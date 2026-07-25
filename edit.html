@@ -178,6 +178,30 @@
         <input type="text" id="tagline" placeholder="Home Brewed · Always Cold">
       </div>
       <div class="field">
+        <label for="bg">Background</label>
+        <select id="bg">
+          <option value="charcoal">Charcoal (default)</option>
+          <option value="chalk">Chalkboard</option>
+          <option value="oak">Oak barrel</option>
+          <option value="slate">Slate</option>
+          <option value="copper">Copper</option>
+          <option value="photo">My own photo…</option>
+        </select>
+        <div id="bgphotorow" style="display:none;margin-top:12px">
+          <div class="logorow">
+            <div class="logoprev" id="bgprev">No photo yet</div>
+            <div style="flex:1 1 240px">
+              <input type="file" id="bgfile" accept="image/*" style="display:none">
+              <button class="btn-ghost" id="bgpick">Choose a photo…</button>
+              <div class="hint">
+                The photo is darkened automatically so the beer names stay readable.
+                A wide, not-too-busy picture works best.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="field">
         <label>Logo at the top of the TV screen</label>
         <div class="logorow">
           <div class="logoprev" id="logoprev">No logo yet</div>
@@ -428,6 +452,61 @@
     data.logo = ""; renderLogo(); touched();
   });
 
+  /* ---------------- background ---------------- */
+  function renderBg(){
+    var isPhoto = data.bg === "photo";
+    $("bgphotorow").style.display = isPhoto ? "" : "none";
+    var p = $("bgprev");
+    if(data.bgPhoto){
+      p.innerHTML = "";
+      var img = new Image(); img.alt = "";
+      img.onerror = function(){ p.textContent = "Couldn't read that photo"; };
+      img.src = data.bgPhoto;
+      p.appendChild(img);
+    } else {
+      p.textContent = "No photo yet";
+    }
+  }
+
+  function handleBgFile(file){
+    if(!file) return;
+    if(!/^image\//.test(file.type)){ alert("Please pick a picture file (PNG or JPG)."); return; }
+    var reader = new FileReader();
+    reader.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        /* Big enough for a 1080p TV, small enough to publish quickly. */
+        var maxW = 1600, maxH = 900;
+        var scale = Math.min(maxW / img.width, maxH / img.height, 1);
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        var ctx = c.getContext("2d");
+        ctx.fillStyle = "#0e0c0a"; ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        var out;
+        try { out = c.toDataURL("image/jpeg", 0.82); }
+        catch(err){ alert("That photo couldn't be processed. Try a different one."); return; }
+        data.bgPhoto = out;
+        renderBg(); touched();
+      };
+      img.onerror = function(){ alert("That file didn't look like a picture. Try a PNG or JPG."); };
+      img.src = reader.result;
+    };
+    reader.onerror = function(){ alert("Couldn't read that file."); };
+    reader.readAsDataURL(file);
+  }
+
+  $("bg").addEventListener("change", function(){
+    data.bg = this.value; renderBg(); touched();
+  });
+  $("bgpick").addEventListener("click", function(){ $("bgfile").click(); });
+  $("bgfile").addEventListener("change", function(){
+    handleBgFile(this.files && this.files[0]);
+    this.value = "";
+  });
+
   function renderSettings(){
     $("brewery").value       = data.brewery || "";
     $("tagline").value       = data.tagline || "";
@@ -438,6 +517,8 @@
     $("logoOnly").checked    = !!data.logoOnly;
     $("logoSize").value      = data.logoSize || "m";
     $("rotate").value        = String(Number(data.rotate) || 0);
+    $("bg").value            = data.bg || "charcoal";
+    renderBg();
     renderLogo();
   }
 
@@ -623,6 +704,7 @@
   /* ---------------- publish ---------------- */
   function serialize(){
     var out = JSON.parse(JSON.stringify(data));
+    delete out.bgPhoto;                 /* lives in bgphoto.json - see publish() */
     out.updated = new Date().toISOString();
     return JSON.stringify(out, null, 2) + "\n";
   }
@@ -645,6 +727,27 @@
     };
     xhr.onerror = function(){ cb(new Error("Network error — is the laptop online?")); };
     xhr.send(opts.body ? JSON.stringify(opts.body) : null);
+  }
+
+  /* Write one file: look up its sha (needed to replace), then PUT. */
+  function putFile(path, text, message, cb){
+    var c = cfg();
+    var base = "/repos/" + c.owner + "/" + c.repo + "/contents/" + path;
+    api(base + "?ref=" + encodeURIComponent(c.branch), {}, function(err, status, json){
+      if(err) return cb(err);
+      if(status !== 200 && status !== 404){
+        return cb(new Error("Couldn't reach " + path + " (" + status + "). Check the ⚙️ setup."));
+      }
+      var body = { message: message, content: b64(text), branch: c.branch };
+      if(status === 200 && json && json.sha) body.sha = json.sha;
+      api(base, {method:"PUT", body:body}, function(err2, st2, j2){
+        if(err2) return cb(err2);
+        if(st2 === 200 || st2 === 201) return cb(null);
+        if(st2 === 409) return cb(new Error("Someone else just changed the list. Reload this page and redo your edit."));
+        if(st2 === 401 || st2 === 403) return cb(new Error("Couldn't save — the access token has expired or been revoked. Ask Jesse for a new one."));
+        cb(new Error("GitHub said " + st2 + ": " + ((j2 && j2.message) || "unknown error")));
+      });
+    });
   }
 
   $("gh-test").addEventListener("click", function(){
@@ -676,38 +779,32 @@
     btn.disabled = true;
     setStatus("Publishing…");
 
-    var base = "/repos/" + c.owner + "/" + c.repo + "/contents/taps.json";
-    /* Get the current file's sha first — GitHub needs it to replace a file. */
-    api(base + "?ref=" + encodeURIComponent(c.branch), {}, function(err, status, json){
-      if(err){ btn.disabled = false; setStatus(err.message, "err"); return; }
-      if(status !== 200 && status !== 404){
-        btn.disabled = false;
-        setStatus("Couldn't reach the tap list file (" + status + "). Check the ⚙️ setup.", "err");
-        return;
-      }
-      var body = {
-        message: "Update tap list",
-        content: b64(serialize()),
-        branch:  c.branch
-      };
-      if(status === 200 && json && json.sha) body.sha = json.sha;
+    function finish(err){
+      btn.disabled = false;
+      if(err){ setStatus(err.message, "err"); return; }
+      published = JSON.parse(JSON.stringify(data));
+      clearDraft();
+      setStatus("✓ Published! The TV will show it within about a minute.", "ok");
+    }
 
-      api(base, {method:"PUT", body:body}, function(err2, st2, j2){
-        btn.disabled = false;
-        if(err2){ setStatus(err2.message, "err"); return; }
-        if(st2 === 200 || st2 === 201){
-          published = JSON.parse(JSON.stringify(data));
-          clearDraft();
-          setStatus("✓ Published! The TV will show it within about a minute.", "ok");
-        } else if(st2 === 409){
-          setStatus("Someone else just changed the list. Reload this page and redo your edit.", "err");
-        } else if(st2 === 401 || st2 === 403){
-          setStatus("Couldn't save — the access token has expired or been revoked. Ask Jesse for a new one.", "err");
-        } else {
-          setStatus("GitHub said " + st2 + ": " + ((j2 && j2.message) || "unknown error"), "err");
-        }
-      });
-    });
+    function writeTaps(){
+      setStatus("Publishing…");
+      putFile("taps.json", serialize(), "Update tap list", finish);
+    }
+
+    /* Only re-upload the photo when it actually changed - it's the big payload. */
+    var photoChanged = data.bg === "photo" && data.bgPhoto &&
+                       data.bgPhoto !== (published && published.bgPhoto);
+    if(photoChanged){
+      setStatus("Uploading the background photo…");
+      data.bgV = String(Date.now());
+      putFile("bgphoto.json",
+              JSON.stringify({ photo: data.bgPhoto }) + "\n",
+              "Update background photo",
+              function(err){ if(err) return finish(err); writeTaps(); });
+    } else {
+      writeTaps();
+    }
   });
 
   window.addEventListener("beforeunload", function(e){
@@ -734,6 +831,7 @@
     if(json.logo == null) json.logo = "";
     if(json.perPage == null) json.perPage = "auto";
     if(!json.logoSize) json.logoSize = "m";
+    if(!json.bg) json.bg = "charcoal";
     json.rotate = Number(json.rotate) || 0;
     if(json.rotateSeconds == null) json.rotateSeconds = 20;
     if(json.showClock == null) json.showClock = true;
@@ -765,6 +863,25 @@
 
     renderAll();
     setStatus("Ready.");
+
+    /* Pull the existing background photo in separately, so the preview shows it
+       and we don't needlessly re-upload it on the next publish. */
+    if(data.bg === "photo" && !data.bgPhoto){
+      var bx = new XMLHttpRequest();
+      bx.open("GET", "bgphoto.json?t=" + Date.now(), true);
+      bx.onload = function(){
+        if(bx.status < 200 || bx.status >= 300) return;
+        try {
+          var j = JSON.parse(bx.responseText);
+          if(j && j.photo){
+            data.bgPhoto = j.photo;
+            published.bgPhoto = j.photo;   /* matches -> publish won't re-send it */
+            renderBg();
+          }
+        } catch(e){}
+      };
+      bx.send();
+    }
   }
 
   var xhr = new XMLHttpRequest();

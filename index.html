@@ -38,12 +38,59 @@
     --uw:1vw;
   }
   body.rot90,body.rot270{--u:1vw;--uw:1vh}
+
+  /* ================= background presets =================
+     All deliberately dark — the board is light text, so contrast comes first. */
+  body.bg-charcoal{
+    background:
+      radial-gradient(130% 95% at 50% -28%, #2b231b 0%, rgba(43,35,27,0) 68%),
+      radial-gradient(80% 60% at 100% 110%, #1d1813 0%, rgba(29,24,19,0) 70%),
+      #0e0c0a;
+  }
+  body.bg-chalk{
+    background:
+      radial-gradient(90% 70% at 28% 18%, rgba(255,255,255,.05) 0%, rgba(255,255,255,0) 62%),
+      radial-gradient(80% 65% at 78% 82%, rgba(255,255,255,.035) 0%, rgba(255,255,255,0) 66%),
+      linear-gradient(180deg,#1a2420 0%,#131b18 100%),
+      #131b18;
+  }
+  body.bg-oak{
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(0,0,0,.20) 0px, rgba(0,0,0,.20) 3px,
+        rgba(255,255,255,.020) 3px, rgba(255,255,255,.020) 7px,
+        rgba(0,0,0,.11) 7px, rgba(0,0,0,.11) 13px,
+        rgba(255,255,255,.010) 13px, rgba(255,255,255,.010) 22px),
+      radial-gradient(120% 90% at 50% 0%, #452c1a 0%, rgba(69,44,26,0) 70%),
+      linear-gradient(180deg,#33200f 0%,#20130a 62%,#170d06 100%),
+      #20130a;
+  }
+  body.bg-slate{
+    background:
+      radial-gradient(120% 90% at 18% -5%, #2b3238 0%, rgba(43,50,56,0) 62%),
+      radial-gradient(90% 70% at 95% 105%, #232a30 0%, rgba(35,42,48,0) 68%),
+      linear-gradient(180deg,#191d21 0%,#0f1215 100%),
+      #0f1215;
+  }
+  body.bg-copper{
+    background:
+      linear-gradient(135deg, rgba(227,173,66,.11) 0%, rgba(227,173,66,0) 42%),
+      radial-gradient(115% 90% at 72% -12%, #3d2c18 0%, rgba(61,44,24,0) 66%),
+      linear-gradient(180deg,#1b150d 0%,#100b06 100%),
+      #100b06;
+  }
+  /* photo: a scrim keeps the text readable whatever they upload */
+  body.bg-photo{background-color:#0e0c0a;background-size:cover;background-position:center;
+                background-repeat:no-repeat;background-attachment:scroll}
+  /* Over a photo the cards go near-solid, so a busy picture can't wreck contrast.
+     The photo still shows through the gaps between cards. */
+  body.bg-photo .tap{
+    background:linear-gradient(180deg,rgba(12,10,8,.86),rgba(12,10,8,.78));
+    border-color:rgba(226,197,140,.22);
+  }
   html,body{height:100%}
   body{
-    background:
-      radial-gradient(calc(130 * var(--u)) calc(95 * var(--u)) at 50% -28%, #2b231b 0%, rgba(43,35,27,0) 68%),
-      radial-gradient(calc(80 * var(--u)) calc(60 * var(--u)) at 100% 110%, #1d1813 0%, rgba(29,24,19,0) 70%),
-      var(--bg);
+    background:var(--bg);          /* replaced by a .bg-* preset at render time */
     color:var(--cream);
     font-family:var(--sans);
     overflow:hidden;
@@ -364,7 +411,11 @@
     /* screen rotation, for a panel mounted on its side */
     var rot = Number(data.rotate) || 0;
     if(rot !== 90 && rot !== 180 && rot !== 270) rot = 0;
-    document.body.className = rot ? ("rot" + rot) : "";
+
+    var bg = data.bg || "charcoal";
+    if(!/^(charcoal|chalk|oak|slate|copper|photo)$/.test(bg)) bg = "charcoal";
+    document.body.className = (rot ? "rot" + rot + " " : "") + "bg-" + bg;
+    applyBgPhoto(bg);
 
     /* header logo */
     var mark = el("mark");
@@ -451,6 +502,44 @@
       if(ps[pageIndex]) ps[pageIndex].classList.add("on");
       if(ds[pageIndex]) ds[pageIndex].classList.add("on");
     }, seconds * 1000);
+  }
+
+  /* ---------- background photo ----------
+     Kept out of taps.json so the every-60s poll stays a couple of KB.
+     Re-fetched only when bgV changes. */
+  var bgPhotoData = null, bgPhotoV = null, bgPhotoPending = false;
+
+  function paintBgPhoto(){
+    if(bgPhotoData){
+      document.body.style.backgroundImage =
+        "linear-gradient(rgba(14,12,10,.74),rgba(14,12,10,.80)), url('" + bgPhotoData + "')";
+    }
+  }
+
+  function applyBgPhoto(bg){
+    if(bg !== "photo"){
+      document.body.style.backgroundImage = "";
+      return;
+    }
+    var want = String(data.bgV || "");
+    if(bgPhotoData && bgPhotoV === want){ paintBgPhoto(); return; }
+    if(bgPhotoPending) return;
+    bgPhotoPending = true;
+
+    var x = new XMLHttpRequest();
+    x.open("GET", "bgphoto.json?v=" + encodeURIComponent(want), true);
+    x.timeout = 20000;
+    x.onload = function(){
+      bgPhotoPending = false;
+      if(x.status >= 200 && x.status < 300){
+        try {
+          var j = JSON.parse(x.responseText);
+          if(j && j.photo){ bgPhotoData = j.photo; bgPhotoV = want; paintBgPhoto(); }
+        } catch(e){}
+      }
+    };
+    x.onerror = x.ontimeout = function(){ bgPhotoPending = false; };
+    x.send();
   }
 
   /* ---------- load + refresh ---------- */
