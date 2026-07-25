@@ -7,7 +7,7 @@
   "perPage": 8,
   "rotateSeconds": 20,
   "hideKicked": false,
-  "updated": "2026-07-25T08:31:43.070Z",
+  "updated": "2026-07-25T08:33:54.342Z",
   "taps": [
     {
       "num": 1,
@@ -18,7 +18,7 @@
       "notes": "Grapefruit and pine, dry bitter finish.",
       "color": "#e0a63a",
       "icon": "hop",
-      "level": 85,
+      "level": 100,
       "status": "pouring"
     },
     {
@@ -29,8 +29,8 @@
       "ibu": "18",
       "notes": "Light, crisp and easy. The lawnmower beer.",
       "color": "#f2d16b",
-      "icon": "wheat",
-      "level": 60,
+      "icon": "growler",
+      "level": 100,
       "status": "pouring"
     },
     {
@@ -41,8 +41,8 @@
       "ibu": "24",
       "notes": "Toasty malt, caramel, a little nutty.",
       "color": "#7a3b16",
-      "icon": "mug",
-      "level": 40,
+      "icon": "pint",
+      "level": 100,
       "status": "pouring"
     },
     {
@@ -52,8 +52,8 @@
       "abv": "6.1",
       "ibu": "32",
       "notes": "Coffee, dark chocolate, smooth as silk.",
-      "color": "#2a1508",
-      "icon": "pint",
+      "color": "#a04f18",
+      "icon": "keg",
       "level": 15,
       "status": "pouring"
     },
@@ -66,8 +66,8 @@
       "notes": "Local wildflower honey, finishes clean.",
       "color": "#eec24a",
       "icon": "growler",
-      "level": 0,
-      "status": "kicked"
+      "level": 100,
+      "status": "pouring"
     },
     {
       "num": 6,
