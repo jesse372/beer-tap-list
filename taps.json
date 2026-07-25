@@ -7,7 +7,7 @@
   "perPage": 8,
   "rotateSeconds": 20,
   "hideKicked": false,
-  "updated": "2026-07-25T08:28:41.768Z",
+  "updated": "2026-07-25T08:31:43.070Z",
   "taps": [
     {
       "num": 1,
@@ -80,6 +80,30 @@
       "icon": "bottle",
       "level": 100,
       "status": "coming"
+    },
+    {
+      "num": 7,
+      "name": "English",
+      "style": "English IPA",
+      "abv": "1",
+      "ibu": "1",
+      "notes": "",
+      "color": "#e0a63a",
+      "icon": "pint",
+      "level": 100,
+      "status": "pouring"
+    },
+    {
+      "num": 8,
+      "name": "black IPA",
+      "style": "American IPA",
+      "abv": "5",
+      "ibu": "50",
+      "notes": "",
+      "color": "#e0a63a",
+      "icon": "bottle",
+      "level": 100,
+      "status": "pouring"
     }
   ]
 }
