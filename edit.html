@@ -19,30 +19,30 @@
   body{
     background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    font-size:18px;line-height:1.45;padding-bottom:140px;
+    font-size:18px;line-height:1.4;padding-bottom:78px;
   }
-  .wrap{max-width:860px;margin:0 auto;padding:24px 18px}
+  .wrap{max-width:860px;margin:0 auto;padding:14px 18px}
 
   /* ---------- top bar ---------- */
   .top{
-    background:#241d15;color:#f4e9d5;padding:20px 18px;
-    position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(0,0,0,.18);
+    background:#241d15;color:#f4e9d5;padding:9px 18px;
+    box-shadow:0 2px 12px rgba(0,0,0,.18);
   }
-  .top .wrap{padding:0 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .top h1{font-family:Georgia,serif;font-size:26px;font-weight:700;flex:1 1 auto}
-  .top .sub{font-size:14px;color:#b6a68c;width:100%;margin-top:-4px}
+  .top .wrap{padding:0 18px;display:flex;align-items:center;gap:14px}
+  .top h1{font-family:Georgia,serif;font-size:19px;font-weight:700;flex:1 1 auto;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  h2{font-family:Georgia,serif;font-size:22px;margin:30px 0 12px}
+  h2{font-family:Georgia,serif;font-size:20px;margin:16px 0 9px}
 
   /* ---------- buttons ---------- */
   button{
     font:inherit;font-weight:600;cursor:pointer;border:2px solid transparent;
-    border-radius:12px;padding:14px 20px;background:#efe6d5;color:var(--ink);
+    border-radius:11px;padding:11px 16px;background:#efe6d5;color:var(--ink);
     transition:filter .15s ease;
   }
   button:hover{filter:brightness(.95)}
   button:active{transform:translateY(1px)}
-  .btn-primary{background:var(--green);color:#fff;font-size:20px;padding:18px 28px}
+  .btn-primary{background:var(--green);color:#fff;font-size:17px;padding:12px 22px;white-space:nowrap}
   .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink)}
   .btn-ghost-light{background:transparent;border-color:#5a4c3a;color:#f4e9d5}
   .btn-danger{background:transparent;border-color:#e5c4c4;color:var(--red);padding:10px 14px}
@@ -52,35 +52,35 @@
   /* ---------- cards ---------- */
   .card{
     background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(60,45,20,.06);
+    padding:15px;margin-bottom:12px;box-shadow:0 1px 3px rgba(60,45,20,.06);
   }
   .card.kicked{background:#faf7f1;opacity:.85}
-  .card-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .card-head{display:flex;align-items:center;gap:10px;margin-bottom:11px;flex-wrap:wrap}
   .card-head .taplabel{font-size:13px;font-weight:700;letter-spacing:.09em;
                        text-transform:uppercase;color:var(--muted);flex:0 0 auto}
   .card-head input.tapno[type=number]{
     background:#241d15;color:#f4e9d5;border-radius:10px;font-weight:700;
-    width:64px;height:46px;font-size:18px;text-align:center;
+    width:58px;height:40px;font-size:17px;text-align:center;
     border:2px solid #241d15;flex:0 0 auto;padding:0;
   }
   .card-head .spacer{flex:1 1 auto}
 
   label{display:block;font-size:13px;font-weight:700;letter-spacing:.09em;
-        text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+        text-transform:uppercase;color:var(--muted);margin-bottom:4px}
   input[type=text],input[type=number],textarea,select{
-    font:inherit;width:100%;padding:13px 14px;border:2px solid var(--line);
+    font:inherit;width:100%;padding:10px 12px;border:2px solid var(--line);
     border-radius:10px;background:#fffdf9;color:var(--ink);
   }
   input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
-  textarea{resize:vertical;min-height:64px}
-  .field{margin-bottom:16px}
+  textarea{resize:vertical;min-height:52px}
+  .field{margin-bottom:11px}
   .row{display:flex;gap:14px;flex-wrap:wrap}
-  .row>.field{flex:1 1 150px;margin-bottom:16px}
+  .row>.field{flex:1 1 150px;margin-bottom:11px}
 
   /* ---------- colour swatches ---------- */
   .swatches{display:flex;gap:9px;flex-wrap:wrap}
   .sw{
-    width:46px;height:46px;border-radius:10px;border:3px solid transparent;
+    width:42px;height:42px;border-radius:10px;border:3px solid transparent;
     cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18);padding:0;
   }
   .sw.on{border-color:var(--ink)}
@@ -88,11 +88,11 @@
   /* ---------- icon picker ---------- */
   .icons{display:flex;gap:9px;flex-wrap:wrap}
   .ic{
-    width:58px;height:58px;border:2px solid var(--line);border-radius:12px;
+    width:50px;height:50px;border:2px solid var(--line);border-radius:11px;
     background:#fffdf9;color:var(--gold);padding:0;
     display:flex;align-items:center;justify-content:center;
   }
-  .ic svg{width:32px;height:32px}
+  .ic svg{width:28px;height:28px}
   .ic.on{border-color:var(--ink);background:#fdf3df}
   .ic.none{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em}
 
@@ -106,7 +106,7 @@
   .logoprev img{max-width:100%;max-height:100%;object-fit:contain;display:block}
 
   /* ---------- level slider ---------- */
-  input[type=range]{width:100%;height:38px;accent-color:var(--gold)}
+  input[type=range]{width:100%;height:32px;accent-color:var(--gold)}
   .levelrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .levelval{font-weight:700;font-size:20px;min-width:62px;text-align:right}
   .quick{display:flex;gap:8px;flex-wrap:wrap}
@@ -114,10 +114,11 @@
   /* ---------- publish bar ---------- */
   .publishbar{
     position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px solid var(--line);
-    padding:16px 18px;z-index:30;box-shadow:0 -4px 18px rgba(60,45,20,.10);
+    padding:8px 18px;z-index:30;box-shadow:0 -4px 18px rgba(60,45,20,.10);
   }
-  .publishbar .wrap{padding:0 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-  .status{flex:1 1 220px;font-size:16px;color:var(--muted);min-width:0}
+  .publishbar .wrap{padding:0 18px;display:flex;align-items:center;gap:12px}
+  .status{flex:1 1 auto;font-size:15px;color:var(--muted);min-width:0;
+          overflow:hidden;text-overflow:ellipsis}
   .status.ok{color:var(--green);font-weight:600}
   .status.err{color:var(--red);font-weight:600}
 
@@ -146,8 +147,7 @@
 <div class="top">
   <div class="wrap">
     <h1>🍺 Edit the Tap List</h1>
-    <button class="btn-ghost-light" id="preview">See the TV screen</button>
-    <div class="sub">Make your changes, then hit the big green Publish button at the bottom.</div>
+    <button class="btn-ghost-light btn-sm" id="preview">See the TV screen</button>
   </div>
 </div>
 
@@ -161,7 +161,7 @@
 
   <h2>The beers</h2>
   <div id="taps"></div>
-  <button id="add" style="width:100%;padding:18px;font-size:19px;border:2px dashed var(--line)">
+  <button id="add" style="width:100%;padding:13px;font-size:18px;border:2px dashed var(--line)">
     + Add another beer
   </button>
 
@@ -269,7 +269,7 @@
 <div class="publishbar">
   <div class="wrap">
     <div class="status" id="status">Ready.</div>
-    <button class="btn-ghost" id="revert">Undo all my changes</button>
+    <button class="btn-ghost" id="revert">Undo changes</button>
     <button class="btn-primary" id="publish">Publish to the TV</button>
   </div>
 </div>
