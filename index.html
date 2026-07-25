@@ -4,154 +4,208 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>On Tap</title>
-<meta name="theme-color" content="#12100e">
+<meta name="theme-color" content="#0e0c0a">
 <link rel="icon" href="favicon.svg">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="On Tap">
+<link rel="stylesheet" href="fonts/fonts.css">
 <style>
+  /* NOTE ON BROWSER SUPPORT
+     This runs on Fire TV's Silk browser, which is an old Chromium. Deliberately avoided:
+     `inset:` shorthand, `clamp()`, `aspect-ratio`, container queries, CSS nesting.
+     Everything below is long-hand and safe. */
+
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
-    --bg:#12100e;
-    --panel:#1c1815;
-    --line:rgba(226,197,140,.16);
-    --cream:#f4e9d5;
-    --muted:#a99c85;
-    --gold:#e0a63a;
-    --s:1;                 /* global scale, set by JS from row count */
-    --pad:3.2vh;           /* TV overscan safety */
+    --bg:#0e0c0a;
+    --line:rgba(226,197,140,.14);
+    --line-strong:rgba(226,197,140,.30);
+    --cream:#f6ecd8;
+    --muted:#a3937a;
+    --dim:#7d7060;
+    --gold:#e3ad42;
+    --serif:'Bitter',Georgia,'Times New Roman',serif;
+    --sans:'Barlow',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    --cond:'Barlow Condensed','Barlow',Arial Narrow,Arial,sans-serif;
+    --s:1;
+    --pad:3.4vh;
   }
   html,body{height:100%}
   body{
     background:
-      radial-gradient(120vh 90vh at 50% -20%, #2a231c 0%, transparent 62%),
+      radial-gradient(130vh 95vh at 50% -28%, #2b231b 0%, rgba(43,35,27,0) 68%),
+      radial-gradient(80vh 60vh at 100% 110%, #1d1813 0%, rgba(29,24,19,0) 70%),
       var(--bg);
     color:var(--cream);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-family:var(--sans);
     overflow:hidden;
     -webkit-font-smoothing:antialiased;
   }
   .screen{
     height:100vh;height:100dvh;
-    padding:var(--pad) calc(var(--pad) * 1.5);
+    padding:var(--pad) calc(var(--pad) * 1.45);
     display:flex;flex-direction:column;
   }
 
-  /* ---------- header ---------- */
+  /* ================= header ================= */
   header{
-    display:flex;align-items:baseline;justify-content:space-between;
-    gap:2vw;padding-bottom:1.6vh;border-bottom:2px solid var(--line);
-    flex:0 0 auto;
+    flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    gap:2.5vw;padding-bottom:1.9vh;position:relative;
   }
-  .brand{display:flex;align-items:center;gap:1.4vw;min-width:0}
-  .mark{font-size:4.2vh;line-height:1;flex:0 0 auto}
-  .mark img{display:block;height:8vh;max-width:26vw;object-fit:contain}
+  header::after{  /* gold rule that fades out to the right */
+    content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
+    background:linear-gradient(90deg,var(--gold) 0%,rgba(227,173,66,.35) 45%,rgba(227,173,66,.06) 100%);
+  }
+  .brand{display:flex;align-items:center;gap:1.5vw;min-width:0}
+  .mark{line-height:0;flex:0 0 auto;font-size:6vh}
+  .mark img{display:block;max-width:30vw;object-fit:contain;height:8.5vh}
+  .mark.sz-s img{height:6vh}
+  .mark.sz-l img{height:12.5vh}
   .names{min-width:0}
   h1{
-    font-family:Georgia,"Times New Roman",serif;
-    font-size:4.4vh;line-height:1.05;font-weight:700;letter-spacing:.01em;
+    font-family:var(--serif);font-weight:700;
+    font-size:5vh;line-height:1.02;letter-spacing:-.005em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
-  .tagline{font-size:1.85vh;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-top:.5vh}
+  .tagline{
+    font-family:var(--cond);font-weight:500;font-size:2.1vh;
+    color:var(--muted);letter-spacing:.3em;text-transform:uppercase;margin-top:.7vh;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
   .right{text-align:right;flex:0 0 auto}
   .ontap{
-    font-family:Georgia,serif;font-size:3.4vh;letter-spacing:.3em;
-    color:var(--gold);text-transform:uppercase;
+    font-family:var(--cond);font-weight:600;font-size:3.6vh;
+    letter-spacing:.42em;text-indent:.42em;
+    color:var(--gold);text-transform:uppercase;line-height:1;
   }
-  .clock{font-size:2vh;color:var(--muted);margin-top:.5vh;font-variant-numeric:tabular-nums}
+  .clock{
+    font-family:var(--cond);font-weight:500;font-size:2.1vh;color:var(--muted);
+    margin-top:.9vh;letter-spacing:.16em;
+  }
 
-  /* ---------- tap grid ---------- */
-  main{flex:1 1 auto;min-height:0;position:relative;padding-top:1.8vh}
+  /* ================= grid ================= */
+  main{flex:1 1 auto;min-height:0;position:relative;padding-top:2.1vh}
   .page{
-    /* longhand, not `inset:` — Fire TV's Silk browser doesn't support the shorthand
-       and silently collapses the grid to content height, leaving dead space below. */
-    position:absolute;top:1.8vh;right:0;bottom:0;left:0;
-    display:grid;gap:1.6vh 2.2vw;
-    opacity:0;transition:opacity .7s ease;pointer-events:none;
+    position:absolute;top:2.1vh;right:0;bottom:0;left:0;
+    display:grid;gap:1.5vh 2vw;
+    opacity:0;transition:opacity .8s ease;pointer-events:none;
   }
   .page.on{opacity:1}
 
+  /* ================= tap card ================= */
   .tap{
-    background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
-    border:1px solid var(--line);border-radius:1.4vh;
-    padding:calc(1.9vh * var(--s)) calc(2vh * var(--s));
-    display:flex;gap:calc(1.8vh * var(--s));align-items:stretch;min-height:0;overflow:hidden;
+    position:relative;overflow:hidden;min-height:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.008));
+    border:1px solid var(--line);border-radius:1.5vh;
+    padding:calc(1.7vh * var(--s)) calc(2.1vh * var(--s));
+    padding-left:calc(2.4vh * var(--s));
+    display:flex;align-items:center;gap:calc(1.9vh * var(--s));
   }
-  .tap.kicked{opacity:.42}
+  .tap::before{  /* colour spine, tinted per beer */
+    content:"";position:absolute;top:0;bottom:0;left:0;width:.55vh;
+    background:var(--beer,#e3ad42);opacity:.85;
+  }
+  .tap.out{opacity:.4}
+  .tap.out::before{opacity:.3}
 
-  /* glass / level indicator */
+  /* tap number */
+  .numbadge{
+    flex:0 0 auto;
+    width:calc(4.4vh * var(--s));height:calc(4.4vh * var(--s));
+    border:1px solid var(--line-strong);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--cond);font-weight:600;
+    font-size:calc(2.3vh * var(--s));color:var(--gold);
+    letter-spacing:.02em;
+  }
+
+  /* glass */
   .glass{
-    flex:0 0 auto;align-self:center;
-    width:calc(5.6vh * var(--s));
-    height:calc(14vh * var(--s));max-height:100%;
-    border-radius:.7vh;
-    background:rgba(255,255,255,.075);border:1px solid var(--line);
-    position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+    flex:0 0 auto;
+    width:calc(4.8vh * var(--s));height:calc(13vh * var(--s));max-height:100%;
+    border:1px solid var(--line);border-radius:.5vh .5vh .9vh .9vh;
+    background:rgba(255,255,255,.055);
+    position:relative;overflow:hidden;
+    display:flex;flex-direction:column;justify-content:flex-end;
   }
-  .fill{width:100%;transition:height .6s ease;box-shadow:inset 0 .6vh 1.4vh rgba(255,255,255,.28)}
-  .foam{height:.9vh;width:100%;background:linear-gradient(180deg,#fffaf0,#efe3cc);flex:0 0 auto}
-  .num{
-    position:absolute;inset:auto 0 0 0;text-align:center;
-    font-size:calc(1.6vh * var(--s));font-weight:700;color:var(--cream);
-    background:rgba(0,0,0,.55);padding:.35vh 0;letter-spacing:.06em;
-  }
+  .foam{flex:0 0 auto;height:.85vh;width:100%;
+        background:linear-gradient(180deg,#fffdf7,#eee0c6)}
+  .fill{width:100%;transition:height .7s ease;
+        box-shadow:inset 0 .5vh 1.3vh rgba(255,255,255,.22)}
 
-  .body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.5vh}
-  .namerow{display:flex;align-items:center;gap:calc(1.2vh * var(--s));min-width:0}
-  .ico{
-    flex:0 0 auto;color:var(--gold);
-    width:calc(4.2vh * var(--s));height:calc(4.2vh * var(--s));
-  }
+  /* text block */
+  .body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;
+        gap:.45vh}
+  .namerow{display:flex;align-items:center;gap:calc(1.15vh * var(--s));min-width:0}
+  .ico{flex:0 0 auto;color:var(--gold);
+       width:calc(3.9vh * var(--s));height:calc(3.9vh * var(--s))}
   .name{
     flex:1 1 auto;min-width:0;
-    font-family:Georgia,"Times New Roman",serif;font-weight:700;
-    font-size:calc(3.5vh * var(--s));line-height:1.1;
+    font-family:var(--serif);font-weight:700;
+    font-size:calc(3.4vh * var(--s));line-height:1.08;letter-spacing:-.004em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
   .style{
-    font-size:calc(1.95vh * var(--s));color:var(--gold);
-    letter-spacing:.12em;text-transform:uppercase;
+    font-family:var(--cond);font-weight:600;
+    font-size:calc(2.15vh * var(--s));color:var(--gold);
+    letter-spacing:.19em;text-transform:uppercase;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
   .notes{
-    font-size:calc(1.9vh * var(--s));color:var(--muted);line-height:1.35;
+    font-family:var(--sans);font-weight:400;
+    font-size:calc(2.05vh * var(--s));color:var(--muted);line-height:1.36;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   }
-  .stats{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;gap:.9vh;text-align:right}
-  .stat .v{font-size:calc(2.9vh * var(--s));font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
-  .stat .k{font-size:calc(1.35vh * var(--s));color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-top:.3vh}
-  .badge{
-    align-self:flex-end;font-size:calc(1.4vh * var(--s));letter-spacing:.18em;text-transform:uppercase;
-    padding:.5vh 1vh;border-radius:.6vh;border:1px solid currentColor;white-space:nowrap;
-  }
-  .badge.low{color:#e8913c}
-  .badge.kicked{color:#8d8578}
-  .badge.coming{color:#7fb6a1}
 
-  /* ---------- footer ---------- */
-  footer{
-    flex:0 0 auto;padding-top:1.4vh;border-top:2px solid var(--line);
-    display:flex;justify-content:space-between;align-items:center;
-    font-size:1.6vh;color:var(--muted);letter-spacing:.1em;
+  /* stats */
+  .stats{flex:0 0 auto;display:flex;align-items:center;gap:calc(1.9vh * var(--s))}
+  .stat{text-align:center}
+  .stat .v{
+    font-family:var(--sans);font-weight:600;
+    font-size:calc(3.2vh * var(--s));line-height:1;
+    font-variant-numeric:tabular-nums;
   }
-  .dots{display:flex;gap:.9vh}
-  .dot{width:1vh;height:1vh;border-radius:50%;background:rgba(244,233,213,.25)}
+  .stat .k{
+    font-family:var(--cond);font-weight:500;
+    font-size:calc(1.45vh * var(--s));color:var(--dim);
+    letter-spacing:.24em;text-transform:uppercase;margin-top:.5vh;
+  }
+  .badge{
+    font-family:var(--cond);font-weight:600;
+    font-size:calc(1.5vh * var(--s));letter-spacing:.19em;text-transform:uppercase;
+    padding:.6vh 1.1vh;border-radius:.5vh;border:1px solid currentColor;white-space:nowrap;
+  }
+  .badge.low{color:#eb9a3c}
+  .badge.kicked{color:#8b8172}
+  .badge.coming{color:#79b39c}
+
+  /* ================= footer ================= */
+  footer{
+    flex:0 0 auto;margin-top:1.5vh;padding-top:1.4vh;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:var(--cond);font-weight:500;
+    font-size:1.75vh;color:var(--dim);letter-spacing:.2em;text-transform:uppercase;
+  }
+  .dots{display:flex;gap:1vh;align-items:center}
+  .dot{width:1vh;height:1vh;border-radius:50%;background:rgba(246,236,216,.2);
+       transition:background .5s ease}
   .dot.on{background:var(--gold)}
 
   .msg{
     position:absolute;top:0;right:0;bottom:0;left:0;
     display:flex;align-items:center;justify-content:center;
-    text-align:center;font-size:3vh;color:var(--muted);padding:6vh;line-height:1.5;
+    text-align:center;font-size:3.2vh;color:var(--muted);padding:6vh;line-height:1.55;
   }
 
-  /* "press OK for full screen" nudge — fades itself out, never shown once fullscreen */
   #fshint{
-    position:fixed;right:2.5vh;bottom:2.5vh;z-index:50;
-    background:rgba(224,166,58,.94);color:#1a1509;
-    font-size:2vh;font-weight:700;letter-spacing:.06em;
-    padding:1.4vh 2.2vh;border-radius:1vh;
-    box-shadow:0 .6vh 2vh rgba(0,0,0,.5);
+    position:fixed;right:2.6vh;bottom:2.6vh;z-index:50;
+    background:rgba(227,173,66,.95);color:#1a1408;
+    font-family:var(--cond);font-weight:600;
+    font-size:2vh;letter-spacing:.1em;text-transform:uppercase;
+    padding:1.3vh 2.1vh;border-radius:.8vh;
+    box-shadow:0 .6vh 2vh rgba(0,0,0,.55);
     transition:opacity .6s ease;
   }
   #fshint.gone{opacity:0;pointer-events:none}
@@ -188,33 +242,20 @@
 (function(){
   "use strict";
 
-  /* Fallback list so the TV NEVER shows a blank screen if taps.json can't load. */
+  /* Never let the TV go blank, even if taps.json is unreachable. */
   var FALLBACK = {
-    brewery:"Home Brew", tagline:"", showClock:true, perPage:6, rotateSeconds:20,
-    hideKicked:false,
+    brewery:"Home Brew", tagline:"", showClock:true, perPage:"auto", rotateSeconds:20,
+    hideKicked:false, logo:"",
     taps:[{num:1,name:"Tap list unavailable",style:"Check back shortly",abv:"",ibu:"",
-           notes:"The tap list file could not be loaded.",color:"#e0a63a",level:0,status:"pouring"}]
+           notes:"The tap list could not be loaded.",color:"#e3ad42",icon:"",level:0,status:"pouring"}]
   };
 
   var el = function(id){ return document.getElementById(id); };
   var data = null, pages = [], pageIndex = 0, rotateTimer = null, lastStamp = "";
 
-  /* ---------- clock ---------- */
-  function tickClock(){
-    if(!data || data.showClock === false){ el("clock").textContent = ""; return; }
-    var d = new Date();
-    var h = d.getHours(), m = d.getMinutes();
-    var ap = h >= 12 ? "PM" : "AM";
-    h = h % 12; if(h === 0) h = 12;
-    el("clock").textContent = h + ":" + (m < 10 ? "0" + m : m) + " " + ap;
-  }
-  setInterval(tickClock, 15000);
-
-  /* ---------- helpers ---------- */
   function esc(s){
     return String(s == null ? "" : s)
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;");
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
   function chunk(arr, n){
     var out = [], i;
@@ -222,29 +263,42 @@
     return out.length ? out : [[]];
   }
 
+  /* ---------- clock ---------- */
+  function tickClock(){
+    if(!data || data.showClock === false){ el("clock").textContent = ""; return; }
+    var d = new Date(), h = d.getHours(), m = d.getMinutes();
+    var ap = h >= 12 ? "PM" : "AM";
+    h = h % 12; if(h === 0) h = 12;
+    el("clock").textContent = h + ":" + (m < 10 ? "0" + m : m) + " " + ap;
+  }
+  setInterval(tickClock, 15000);
+
+  /* ---------- one card ---------- */
   function tapHTML(t){
     var level  = Math.max(0, Math.min(100, Number(t.level) || 0));
     var status = t.status || "pouring";
     var kicked = status === "kicked" || (status === "pouring" && level <= 0);
-    var color  = t.color || "#e0a63a";
+    var coming = status === "coming";
+    var color  = t.color || "#e3ad42";
 
     var badge = "";
-    if(status === "coming")      badge = '<div class="badge coming">Coming Soon</div>';
-    else if(kicked)              badge = '<div class="badge kicked">Kicked</div>';
-    else if(level <= 20)         badge = '<div class="badge low">Almost Gone</div>';
+    if(coming)           badge = '<div class="badge coming">Coming Soon</div>';
+    else if(kicked)      badge = '<div class="badge kicked">Kicked</div>';
+    else if(level <= 20) badge = '<div class="badge low">Almost Gone</div>';
 
     var stats = "";
     if(t.abv) stats += '<div class="stat"><div class="v">' + esc(t.abv) + '%</div><div class="k">ABV</div></div>';
     if(t.ibu) stats += '<div class="stat"><div class="v">' + esc(t.ibu) + '</div><div class="k">IBU</div></div>';
+    if(badge) stats += badge;
 
-    var shownLevel = (status === "coming") ? 0 : (kicked ? 0 : level);
+    var shown = (coming || kicked) ? 0 : level;
 
     return '' +
-      '<div class="tap' + (kicked || status === "coming" ? " kicked" : "") + '">' +
+      '<div class="tap' + (kicked || coming ? " out" : "") + '" style="--beer:' + esc(color) + '">' +
+        '<div class="numbadge">' + esc(t.num != null ? t.num : "") + '</div>' +
         '<div class="glass">' +
-          (shownLevel > 4 ? '<div class="foam"></div>' : '') +
-          '<div class="fill" style="height:' + shownLevel + '%;background:' + esc(color) + '"></div>' +
-          '<div class="num">' + esc(t.num != null ? t.num : "") + '</div>' +
+          (shown > 4 ? '<div class="foam"></div>' : '') +
+          '<div class="fill" style="height:' + shown + '%;background:' + esc(color) + '"></div>' +
         '</div>' +
         '<div class="body">' +
           '<div class="namerow">' +
@@ -254,7 +308,7 @@
           (t.style ? '<div class="style">' + esc(t.style) + '</div>' : '') +
           (t.notes ? '<div class="notes">' + esc(t.notes) + '</div>' : '') +
         '</div>' +
-        '<div class="stats">' + stats + badge + '</div>' +
+        '<div class="stats">' + stats + '</div>' +
       '</div>';
   }
 
@@ -262,20 +316,22 @@
   function render(){
     var main = el("main");
 
-    /* Header logo: a picture if one was uploaded, otherwise the beer emoji. */
+    /* header logo */
     var mark = el("mark");
+    var size = (data.logoSize === "s" || data.logoSize === "l") ? data.logoSize : "m";
+    mark.className = "mark sz-" + size;
     if(data.logo){
       var img = new Image();
       img.alt = "";
-      img.onerror = function(){ mark.textContent = "🍺"; };   /* never leave a broken image on the TV */
+      img.onerror = function(){ mark.className = "mark"; mark.textContent = "🍺"; };
       img.src = data.logo;
       mark.innerHTML = "";
       mark.appendChild(img);
     } else {
+      mark.className = "mark";
       mark.textContent = "🍺";
     }
 
-    /* If the logo already spells out the name, don't print it twice. */
     var hideName = !!(data.logo && data.logoOnly);
     el("brewery").style.display = hideName ? "none" : "";
     el("brewery").textContent = data.brewery || "On Tap";
@@ -283,42 +339,49 @@
     tickClock();
 
     var taps = (data.taps || []).slice();
-    if(data.hideKicked) {
+    if(data.hideKicked){
       taps = taps.filter(function(t){
         return !(t.status === "kicked" || (t.status !== "coming" && (Number(t.level) || 0) <= 0));
       });
     }
 
     if(!taps.length){
-      main.innerHTML = '<div class="msg">No beers on tap right now.<br>Check back soon! 🍺</div>';
-      el("dots").innerHTML = "";
-      el("foot-left").textContent = "";
+      main.innerHTML = '<div class="msg">Nothing on tap right now.<br>Check back soon 🍺</div>';
+      el("dots").innerHTML = ""; el("foot-left").textContent = "";
       if(rotateTimer) clearInterval(rotateTimer);
       return;
     }
 
-    var perPage = Math.max(1, Math.min(8, Number(data.perPage) || 6));
+    /* "auto" fits everything on one screen up to 8, so it only paginates when it must. */
+    var perPage = data.perPage;
+    if(perPage === "auto" || perPage == null || !Number(perPage)){
+      perPage = Math.min(8, taps.length);
+    }
+    perPage = Math.max(1, Math.min(8, Number(perPage)));
+
     pages = chunk(taps, perPage);
 
-    /* Layout: one column for short lists, two columns once it gets busy. */
-    var cols = perPage <= 3 ? 1 : 2;
+    var onThisPage = Math.min(perPage, taps.length);
+    var cols = onThisPage <= 3 ? 1 : 2;
     var rows = Math.ceil(perPage / cols);
-    /* Scale text so a 2-row page reads big and a 4-row page still fits. */
-    var scale = Math.max(0.62, Math.min(1.25, 3 / rows));
+    /* Fill the card height properly — 4 rows still needs to read from the sofa. */
+    var scale = Math.max(0.78, Math.min(1.3, 3.6 / rows));
 
     main.innerHTML = pages.map(function(p, i){
       return '<div class="page' + (i === 0 ? " on" : "") + '" style="' +
         'grid-template-columns:repeat(' + cols + ',1fr);' +
         'grid-template-rows:repeat(' + rows + ',1fr);' +
-        '--s:' + scale.toFixed(3) + '">' +
-        p.map(tapHTML).join("") + '</div>';
+        '--s:' + scale.toFixed(3) + '">' + p.map(tapHTML).join("") + '</div>';
     }).join("");
 
     el("dots").innerHTML = pages.length > 1
       ? pages.map(function(_, i){ return '<div class="dot' + (i === 0 ? " on" : "") + '"></div>'; }).join("")
       : "";
 
-    el("foot-left").textContent = taps.length + (taps.length === 1 ? " beer" : " beers") + " on the board";
+    var pouring = taps.filter(function(t){
+      return t.status !== "coming" && !(t.status === "kicked" || (Number(t.level) || 0) <= 0);
+    }).length;
+    el("foot-left").textContent = pouring + (pouring === 1 ? " beer pouring" : " beers pouring");
 
     pageIndex = 0;
     startRotate(Math.max(6, Number(data.rotateSeconds) || 20));
@@ -328,43 +391,40 @@
     if(rotateTimer) clearInterval(rotateTimer);
     if(pages.length < 2) return;
     rotateTimer = setInterval(function(){
-      var pagesEls = document.querySelectorAll(".page");
-      var dotEls   = document.querySelectorAll(".dot");
-      if(!pagesEls.length) return;
-      if(pagesEls[pageIndex]) pagesEls[pageIndex].classList.remove("on");
-      if(dotEls[pageIndex])   dotEls[pageIndex].classList.remove("on");
-      pageIndex = (pageIndex + 1) % pagesEls.length;
-      if(pagesEls[pageIndex]) pagesEls[pageIndex].classList.add("on");
-      if(dotEls[pageIndex])   dotEls[pageIndex].classList.add("on");
+      var ps = document.querySelectorAll(".page"), ds = document.querySelectorAll(".dot");
+      if(!ps.length) return;
+      if(ps[pageIndex]) ps[pageIndex].classList.remove("on");
+      if(ds[pageIndex]) ds[pageIndex].classList.remove("on");
+      pageIndex = (pageIndex + 1) % ps.length;
+      if(ps[pageIndex]) ps[pageIndex].classList.add("on");
+      if(ds[pageIndex]) ds[pageIndex].classList.add("on");
     }, seconds * 1000);
   }
 
-  /* ---------- load + auto-refresh ---------- */
+  /* ---------- load + refresh ---------- */
   function load(){
-    var url = "taps.json?t=" + Date.now();   /* cache-bust so the TV always sees fresh edits */
+    var url = "taps.json?t=" + Date.now();
     var done = false;
 
     function apply(json){
       if(done) return; done = true;
       var stamp = JSON.stringify(json);
-      if(stamp === lastStamp) return;        /* nothing changed - don't restart the rotation */
-      lastStamp = stamp;
-      data = json;
-      render();
+      if(stamp === lastStamp) return;      /* unchanged - don't restart the rotation */
+      lastStamp = stamp; data = json; render();
     }
     function fail(){
       if(done) return; done = true;
-      if(!data){ data = FALLBACK; render(); }   /* only fall back if we've never loaded */
+      if(!data){ data = FALLBACK; render(); }
     }
 
     try {
-      var xhr = new XMLHttpRequest();          /* XHR: works on every Fire TV browser build */
+      var xhr = new XMLHttpRequest();
       xhr.open("GET", url, true);
       xhr.timeout = 12000;
       xhr.onload = function(){
         if(xhr.status >= 200 && xhr.status < 300){
           try { apply(JSON.parse(xhr.responseText)); } catch(e){ fail(); }
-        } else { fail(); }
+        } else fail();
       };
       xhr.onerror = xhr.ontimeout = fail;
       xhr.send();
@@ -372,11 +432,9 @@
   }
 
   load();
-  setInterval(load, 60000);                    /* pick up edits within a minute */
+  setInterval(load, 60000);
 
-  /* ---------- full screen ----------
-     On a Fire Stick the remote's OK button arrives as a plain click, so any
-     press hides the Silk address bar. Vendor-prefixed for older Fire OS builds. */
+  /* ---------- full screen ---------- */
   var hint = el("fshint"), hintTimer = null;
 
   function isFullscreen(){
@@ -399,21 +457,15 @@
   document.addEventListener("click", goFullscreen, false);
   document.addEventListener("keydown", function(e){
     var k = e.keyCode;
-    if(k === 13 || k === 32 || k === 179 || k === 85) goFullscreen();  /* OK / space / play */
+    if(k === 13 || k === 32 || k === 179 || k === 85) goFullscreen();
   }, false);
-
   ["fullscreenchange","webkitfullscreenchange","mozfullscreenchange"].forEach(function(ev){
     document.addEventListener(ev, function(){ if(isFullscreen()) hideHint(); }, false);
   });
-
-  /* Don't nag forever — the hint retires on its own after 30s. */
   if(hint){
     if(isFullscreen()) hideHint();
     else hintTimer = setTimeout(hideHint, 30000);
   }
-
-  /* Keep the screen busy so the TV is less likely to blank out. */
-  setInterval(function(){ document.body.style.opacity = "0.999999"; setTimeout(function(){ document.body.style.opacity = ""; }, 60); }, 45000);
 })();
 </script>
 </body>

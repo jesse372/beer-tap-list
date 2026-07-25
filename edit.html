@@ -185,6 +185,14 @@
             <input type="file" id="logofile" accept="image/*" style="display:none">
             <button class="btn-ghost" id="logopick">Choose a picture…</button>
             <button class="btn-danger" id="logoclear" style="display:none">Remove</button>
+            <div id="logosizerow" style="display:none;margin-top:12px">
+              <label for="logoSize">Logo size on the TV</label>
+              <select id="logoSize" style="max-width:220px">
+                <option value="s">Small</option>
+                <option value="m">Medium</option>
+                <option value="l">Large</option>
+              </select>
+            </div>
             <div class="hint">
               A PNG or JPG from the laptop. It's shrunk automatically, so any size is fine —
               a wide logo looks best. Leave it empty to show the 🍺 instead.
@@ -196,12 +204,16 @@
         <div class="field">
           <label for="perPage">Beers shown per screen</label>
           <select id="perPage">
+            <option value="auto">Auto — fit them all (recommended)</option>
             <option value="2">2 — biggest text</option>
             <option value="4">4 — big text</option>
-            <option value="6">6 — recommended</option>
+            <option value="6">6</option>
             <option value="8">8 — smallest text</option>
           </select>
-          <div class="hint">Extra beers rotate onto the next screen automatically.</div>
+          <div class="hint">
+            Auto shows every beer on one screen (up to 8) at the largest text that fits.
+            Beyond that, the extras rotate onto a second screen.
+          </div>
         </div>
         <div class="field">
           <label for="rotateSeconds">Seconds per screen</label>
@@ -342,9 +354,11 @@
       img.src = data.logo;
       p.appendChild(img);
       $("logoclear").style.display = "";
+      $("logosizerow").style.display = "";
     } else {
       p.textContent = "No logo yet";
       $("logoclear").style.display = "none";
+      $("logosizerow").style.display = "none";
     }
   }
 
@@ -402,11 +416,12 @@
   function renderSettings(){
     $("brewery").value       = data.brewery || "";
     $("tagline").value       = data.tagline || "";
-    $("perPage").value       = String(data.perPage || 6);
+    $("perPage").value       = (data.perPage === "auto" || !data.perPage) ? "auto" : String(data.perPage);
     $("rotateSeconds").value = data.rotateSeconds || 20;
     $("showClock").checked   = data.showClock !== false;
     $("hideKicked").checked  = !!data.hideKicked;
     $("logoOnly").checked    = !!data.logoOnly;
+    $("logoSize").value      = data.logoSize || "m";
     renderLogo();
   }
 
@@ -487,9 +502,13 @@
       touched();
     });
   });
-  $("perPage").addEventListener("change", function(){ data.perPage = Number(this.value); touched(); });
+  $("perPage").addEventListener("change", function(){
+    data.perPage = this.value === "auto" ? "auto" : Number(this.value);
+    touched();
+  });
   $("showClock").addEventListener("change", function(){ data.showClock = this.checked; touched(); });
   $("logoOnly").addEventListener("change", function(){ data.logoOnly = this.checked; touched(); });
+  $("logoSize").addEventListener("change", function(){ data.logoSize = this.value; touched(); });
   $("hideKicked").addEventListener("change", function(){ data.hideKicked = this.checked; touched(); });
 
   /* Tap fields (delegated so re-renders never lose their wiring) */
@@ -696,7 +715,8 @@
       };
     });
     if(json.logo == null) json.logo = "";
-    if(json.perPage == null) json.perPage = 6;
+    if(json.perPage == null) json.perPage = "auto";
+    if(!json.logoSize) json.logoSize = "m";
     if(json.rotateSeconds == null) json.rotateSeconds = 20;
     if(json.showClock == null) json.showClock = true;
     return json;
