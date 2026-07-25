@@ -220,6 +220,21 @@
           <input type="number" id="rotateSeconds" min="6" max="120" step="1">
         </div>
       </div>
+      <div class="row">
+        <div class="field">
+          <label for="rotate">Screen rotation</label>
+          <select id="rotate">
+            <option value="0">Normal (widescreen)</option>
+            <option value="90">Rotated — turn right ↻</option>
+            <option value="270">Rotated — turn left ↺</option>
+            <option value="180">Upside down</option>
+          </select>
+          <div class="hint">
+            For a TV or monitor mounted on its side. If the first rotated option comes out
+            upside down, pick the other one.
+          </div>
+        </div>
+      </div>
       <div class="checkline">
         <input type="checkbox" id="logoOnly">
         <label for="logoOnly">My logo already has the name in it — don't show the text name too</label>
@@ -422,6 +437,7 @@
     $("hideKicked").checked  = !!data.hideKicked;
     $("logoOnly").checked    = !!data.logoOnly;
     $("logoSize").value      = data.logoSize || "m";
+    $("rotate").value        = String(Number(data.rotate) || 0);
     renderLogo();
   }
 
@@ -509,6 +525,7 @@
   $("showClock").addEventListener("change", function(){ data.showClock = this.checked; touched(); });
   $("logoOnly").addEventListener("change", function(){ data.logoOnly = this.checked; touched(); });
   $("logoSize").addEventListener("change", function(){ data.logoSize = this.value; touched(); });
+  $("rotate").addEventListener("change", function(){ data.rotate = Number(this.value); touched(); });
   $("hideKicked").addEventListener("change", function(){ data.hideKicked = this.checked; touched(); });
 
   /* Tap fields (delegated so re-renders never lose their wiring) */
@@ -717,6 +734,7 @@
     if(json.logo == null) json.logo = "";
     if(json.perPage == null) json.perPage = "auto";
     if(!json.logoSize) json.logoSize = "m";
+    json.rotate = Number(json.rotate) || 0;
     if(json.rotateSeconds == null) json.rotateSeconds = 20;
     if(json.showClock == null) json.showClock = true;
     return json;

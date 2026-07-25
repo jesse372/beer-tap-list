@@ -30,13 +30,19 @@
     --sans:'Barlow',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
     --cond:'Barlow Condensed','Barlow',Arial Narrow,Arial,sans-serif;
     --s:1;
-    --pad:3.4vh;
+    --pad:calc(3.4 * var(--u));
+    /* --u  = one unit along the board's OWN vertical axis
+       --uw = one unit along its horizontal axis
+       Rotating swaps them, so every size below stays correct. */
+    --u:1vh;
+    --uw:1vw;
   }
+  body.rot90,body.rot270{--u:1vw;--uw:1vh}
   html,body{height:100%}
   body{
     background:
-      radial-gradient(130vh 95vh at 50% -28%, #2b231b 0%, rgba(43,35,27,0) 68%),
-      radial-gradient(80vh 60vh at 100% 110%, #1d1813 0%, rgba(29,24,19,0) 70%),
+      radial-gradient(calc(130 * var(--u)) calc(95 * var(--u)) at 50% -28%, #2b231b 0%, rgba(43,35,27,0) 68%),
+      radial-gradient(calc(80 * var(--u)) calc(60 * var(--u)) at 100% 110%, #1d1813 0%, rgba(29,24,19,0) 70%),
       var(--bg);
     color:var(--cream);
     font-family:var(--sans);
@@ -49,47 +55,86 @@
     display:flex;flex-direction:column;
   }
 
+  /* ---- rotation, for a TV/monitor mounted on its side ----
+     The board is drawn at swapped dimensions, then turned to match the panel. */
+  body.rot90 .screen,body.rot270 .screen{
+    position:absolute;top:0;left:0;
+    width:100vh;height:100vw;
+    -webkit-transform-origin:0 0;transform-origin:0 0;
+  }
+  body.rot90 .screen{
+    -webkit-transform:rotate(90deg) translate(0,-100%);
+    transform:rotate(90deg) translate(0,-100%);
+  }
+  body.rot270 .screen{
+    -webkit-transform:rotate(-90deg) translate(-100%,0);
+    transform:rotate(-90deg) translate(-100%,0);
+  }
+  body.rot180 .screen{
+    -webkit-transform:rotate(180deg);transform:rotate(180deg);
+  }
+  /* A portrait board is much narrower, so the header has to give ground:
+     smaller type, and the name is allowed to wrap rather than truncate. */
+  body.rot90 h1,body.rot270 h1{
+    font-size:calc(3.5 * var(--u));white-space:normal;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  body.rot90 .tagline,body.rot270 .tagline{
+    font-size:calc(1.65 * var(--u));letter-spacing:.18em;
+  }
+  body.rot90 .ontap,body.rot270 .ontap{
+    font-size:calc(2.5 * var(--u));letter-spacing:.28em;text-indent:.28em;
+  }
+  body.rot90 .clock,body.rot270 .clock{font-size:calc(1.7 * var(--u))}
+  body.rot90 .mark img,body.rot270 .mark img{height:calc(6.4 * var(--u))}
+  body.rot90 .mark.sz-s img,body.rot270 .mark.sz-s img{height:calc(4.8 * var(--u))}
+  body.rot90 .mark.sz-l img,body.rot270 .mark.sz-l img{height:calc(9 * var(--u))}
+  body.rot90 #fshint,body.rot270 #fshint{
+    font-size:calc(1.5 * var(--u));
+    padding:calc(.95 * var(--u)) calc(1.6 * var(--u));
+  }
+
   /* ================= header ================= */
   header{
     flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
-    gap:2.5vw;padding-bottom:1.9vh;position:relative;
+    gap:calc(2.5 * var(--uw));padding-bottom:calc(1.9 * var(--u));position:relative;
   }
   header::after{  /* gold rule that fades out to the right */
     content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
     background:linear-gradient(90deg,var(--gold) 0%,rgba(227,173,66,.35) 45%,rgba(227,173,66,.06) 100%);
   }
-  .brand{display:flex;align-items:center;gap:1.5vw;min-width:0}
-  .mark{line-height:0;flex:0 0 auto;font-size:6vh}
-  .mark img{display:block;max-width:30vw;object-fit:contain;height:8.5vh}
-  .mark.sz-s img{height:6vh}
-  .mark.sz-l img{height:12.5vh}
+  .brand{display:flex;align-items:center;gap:calc(1.5 * var(--uw));min-width:0}
+  .mark{line-height:0;flex:0 0 auto;font-size:calc(6 * var(--u))}
+  .mark img{display:block;max-width:calc(30 * var(--uw));object-fit:contain;height:calc(8.5 * var(--u))}
+  .mark.sz-s img{height:calc(6 * var(--u))}
+  .mark.sz-l img{height:calc(12.5 * var(--u))}
   .names{min-width:0}
   h1{
     font-family:var(--serif);font-weight:700;
-    font-size:5vh;line-height:1.02;letter-spacing:-.005em;
+    font-size:calc(5 * var(--u));line-height:1.02;letter-spacing:-.005em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
   .tagline{
-    font-family:var(--cond);font-weight:500;font-size:2.1vh;
-    color:var(--muted);letter-spacing:.3em;text-transform:uppercase;margin-top:.7vh;
+    font-family:var(--cond);font-weight:500;font-size:calc(2.1 * var(--u));
+    color:var(--muted);letter-spacing:.3em;text-transform:uppercase;margin-top:calc(.7 * var(--u));
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
   .right{text-align:right;flex:0 0 auto}
   .ontap{
-    font-family:var(--cond);font-weight:600;font-size:3.6vh;
+    font-family:var(--cond);font-weight:600;font-size:calc(3.6 * var(--u));
     letter-spacing:.42em;text-indent:.42em;
     color:var(--gold);text-transform:uppercase;line-height:1;
   }
   .clock{
-    font-family:var(--cond);font-weight:500;font-size:2.1vh;color:var(--muted);
-    margin-top:.9vh;letter-spacing:.16em;
+    font-family:var(--cond);font-weight:500;font-size:calc(2.1 * var(--u));color:var(--muted);
+    margin-top:calc(.9 * var(--u));letter-spacing:.16em;
   }
 
   /* ================= grid ================= */
-  main{flex:1 1 auto;min-height:0;position:relative;padding-top:2.1vh}
+  main{flex:1 1 auto;min-height:0;position:relative;padding-top:calc(2.1 * var(--u))}
   .page{
-    position:absolute;top:2.1vh;right:0;bottom:0;left:0;
-    display:grid;gap:1.5vh 2vw;
+    position:absolute;top:calc(2.1 * var(--u));right:0;bottom:0;left:0;
+    display:grid;gap:calc(1.5 * var(--u)) calc(2 * var(--uw));
     opacity:0;transition:opacity .8s ease;pointer-events:none;
   }
   .page.on{opacity:1}
@@ -98,13 +143,13 @@
   .tap{
     position:relative;overflow:hidden;min-height:0;
     background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.008));
-    border:1px solid var(--line);border-radius:1.5vh;
-    padding:calc(1.7vh * var(--s)) calc(2.1vh * var(--s));
-    padding-left:calc(2.4vh * var(--s));
-    display:flex;align-items:center;gap:calc(1.9vh * var(--s));
+    border:1px solid var(--line);border-radius:calc(1.5 * var(--u));
+    padding:calc((1.7 * var(--u)) * var(--s)) calc((2.1 * var(--u)) * var(--s));
+    padding-left:calc((2.4 * var(--u)) * var(--s));
+    display:flex;align-items:center;gap:calc((1.9 * var(--u)) * var(--s));
   }
   .tap::before{  /* colour spine, tinted per beer */
-    content:"";position:absolute;top:0;bottom:0;left:0;width:.55vh;
+    content:"";position:absolute;top:0;bottom:0;left:0;width:calc(.55 * var(--u));
     background:var(--beer,#e3ad42);opacity:.85;
   }
   .tap.out{opacity:.4}
@@ -113,69 +158,69 @@
   /* tap number */
   .numbadge{
     flex:0 0 auto;
-    width:calc(4.4vh * var(--s));height:calc(4.4vh * var(--s));
+    width:calc((4.4 * var(--u)) * var(--s));height:calc((4.4 * var(--u)) * var(--s));
     border:1px solid var(--line-strong);border-radius:50%;
     display:flex;align-items:center;justify-content:center;
     font-family:var(--cond);font-weight:600;
-    font-size:calc(2.3vh * var(--s));color:var(--gold);
+    font-size:calc((2.3 * var(--u)) * var(--s));color:var(--gold);
     letter-spacing:.02em;
   }
 
   /* glass */
   .glass{
     flex:0 0 auto;
-    width:calc(4.8vh * var(--s));height:calc(13vh * var(--s));max-height:100%;
-    border:1px solid var(--line);border-radius:.5vh .5vh .9vh .9vh;
+    width:calc((4.8 * var(--u)) * var(--s));height:calc((13 * var(--u)) * var(--s));max-height:100%;
+    border:1px solid var(--line);border-radius:calc(.5 * var(--u)) calc(.5 * var(--u)) calc(.9 * var(--u)) calc(.9 * var(--u));
     background:rgba(255,255,255,.055);
     position:relative;overflow:hidden;
     display:flex;flex-direction:column;justify-content:flex-end;
   }
-  .foam{flex:0 0 auto;height:.85vh;width:100%;
+  .foam{flex:0 0 auto;height:calc(.85 * var(--u));width:100%;
         background:linear-gradient(180deg,#fffdf7,#eee0c6)}
   .fill{width:100%;transition:height .7s ease;
-        box-shadow:inset 0 .5vh 1.3vh rgba(255,255,255,.22)}
+        box-shadow:inset 0 calc(.5 * var(--u)) calc(1.3 * var(--u)) rgba(255,255,255,.22)}
 
   /* text block */
   .body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;
-        gap:.45vh}
-  .namerow{display:flex;align-items:center;gap:calc(1.15vh * var(--s));min-width:0}
+        gap:calc(.45 * var(--u))}
+  .namerow{display:flex;align-items:center;gap:calc((1.15 * var(--u)) * var(--s));min-width:0}
   .ico{flex:0 0 auto;color:var(--gold);
-       width:calc(3.9vh * var(--s));height:calc(3.9vh * var(--s))}
+       width:calc((3.9 * var(--u)) * var(--s));height:calc((3.9 * var(--u)) * var(--s))}
   .name{
     flex:1 1 auto;min-width:0;
     font-family:var(--serif);font-weight:700;
-    font-size:calc(3.4vh * var(--s));line-height:1.08;letter-spacing:-.004em;
+    font-size:calc((3.4 * var(--u)) * var(--s));line-height:1.08;letter-spacing:-.004em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
   .style{
     font-family:var(--cond);font-weight:600;
-    font-size:calc(2.15vh * var(--s));color:var(--gold);
+    font-size:calc((2.15 * var(--u)) * var(--s));color:var(--gold);
     letter-spacing:.19em;text-transform:uppercase;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
   .notes{
     font-family:var(--sans);font-weight:400;
-    font-size:calc(2.05vh * var(--s));color:var(--muted);line-height:1.36;
+    font-size:calc((2.05 * var(--u)) * var(--s));color:var(--muted);line-height:1.36;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   }
 
   /* stats */
-  .stats{flex:0 0 auto;display:flex;align-items:center;gap:calc(1.9vh * var(--s))}
+  .stats{flex:0 0 auto;display:flex;align-items:center;gap:calc((1.9 * var(--u)) * var(--s))}
   .stat{text-align:center}
   .stat .v{
     font-family:var(--sans);font-weight:600;
-    font-size:calc(3.2vh * var(--s));line-height:1;
+    font-size:calc((3.2 * var(--u)) * var(--s));line-height:1;
     font-variant-numeric:tabular-nums;
   }
   .stat .k{
     font-family:var(--cond);font-weight:500;
-    font-size:calc(1.45vh * var(--s));color:var(--dim);
-    letter-spacing:.24em;text-transform:uppercase;margin-top:.5vh;
+    font-size:calc((1.45 * var(--u)) * var(--s));color:var(--dim);
+    letter-spacing:.24em;text-transform:uppercase;margin-top:calc(.5 * var(--u));
   }
   .badge{
     font-family:var(--cond);font-weight:600;
-    font-size:calc(1.5vh * var(--s));letter-spacing:.19em;text-transform:uppercase;
-    padding:.6vh 1.1vh;border-radius:.5vh;border:1px solid currentColor;white-space:nowrap;
+    font-size:calc((1.5 * var(--u)) * var(--s));letter-spacing:.19em;text-transform:uppercase;
+    padding:calc(.6 * var(--u)) calc(1.1 * var(--u));border-radius:calc(.5 * var(--u));border:1px solid currentColor;white-space:nowrap;
   }
   .badge.low{color:#eb9a3c}
   .badge.kicked{color:#8b8172}
@@ -183,29 +228,29 @@
 
   /* ================= footer ================= */
   footer{
-    flex:0 0 auto;margin-top:1.5vh;padding-top:1.4vh;border-top:1px solid var(--line);
+    flex:0 0 auto;margin-top:calc(1.5 * var(--u));padding-top:calc(1.4 * var(--u));border-top:1px solid var(--line);
     display:flex;justify-content:space-between;align-items:center;
     font-family:var(--cond);font-weight:500;
-    font-size:1.75vh;color:var(--dim);letter-spacing:.2em;text-transform:uppercase;
+    font-size:calc(1.75 * var(--u));color:var(--dim);letter-spacing:.2em;text-transform:uppercase;
   }
-  .dots{display:flex;gap:1vh;align-items:center}
-  .dot{width:1vh;height:1vh;border-radius:50%;background:rgba(246,236,216,.2);
+  .dots{display:flex;gap:calc(1 * var(--u));align-items:center}
+  .dot{width:calc(1 * var(--u));height:calc(1 * var(--u));border-radius:50%;background:rgba(246,236,216,.2);
        transition:background .5s ease}
   .dot.on{background:var(--gold)}
 
   .msg{
     position:absolute;top:0;right:0;bottom:0;left:0;
     display:flex;align-items:center;justify-content:center;
-    text-align:center;font-size:3.2vh;color:var(--muted);padding:6vh;line-height:1.55;
+    text-align:center;font-size:calc(3.2 * var(--u));color:var(--muted);padding:calc(6 * var(--u));line-height:1.55;
   }
 
   #fshint{
-    position:fixed;right:2.6vh;bottom:2.6vh;z-index:50;
+    position:absolute;right:calc(2.6 * var(--u));bottom:calc(2.6 * var(--u));z-index:50;
     background:rgba(227,173,66,.95);color:#1a1408;
     font-family:var(--cond);font-weight:600;
-    font-size:2vh;letter-spacing:.1em;text-transform:uppercase;
-    padding:1.3vh 2.1vh;border-radius:.8vh;
-    box-shadow:0 .6vh 2vh rgba(0,0,0,.55);
+    font-size:calc(2 * var(--u));letter-spacing:.1em;text-transform:uppercase;
+    padding:calc(1.3 * var(--u)) calc(2.1 * var(--u));border-radius:calc(.8 * var(--u));
+    box-shadow:0 calc(.6 * var(--u)) calc(2 * var(--u)) rgba(0,0,0,.55);
     transition:opacity .6s ease;
   }
   #fshint.gone{opacity:0;pointer-events:none}
@@ -233,9 +278,9 @@
     <div id="foot-left">&nbsp;</div>
     <div class="dots" id="dots"></div>
   </footer>
-</div>
 
-<div id="fshint">Press OK for full screen</div>
+  <div id="fshint">Press OK for full screen</div>
+</div>
 
 <script src="icons.js"></script>
 <script>
@@ -316,6 +361,11 @@
   function render(){
     var main = el("main");
 
+    /* screen rotation, for a panel mounted on its side */
+    var rot = Number(data.rotate) || 0;
+    if(rot !== 90 && rot !== 180 && rot !== 270) rot = 0;
+    document.body.className = rot ? ("rot" + rot) : "";
+
     /* header logo */
     var mark = el("mark");
     var size = (data.logoSize === "s" || data.logoSize === "l") ? data.logoSize : "m";
@@ -362,10 +412,12 @@
     pages = chunk(taps, perPage);
 
     var onThisPage = Math.min(perPage, taps.length);
-    var cols = onThisPage <= 3 ? 1 : 2;
+    /* A rotated (portrait) board is narrow — one column reads far better there. */
+    var portrait = (rot === 90 || rot === 270);
+    var cols = (portrait || onThisPage <= 3) ? 1 : 2;
     var rows = Math.ceil(perPage / cols);
     /* Fill the card height properly — 4 rows still needs to read from the sofa. */
-    var scale = Math.max(0.78, Math.min(1.3, 3.6 / rows));
+    var scale = Math.max(portrait ? 0.5 : 0.78, Math.min(1.3, 3.6 / rows));
 
     main.innerHTML = pages.map(function(p, i){
       return '<div class="page' + (i === 0 ? " on" : "") + '" style="' +
