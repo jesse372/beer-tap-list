@@ -622,7 +622,7 @@
         r.textContent = json.permissions && json.permissions.push
           ? "✓ Connected to " + json.full_name + " — publishing will work."
           : "✗ Connected, but this token can't write. Give it Contents: Read and write.";
-      } else if(status === 401){ r.textContent = "✗ Token rejected. Copy it again (it's only shown once)."; }
+      } else if(status === 401){ r.textContent = "✗ Token rejected — it's either mistyped or has expired. Make a new one on GitHub and paste it here."; }
       else if(status === 404){ r.textContent = "✗ Repo not found, or the token isn't allowed to see it."; }
       else { r.textContent = "✗ GitHub said " + status + ": " + ((json && json.message) || "unknown error"); }
     });
@@ -665,6 +665,8 @@
           setStatus("✓ Published! The TV will show it within about a minute.", "ok");
         } else if(st2 === 409){
           setStatus("Someone else just changed the list. Reload this page and redo your edit.", "err");
+        } else if(st2 === 401 || st2 === 403){
+          setStatus("Couldn't save — the access token has expired or been revoked. Ask Jesse for a new one.", "err");
         } else {
           setStatus("GitHub said " + st2 + ": " + ((j2 && j2.message) || "unknown error"), "err");
         }

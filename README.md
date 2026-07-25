@@ -27,8 +27,8 @@ gh auth login        # only if you aren't already logged in
 That creates a public GitHub repo, pushes the site, and turns on GitHub Pages.
 It prints your two URLs when it's done:
 
-- **TV screen:** `https://YOURNAME.github.io/beer-tap-list`
-- **Editor:** `https://YOURNAME.github.io/beer-tap-list/edit.html`
+- **TV screen:** `https://jesse372.github.io/beer-tap-list`
+- **Editor:** `https://jesse372.github.io/beer-tap-list/edit.html`
 
 > Public repo is required — GitHub Pages on a private repo needs a paid plan.
 > Nothing sensitive is in here; it's a beer list.
