@@ -329,6 +329,16 @@
   <div id="fshint">Press OK for full screen</div>
 </div>
 
+<!-- 2x2 silent loop. Playing video is what actually stops Fire TV sleeping;
+     it is invisible and costs ~2KB. -->
+<video id="awake" muted loop playsinline webkit-playsinline preload="auto"
+       aria-hidden="true" tabindex="-1"
+       style="position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:.01;
+              pointer-events:none;z-index:-1">
+  <source src="keepawake.mp4" type="video/mp4">
+  <source src="keepawake.webm" type="video/webm">
+</video>
+
 <script src="icons.js"></script>
 <script>
 (function(){
@@ -575,6 +585,50 @@
   load();
   setInterval(load, 60000);
 
+  /* ---------- keep the screen awake ----------
+     Two independent mechanisms, because Fire TV sleeps at the OS level and
+     neither approach is guaranteed on every Fire OS build:
+       1. the standard Screen Wake Lock API
+       2. a silent looping video, which Android treats as active playback     */
+  var wakeLock = null;
+
+  function requestWakeLock(){
+    if(!navigator.wakeLock || !navigator.wakeLock.request) return;
+    try {
+      navigator.wakeLock.request("screen").then(function(lock){
+        wakeLock = lock;
+        lock.addEventListener("release", function(){ wakeLock = null; });
+      })["catch"](function(){ /* not permitted - the video fallback covers it */ });
+    } catch(e){}
+  }
+
+  function nudgeVideo(){
+    var v = el("awake");
+    if(!v) return;
+    try {
+      var pr = v.play();
+      if(pr && pr["catch"]) pr["catch"](function(){});   /* needs a gesture - retried on OK */
+    } catch(e){}
+  }
+
+  function keepAwake(){ requestWakeLock(); nudgeVideo(); }
+
+  keepAwake();
+  /* Re-arm: locks are dropped whenever the page is backgrounded, and some
+     builds quietly stop the video. Cheap to check. */
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden) keepAwake();
+  }, false);
+  var av = el("awake");
+  if(av){
+    av.addEventListener("pause", nudgeVideo, false);
+    av.addEventListener("ended", nudgeVideo, false);
+  }
+  setInterval(function(){
+    if(!wakeLock) requestWakeLock();
+    if(av && av.paused) nudgeVideo();
+  }, 30000);
+
   /* ---------- full screen ---------- */
   var hint = el("fshint"), hintTimer = null;
 
@@ -593,6 +647,7 @@
              d.webkitRequestFullScreen || d.mozRequestFullScreen || d.msRequestFullscreen;
     if(fn){ try { fn.call(d); } catch(e){} }
     hideHint();
+    keepAwake();          /* the OK press is the user gesture autoplay may need */
   }
 
   document.addEventListener("click", goFullscreen, false);
