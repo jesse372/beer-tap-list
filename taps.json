@@ -105,5 +105,6 @@
       "level": 100,
       "status": "pouring"
     }
-  ]
+  ],
+  "rotate": 90
 }
