@@ -64,7 +64,9 @@
   /* ---------- tap grid ---------- */
   main{flex:1 1 auto;min-height:0;position:relative;padding-top:1.8vh}
   .page{
-    position:absolute;inset:1.8vh 0 0 0;
+    /* longhand, not `inset:` — Fire TV's Silk browser doesn't support the shorthand
+       and silently collapses the grid to content height, leaving dead space below. */
+    position:absolute;top:1.8vh;right:0;bottom:0;left:0;
     display:grid;gap:1.6vh 2.2vw;
     opacity:0;transition:opacity .7s ease;pointer-events:none;
   }
@@ -138,9 +140,21 @@
   .dot.on{background:var(--gold)}
 
   .msg{
-    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    position:absolute;top:0;right:0;bottom:0;left:0;
+    display:flex;align-items:center;justify-content:center;
     text-align:center;font-size:3vh;color:var(--muted);padding:6vh;line-height:1.5;
   }
+
+  /* "press OK for full screen" nudge — fades itself out, never shown once fullscreen */
+  #fshint{
+    position:fixed;right:2.5vh;bottom:2.5vh;z-index:50;
+    background:rgba(224,166,58,.94);color:#1a1509;
+    font-size:2vh;font-weight:700;letter-spacing:.06em;
+    padding:1.4vh 2.2vh;border-radius:1vh;
+    box-shadow:0 .6vh 2vh rgba(0,0,0,.5);
+    transition:opacity .6s ease;
+  }
+  #fshint.gone{opacity:0;pointer-events:none}
 </style>
 </head>
 <body>
@@ -166,6 +180,8 @@
     <div class="dots" id="dots"></div>
   </footer>
 </div>
+
+<div id="fshint">Press OK for full screen</div>
 
 <script src="icons.js"></script>
 <script>
@@ -357,6 +373,44 @@
 
   load();
   setInterval(load, 60000);                    /* pick up edits within a minute */
+
+  /* ---------- full screen ----------
+     On a Fire Stick the remote's OK button arrives as a plain click, so any
+     press hides the Silk address bar. Vendor-prefixed for older Fire OS builds. */
+  var hint = el("fshint"), hintTimer = null;
+
+  function isFullscreen(){
+    return !!(document.fullscreenElement || document.webkitFullscreenElement ||
+              document.webkitIsFullScreen || document.mozFullScreenElement);
+  }
+  function hideHint(){
+    if(!hint) return;
+    hint.className = "gone";
+    if(hintTimer){ clearTimeout(hintTimer); hintTimer = null; }
+  }
+  function goFullscreen(){
+    var d = document.documentElement;
+    var fn = d.requestFullscreen || d.webkitRequestFullscreen ||
+             d.webkitRequestFullScreen || d.mozRequestFullScreen || d.msRequestFullscreen;
+    if(fn){ try { fn.call(d); } catch(e){} }
+    hideHint();
+  }
+
+  document.addEventListener("click", goFullscreen, false);
+  document.addEventListener("keydown", function(e){
+    var k = e.keyCode;
+    if(k === 13 || k === 32 || k === 179 || k === 85) goFullscreen();  /* OK / space / play */
+  }, false);
+
+  ["fullscreenchange","webkitfullscreenchange","mozfullscreenchange"].forEach(function(ev){
+    document.addEventListener(ev, function(){ if(isFullscreen()) hideHint(); }, false);
+  });
+
+  /* Don't nag forever — the hint retires on its own after 30s. */
+  if(hint){
+    if(isFullscreen()) hideHint();
+    else hintTimer = setTimeout(hideHint, 30000);
+  }
 
   /* Keep the screen busy so the TV is less likely to blank out. */
   setInterval(function(){ document.body.style.opacity = "0.999999"; setTimeout(function(){ document.body.style.opacity = ""; }, 60); }, 45000);
