@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edit the Tap List</title>
+<meta name="theme-color" content="#f6f1e7">
+<link rel="icon" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Edit Taps">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#f6f1e7; --card:#fff; --ink:#241d15; --muted:#7a6c58;
+    --line:#e0d5c2; --gold:#b07c1c; --green:#2e7d4f; --red:#b23b3b;
+  }
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:18px;line-height:1.45;padding-bottom:140px;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:24px 18px}
+
+  /* ---------- top bar ---------- */
+  .top{
+    background:#241d15;color:#f4e9d5;padding:20px 18px;
+    position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(0,0,0,.18);
+  }
+  .top .wrap{padding:0 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .top h1{font-family:Georgia,serif;font-size:26px;font-weight:700;flex:1 1 auto}
+  .top .sub{font-size:14px;color:#b6a68c;width:100%;margin-top:-4px}
+
+  h2{font-family:Georgia,serif;font-size:22px;margin:30px 0 12px}
+
+  /* ---------- buttons ---------- */
+  button{
+    font:inherit;font-weight:600;cursor:pointer;border:2px solid transparent;
+    border-radius:12px;padding:14px 20px;background:#efe6d5;color:var(--ink);
+    transition:filter .15s ease;
+  }
+  button:hover{filter:brightness(.95)}
+  button:active{transform:translateY(1px)}
+  .btn-primary{background:var(--green);color:#fff;font-size:20px;padding:18px 28px}
+  .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+  .btn-ghost-light{background:transparent;border-color:#5a4c3a;color:#f4e9d5}
+  .btn-danger{background:transparent;border-color:#e5c4c4;color:var(--red);padding:10px 14px}
+  .btn-sm{padding:9px 13px;font-size:16px;border-radius:9px}
+  button:disabled{opacity:.5;cursor:not-allowed}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(60,45,20,.06);
+  }
+  .card.kicked{background:#faf7f1;opacity:.85}
+  .card-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .card-head .taplabel{font-size:13px;font-weight:700;letter-spacing:.09em;
+                       text-transform:uppercase;color:var(--muted);flex:0 0 auto}
+  .card-head input.tapno[type=number]{
+    background:#241d15;color:#f4e9d5;border-radius:10px;font-weight:700;
+    width:64px;height:46px;font-size:18px;text-align:center;
+    border:2px solid #241d15;flex:0 0 auto;padding:0;
+  }
+  .card-head .spacer{flex:1 1 auto}
+
+  label{display:block;font-size:13px;font-weight:700;letter-spacing:.09em;
+        text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  input[type=text],input[type=number],textarea,select{
+    font:inherit;width:100%;padding:13px 14px;border:2px solid var(--line);
+    border-radius:10px;background:#fffdf9;color:var(--ink);
+  }
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
+  textarea{resize:vertical;min-height:64px}
+  .field{margin-bottom:16px}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .row>.field{flex:1 1 150px;margin-bottom:16px}
+
+  /* ---------- colour swatches ---------- */
+  .swatches{display:flex;gap:9px;flex-wrap:wrap}
+  .sw{
+    width:46px;height:46px;border-radius:10px;border:3px solid transparent;
+    cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18);padding:0;
+  }
+  .sw.on{border-color:var(--ink)}
+
+  /* ---------- icon picker ---------- */
+  .icons{display:flex;gap:9px;flex-wrap:wrap}
+  .ic{
+    width:58px;height:58px;border:2px solid var(--line);border-radius:12px;
+    background:#fffdf9;color:var(--gold);padding:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .ic svg{width:32px;height:32px}
+  .ic.on{border-color:var(--ink);background:#fdf3df}
+  .ic.none{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+
+  /* ---------- logo ---------- */
+  .logorow{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+  .logoprev{
+    width:190px;height:95px;flex:0 0 auto;border:2px dashed var(--line);border-radius:12px;
+    background:#241d15;color:#8b7c66;font-size:14px;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;
+  }
+  .logoprev img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+
+  /* ---------- level slider ---------- */
+  input[type=range]{width:100%;height:38px;accent-color:var(--gold)}
+  .levelrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .levelval{font-weight:700;font-size:20px;min-width:62px;text-align:right}
+  .quick{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* ---------- publish bar ---------- */
+  .publishbar{
+    position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px solid var(--line);
+    padding:16px 18px;z-index:30;box-shadow:0 -4px 18px rgba(60,45,20,.10);
+  }
+  .publishbar .wrap{padding:0 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .status{flex:1 1 220px;font-size:16px;color:var(--muted);min-width:0}
+  .status.ok{color:var(--green);font-weight:600}
+  .status.err{color:var(--red);font-weight:600}
+
+  /* ---------- misc ---------- */
+  .note{background:#fdf6e6;border:1px solid #ecdcb8;border-radius:12px;padding:14px 16px;
+        font-size:16px;color:#6b5834;margin-bottom:16px}
+  .banner{background:#fff6d8;border:2px solid var(--gold);border-radius:12px;padding:14px 16px;
+          display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+  .banner .t{flex:1 1 200px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0;margin-bottom:16px}
+  summary{padding:18px 20px;cursor:pointer;font-weight:700;font-size:18px;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ ";color:var(--gold)}
+  details[open] summary::before{content:"▾ "}
+  details .inner{padding:0 20px 20px}
+  .hint{font-size:14px;color:var(--muted);margin-top:6px}
+  code{background:#efe6d5;padding:2px 6px;border-radius:5px;font-size:15px}
+  .checkline{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .checkline input{width:24px;height:24px;accent-color:var(--gold);flex:0 0 auto}
+  .checkline label{margin:0;text-transform:none;font-size:17px;letter-spacing:0;
+                   color:var(--ink);font-weight:500}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <h1>🍺 Edit the Tap List</h1>
+    <button class="btn-ghost-light" id="preview">See the TV screen</button>
+    <div class="sub">Make your changes, then hit the big green Publish button at the bottom.</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div id="draftbanner" style="display:none" class="banner">
+    <div class="t"><strong>You have unpublished changes</strong> from <span id="drafttime"></span>.</div>
+    <button class="btn-sm" id="draft-restore">Use those</button>
+    <button class="btn-sm btn-ghost" id="draft-discard">Throw them away</button>
+  </div>
+
+  <h2>The beers</h2>
+  <div id="taps"></div>
+  <button id="add" style="width:100%;padding:18px;font-size:19px;border:2px dashed var(--line)">
+    + Add another beer
+  </button>
+
+  <h2>Screen settings</h2>
+  <details>
+    <summary>Brewery name, clock, and layout</summary>
+    <div class="inner">
+      <div class="field">
+        <label for="brewery">Name at the top of the TV</label>
+        <input type="text" id="brewery" placeholder="Dad's Garage Brewing">
+      </div>
+      <div class="field">
+        <label for="tagline">Small line underneath (optional)</label>
+        <input type="text" id="tagline" placeholder="Home Brewed · Always Cold">
+      </div>
+      <div class="field">
+        <label>Logo at the top of the TV screen</label>
+        <div class="logorow">
+          <div class="logoprev" id="logoprev">No logo yet</div>
+          <div style="flex:1 1 240px">
+            <input type="file" id="logofile" accept="image/*" style="display:none">
+            <button class="btn-ghost" id="logopick">Choose a picture…</button>
+            <button class="btn-danger" id="logoclear" style="display:none">Remove</button>
+            <div class="hint">
+              A PNG or JPG from the laptop. It's shrunk automatically, so any size is fine —
+              a wide logo looks best. Leave it empty to show the 🍺 instead.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="perPage">Beers shown per screen</label>
+          <select id="perPage">
+            <option value="2">2 — biggest text</option>
+            <option value="4">4 — big text</option>
+            <option value="6">6 — recommended</option>
+            <option value="8">8 — smallest text</option>
+          </select>
+          <div class="hint">Extra beers rotate onto the next screen automatically.</div>
+        </div>
+        <div class="field">
+          <label for="rotateSeconds">Seconds per screen</label>
+          <input type="number" id="rotateSeconds" min="6" max="120" step="1">
+        </div>
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="logoOnly">
+        <label for="logoOnly">My logo already has the name in it — don't show the text name too</label>
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="showClock"><label for="showClock">Show the clock in the corner</label>
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="hideKicked"><label for="hideKicked">Hide empty kegs from the TV completely</label>
+      </div>
+    </div>
+  </details>
+
+  <details id="setup">
+    <summary>⚙️ One-time setup (already done? leave this alone)</summary>
+    <div class="inner">
+      <div class="note">
+        This is what lets the Publish button send your changes to the TV.
+        It only needs to be filled in once, on this laptop.
+      </div>
+      <div class="row">
+        <div class="field"><label for="gh-owner">GitHub username</label>
+          <input type="text" id="gh-owner" placeholder="yourusername"></div>
+        <div class="field"><label for="gh-repo">Repository name</label>
+          <input type="text" id="gh-repo" placeholder="beer-tap-list"></div>
+      </div>
+      <div class="field">
+        <label for="gh-token">Access token</label>
+        <input type="text" id="gh-token" placeholder="github_pat_..." autocomplete="off" spellcheck="false">
+        <div class="hint">Stays on this laptop only. Needs <code>Contents: Read and write</code> on that one repository.</div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="gh-branch">Branch</label>
+          <input type="text" id="gh-branch" placeholder="main"></div>
+        <div class="field" style="display:flex;align-items:flex-end">
+          <button class="btn-ghost" id="gh-test" style="width:100%">Test the connection</button>
+        </div>
+      </div>
+      <div id="gh-testresult" class="hint"></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:22px 0">
+      <button class="btn-ghost" id="download">No internet? Download the taps.json file instead</button>
+    </div>
+  </details>
+
+</div>
+
+<div class="publishbar">
+  <div class="wrap">
+    <div class="status" id="status">Ready.</div>
+    <button class="btn-ghost" id="revert">Undo all my changes</button>
+    <button class="btn-primary" id="publish">Publish to the TV</button>
+  </div>
+</div>
+
+<script src="icons.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var DRAFT_KEY = "tapdraft.v1", CFG_KEY = "tapcfg.v1";
+  var COLORS = [
+    ["#f7e5a8","Pale straw"], ["#f2d16b","Gold"],   ["#e0a63a","Amber"],
+    ["#c9761f","Copper"],     ["#a04f18","Red"],    ["#7a3b16","Brown"],
+    ["#4a2410","Dark brown"], ["#2a1508","Black"],  ["#e8b3c8","Fruit / sour"]
+  ];
+
+  var $ = function(id){ return document.getElementById(id); };
+  var data = null, published = null, saveTimer = null;
+
+  function esc(s){
+    return String(s == null ? "" : s)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function setStatus(msg, kind){
+    var s = $("status");
+    s.textContent = msg;
+    s.className = "status" + (kind ? " " + kind : "");
+  }
+
+  /* ---------------- config ---------------- */
+  function cfg(){
+    try { return JSON.parse(localStorage.getItem(CFG_KEY)) || {}; } catch(e){ return {}; }
+  }
+  function saveCfg(){
+    var c = {
+      owner:  $("gh-owner").value.trim(),
+      repo:   $("gh-repo").value.trim(),
+      token:  $("gh-token").value.trim(),
+      branch: $("gh-branch").value.trim() || "main"
+    };
+    try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch(e){}
+    return c;
+  }
+  function loadCfg(){
+    var c = cfg();
+    $("gh-owner").value  = c.owner  || "";
+    $("gh-repo").value   = c.repo   || "";
+    $("gh-token").value  = c.token  || "";
+    $("gh-branch").value = c.branch || "main";
+    if(!c.token) $("setup").open = true;   /* nudge Jesse to finish setup */
+  }
+  /* ---------------- draft ---------------- */
+  function saveDraft(){
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ at: Date.now(), data: data }));
+    } catch(e){}
+  }
+  function clearDraft(){ try { localStorage.removeItem(DRAFT_KEY); } catch(e){} }
+  function getDraft(){
+    try { return JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch(e){ return null; }
+  }
+  function touched(){
+    if(saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveDraft, 400);
+    setStatus("Unpublished changes — hit Publish when you're happy.");
+  }
+
+  /* ---------------- render ---------------- */
+  function blankTap(n){
+    return { num:n, name:"", style:"", abv:"", ibu:"", notes:"",
+             color:"#e0a63a", icon:"pint", level:100, status:"pouring" };
+  }
+
+  /* ---------------- logo ---------------- */
+  function renderLogo(){
+    var p = $("logoprev");
+    if(data.logo){
+      p.innerHTML = "";
+      var img = new Image();
+      img.alt = "";
+      img.onerror = function(){ p.textContent = "Couldn't read that picture"; };
+      img.src = data.logo;
+      p.appendChild(img);
+      $("logoclear").style.display = "";
+    } else {
+      p.textContent = "No logo yet";
+      $("logoclear").style.display = "none";
+    }
+  }
+
+  function handleLogoFile(file){
+    if(!file) return;
+    if(!/^image\//.test(file.type)){ alert("Please pick a picture file (PNG or JPG)."); return; }
+
+    var reader = new FileReader();
+    reader.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        /* Shrink to something a TV header can use, so taps.json stays small. */
+        var maxW = 600, maxH = 200;
+        var scale = Math.min(maxW / img.width, maxH / img.height, 1);
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        var ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+
+        var out;
+        try { out = c.toDataURL("image/png"); }
+        catch(err){ alert("That picture couldn't be processed. Try a different one."); return; }
+
+        /* A photo as PNG gets huge — flatten onto the TV background and use JPEG instead. */
+        if(out.length > 260000){
+          ctx.globalCompositeOperation = "destination-over";
+          ctx.fillStyle = "#12100e";
+          ctx.fillRect(0, 0, w, h);
+          out = c.toDataURL("image/jpeg", 0.85);
+        }
+
+        data.logo = out;
+        renderLogo();
+        touched();
+      };
+      img.onerror = function(){ alert("That file didn't look like a picture. Try a PNG or JPG."); };
+      img.src = reader.result;
+    };
+    reader.onerror = function(){ alert("Couldn't read that file."); };
+    reader.readAsDataURL(file);
+  }
+
+  $("logopick").addEventListener("click", function(){ $("logofile").click(); });
+  $("logofile").addEventListener("change", function(){
+    handleLogoFile(this.files && this.files[0]);
+    this.value = "";                     /* allow re-picking the same file */
+  });
+  $("logoclear").addEventListener("click", function(){
+    data.logo = ""; renderLogo(); touched();
+  });
+
+  function renderSettings(){
+    $("brewery").value       = data.brewery || "";
+    $("tagline").value       = data.tagline || "";
+    $("perPage").value       = String(data.perPage || 6);
+    $("rotateSeconds").value = data.rotateSeconds || 20;
+    $("showClock").checked   = data.showClock !== false;
+    $("hideKicked").checked  = !!data.hideKicked;
+    $("logoOnly").checked    = !!data.logoOnly;
+    renderLogo();
+  }
+
+  function renderTaps(){
+    $("taps").innerHTML = data.taps.map(function(t, i){
+      var kicked = t.status === "kicked";
+      return '' +
+      '<div class="card' + (kicked ? " kicked" : "") + '" data-i="' + i + '">' +
+        '<div class="card-head">' +
+          '<span class="taplabel">Tap</span>' +
+          '<input class="tapno" type="number" min="1" value="' + esc(t.num) + '" data-f="num" title="Tap number">' +
+          '<div class="spacer"></div>' +
+          '<button class="btn-sm btn-ghost" data-act="up"'   + (i === 0 ? " disabled" : "") + '>↑</button>' +
+          '<button class="btn-sm btn-ghost" data-act="down"' + (i === data.taps.length - 1 ? " disabled" : "") + '>↓</button>' +
+          '<button class="btn-sm btn-danger" data-act="del">Remove</button>' +
+        '</div>' +
+
+        '<div class="field"><label>Beer name</label>' +
+          '<input type="text" data-f="name" value="' + esc(t.name) + '" placeholder="Hoppy Days"></div>' +
+
+        '<div class="row">' +
+          '<div class="field" style="flex:2 1 220px"><label>Style</label>' +
+            '<input type="text" data-f="style" value="' + esc(t.style) + '" placeholder="American IPA"></div>' +
+          '<div class="field"><label>ABV %</label>' +
+            '<input type="text" data-f="abv" value="' + esc(t.abv) + '" placeholder="6.8"></div>' +
+          '<div class="field"><label>IBU</label>' +
+            '<input type="text" data-f="ibu" value="' + esc(t.ibu) + '" placeholder="65"></div>' +
+        '</div>' +
+
+        '<div class="field"><label>Tasting notes</label>' +
+          '<textarea data-f="notes" placeholder="Grapefruit and pine, dry bitter finish.">' + esc(t.notes) + '</textarea></div>' +
+
+        '<div class="field"><label>Icon beside the name</label><div class="icons">' +
+          '<button class="ic none' + (!t.icon ? " on" : "") + '" data-icon="">None</button>' +
+          window.BEER_ICONS.map(function(ic){
+            return '<button class="ic' + (t.icon === ic[0] ? " on" : "") + '" data-icon="' + ic[0] +
+                   '" title="' + ic[1] + '">' + window.beerIconSVG(ic[0]) + '</button>';
+          }).join("") +
+        '</div></div>' +
+
+        '<div class="field"><label>Beer colour</label><div class="swatches">' +
+          COLORS.map(function(c){
+            return '<button class="sw' + (c[0].toLowerCase() === String(t.color).toLowerCase() ? " on" : "") +
+                   '" style="background:' + c[0] + '" data-color="' + c[0] + '" title="' + c[1] + '"></button>';
+          }).join("") +
+        '</div></div>' +
+
+        '<div class="field"><label>How much is left in the keg?</label>' +
+          '<div class="levelrow">' +
+            '<input type="range" min="0" max="100" step="5" value="' + (Number(t.level) || 0) + '" data-f="level" style="flex:1 1 220px">' +
+            '<div class="levelval">' + (Number(t.level) || 0) + '%</div>' +
+          '</div>' +
+          '<div class="quick" style="margin-top:8px">' +
+            '<button class="btn-sm btn-ghost" data-level="100">Full</button>' +
+            '<button class="btn-sm btn-ghost" data-level="50">Half</button>' +
+            '<button class="btn-sm btn-ghost" data-level="15">Almost gone</button>' +
+            '<button class="btn-sm btn-ghost" data-level="0">Empty</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="field" style="margin-bottom:0"><label>Status</label>' +
+          '<select data-f="status">' +
+            '<option value="pouring"' + (t.status === "pouring" ? " selected" : "") + '>Pouring now</option>' +
+            '<option value="kicked"'  + (t.status === "kicked"  ? " selected" : "") + '>Kicked (keg is empty)</option>' +
+            '<option value="coming"'  + (t.status === "coming"  ? " selected" : "") + '>Coming soon (still fermenting)</option>' +
+          '</select></div>' +
+      '</div>';
+    }).join("");
+  }
+
+  function renderAll(){ renderSettings(); renderTaps(); }
+
+  /* ---------------- events ---------------- */
+  /* Settings fields */
+  ["brewery","tagline","rotateSeconds"].forEach(function(id){
+    $(id).addEventListener("input", function(){
+      data[id] = id === "rotateSeconds" ? (Number(this.value) || 20) : this.value;
+      touched();
+    });
+  });
+  $("perPage").addEventListener("change", function(){ data.perPage = Number(this.value); touched(); });
+  $("showClock").addEventListener("change", function(){ data.showClock = this.checked; touched(); });
+  $("logoOnly").addEventListener("change", function(){ data.logoOnly = this.checked; touched(); });
+  $("hideKicked").addEventListener("change", function(){ data.hideKicked = this.checked; touched(); });
+
+  /* Tap fields (delegated so re-renders never lose their wiring) */
+  $("taps").addEventListener("input", function(e){
+    var card = e.target.closest(".card"); if(!card) return;
+    var i = Number(card.dataset.i), f = e.target.dataset.f;
+    if(f == null) return;
+    if(f === "level"){
+      data.taps[i].level = Number(e.target.value);
+      card.querySelector(".levelval").textContent = e.target.value + "%";
+    } else if(f === "num"){
+      data.taps[i].num = Number(e.target.value) || (i + 1);
+    } else {
+      data.taps[i][f] = e.target.value;
+    }
+    touched();
+  });
+
+  $("taps").addEventListener("change", function(e){
+    if(e.target.dataset.f !== "status") return;
+    var card = e.target.closest(".card"); if(!card) return;
+    var i = Number(card.dataset.i);
+    data.taps[i].status = e.target.value;
+    if(e.target.value === "kicked") data.taps[i].level = 0;
+    renderTaps(); touched();
+  });
+
+  $("taps").addEventListener("click", function(e){
+    var btn = e.target.closest("button"); if(!btn) return;
+    var card = e.target.closest(".card"); if(!card) return;
+    var i = Number(card.dataset.i);
+
+    if(btn.dataset.icon != null){
+      data.taps[i].icon = btn.dataset.icon;
+      var ics = card.querySelectorAll(".ic");
+      for(var j = 0; j < ics.length; j++) ics[j].classList.remove("on");
+      btn.classList.add("on");
+      touched(); return;
+    }
+    if(btn.dataset.color){
+      data.taps[i].color = btn.dataset.color;
+      var sws = card.querySelectorAll(".sw");
+      for(var k = 0; k < sws.length; k++) sws[k].classList.remove("on");
+      btn.classList.add("on");
+      touched(); return;
+    }
+    if(btn.dataset.level != null){
+      var lv = Number(btn.dataset.level);
+      data.taps[i].level = lv;
+      if(lv === 0 && data.taps[i].status === "pouring") data.taps[i].status = "kicked";
+      if(lv > 0  && data.taps[i].status === "kicked")   data.taps[i].status = "pouring";
+      renderTaps(); touched(); return;
+    }
+    var act = btn.dataset.act;
+    if(act === "del"){
+      if(!confirm('Remove "' + (data.taps[i].name || "this beer") + '" from the list?')) return;
+      data.taps.splice(i, 1); renderTaps(); touched();
+    } else if(act === "up" && i > 0){
+      var a = data.taps[i]; data.taps[i] = data.taps[i-1]; data.taps[i-1] = a;
+      renderTaps(); touched();
+    } else if(act === "down" && i < data.taps.length - 1){
+      var b = data.taps[i]; data.taps[i] = data.taps[i+1]; data.taps[i+1] = b;
+      renderTaps(); touched();
+    }
+  });
+
+  $("add").addEventListener("click", function(){
+    var maxNum = 0;
+    data.taps.forEach(function(t){ maxNum = Math.max(maxNum, Number(t.num) || 0); });
+    data.taps.push(blankTap(maxNum + 1));
+    renderTaps(); touched();
+    var cards = document.querySelectorAll(".card");
+    var last = cards[cards.length - 1];
+    if(last){ last.scrollIntoView({behavior:"smooth", block:"center"}); last.querySelector('[data-f="name"]').focus(); }
+  });
+
+  $("revert").addEventListener("click", function(){
+    if(!confirm("Throw away every change since the last publish?")) return;
+    data = JSON.parse(JSON.stringify(published));
+    clearDraft(); renderAll(); setStatus("Back to what's on the TV right now.");
+  });
+
+  $("preview").addEventListener("click", function(){ window.open("index.html", "_blank"); });
+
+  $("download").addEventListener("click", function(){
+    var blob = new Blob([serialize()], {type:"application/json"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "taps.json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+    setStatus("Downloaded taps.json — upload that file to replace the old one.");
+  });
+
+  /* ---------------- publish ---------------- */
+  function serialize(){
+    var out = JSON.parse(JSON.stringify(data));
+    out.updated = new Date().toISOString();
+    return JSON.stringify(out, null, 2) + "\n";
+  }
+  function b64(str){
+    var bytes = new TextEncoder().encode(str), bin = "";
+    for(var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+  function api(path, opts, cb){
+    var c = cfg();
+    var xhr = new XMLHttpRequest();
+    xhr.open(opts.method || "GET", "https://api.github.com" + path, true);
+    xhr.setRequestHeader("Authorization", "Bearer " + c.token);
+    xhr.setRequestHeader("Accept", "application/vnd.github+json");
+    if(opts.body) xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onload = function(){
+      var json = null;
+      try { json = JSON.parse(xhr.responseText); } catch(e){}
+      cb(null, xhr.status, json);
+    };
+    xhr.onerror = function(){ cb(new Error("Network error — is the laptop online?")); };
+    xhr.send(opts.body ? JSON.stringify(opts.body) : null);
+  }
+
+  $("gh-test").addEventListener("click", function(){
+    var c = saveCfg();
+    var r = $("gh-testresult");
+    if(!c.owner || !c.repo || !c.token){ r.textContent = "Fill in all three boxes first."; return; }
+    r.textContent = "Checking…";
+    api("/repos/" + c.owner + "/" + c.repo, {}, function(err, status, json){
+      if(err){ r.textContent = "✗ " + err.message; return; }
+      if(status === 200){
+        r.textContent = json.permissions && json.permissions.push
+          ? "✓ Connected to " + json.full_name + " — publishing will work."
+          : "✗ Connected, but this token can't write. Give it Contents: Read and write.";
+      } else if(status === 401){ r.textContent = "✗ Token rejected. Copy it again (it's only shown once)."; }
+      else if(status === 404){ r.textContent = "✗ Repo not found, or the token isn't allowed to see it."; }
+      else { r.textContent = "✗ GitHub said " + status + ": " + ((json && json.message) || "unknown error"); }
+    });
+  });
+
+  $("publish").addEventListener("click", function(){
+    var c = cfg();
+    if(!c.owner || !c.repo || !c.token){
+      $("setup").open = true;
+      setStatus("Setup isn't finished yet — see the ⚙️ section.", "err");
+      $("setup").scrollIntoView({behavior:"smooth"});
+      return;
+    }
+    var btn = this;
+    btn.disabled = true;
+    setStatus("Publishing…");
+
+    var base = "/repos/" + c.owner + "/" + c.repo + "/contents/taps.json";
+    /* Get the current file's sha first — GitHub needs it to replace a file. */
+    api(base + "?ref=" + encodeURIComponent(c.branch), {}, function(err, status, json){
+      if(err){ btn.disabled = false; setStatus(err.message, "err"); return; }
+      if(status !== 200 && status !== 404){
+        btn.disabled = false;
+        setStatus("Couldn't reach the tap list file (" + status + "). Check the ⚙️ setup.", "err");
+        return;
+      }
+      var body = {
+        message: "Update tap list",
+        content: b64(serialize()),
+        branch:  c.branch
+      };
+      if(status === 200 && json && json.sha) body.sha = json.sha;
+
+      api(base, {method:"PUT", body:body}, function(err2, st2, j2){
+        btn.disabled = false;
+        if(err2){ setStatus(err2.message, "err"); return; }
+        if(st2 === 200 || st2 === 201){
+          published = JSON.parse(JSON.stringify(data));
+          clearDraft();
+          setStatus("✓ Published! The TV will show it within about a minute.", "ok");
+        } else if(st2 === 409){
+          setStatus("Someone else just changed the list. Reload this page and redo your edit.", "err");
+        } else {
+          setStatus("GitHub said " + st2 + ": " + ((j2 && j2.message) || "unknown error"), "err");
+        }
+      });
+    });
+  });
+
+  window.addEventListener("beforeunload", function(e){
+    if(JSON.stringify(data) !== JSON.stringify(published)){ e.preventDefault(); e.returnValue = ""; }
+  });
+
+  /* ---------------- boot ---------------- */
+  function normalize(json){
+    json = json || {};
+    json.taps = Array.isArray(json.taps) ? json.taps : [];
+    json.taps = json.taps.map(function(t, i){
+      return {
+        num: Number(t.num) || (i + 1),
+        name: t.name || "", style: t.style || "",
+        abv: t.abv == null ? "" : String(t.abv),
+        ibu: t.ibu == null ? "" : String(t.ibu),
+        notes: t.notes || "",
+        color: t.color || "#e0a63a",
+        icon: t.icon || "",
+        level: Number(t.level) || 0,
+        status: t.status || "pouring"
+      };
+    });
+    if(json.logo == null) json.logo = "";
+    if(json.perPage == null) json.perPage = 6;
+    if(json.rotateSeconds == null) json.rotateSeconds = 20;
+    if(json.showClock == null) json.showClock = true;
+    return json;
+  }
+
+  function boot(json){
+    published = normalize(json);
+    data = JSON.parse(JSON.stringify(published));
+
+    var d = getDraft();
+    if(d && d.data && JSON.stringify(normalize(d.data)) !== JSON.stringify(published)){
+      $("draftbanner").style.display = "flex";
+      $("drafttime").textContent = new Date(d.at).toLocaleString();
+      $("draft-restore").onclick = function(){
+        data = normalize(d.data); renderAll();
+        $("draftbanner").style.display = "none";
+        setStatus("Restored your unpublished changes.");
+      };
+      $("draft-discard").onclick = function(){
+        clearDraft(); $("draftbanner").style.display = "none";
+      };
+    }
+
+    loadCfg();
+    ["gh-owner","gh-repo","gh-token","gh-branch"].forEach(function(id){
+      $(id).addEventListener("input", saveCfg);
+    });
+
+    renderAll();
+    setStatus("Ready.");
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "taps.json?t=" + Date.now(), true);
+  xhr.onload = function(){
+    var json = null;
+    try { json = JSON.parse(xhr.responseText); } catch(e){}
+    boot(json || { brewery:"Home Brew", taps:[blankTap(1)] });
+  };
+  xhr.onerror = function(){ boot({ brewery:"Home Brew", taps:[blankTap(1)] }); };
+  xhr.send();
+})();
+</script>
+</body>
+</html>

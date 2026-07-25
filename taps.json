@@ -1,0 +1,85 @@
+{
+  "brewery": "Dad's Garage Brewing",
+  "tagline": "Home Brewed · Always Cold",
+  "logo": "",
+  "logoOnly": false,
+  "showClock": true,
+  "perPage": 6,
+  "rotateSeconds": 20,
+  "hideKicked": false,
+  "updated": "2026-07-25T00:00:00.000Z",
+  "taps": [
+    {
+      "num": 1,
+      "name": "Hoppy Days",
+      "style": "American IPA",
+      "abv": "6.8",
+      "ibu": "65",
+      "notes": "Grapefruit and pine, dry bitter finish.",
+      "color": "#e0a63a",
+      "level": 85,
+      "status": "pouring",
+      "icon": "hop"
+    },
+    {
+      "num": 2,
+      "name": "Front Porch",
+      "style": "Cream Ale",
+      "abv": "4.9",
+      "ibu": "18",
+      "notes": "Light, crisp and easy. The lawnmower beer.",
+      "color": "#f2d16b",
+      "level": 60,
+      "status": "pouring",
+      "icon": "wheat"
+    },
+    {
+      "num": 3,
+      "name": "Old Fence Post",
+      "style": "Brown Ale",
+      "abv": "5.4",
+      "ibu": "24",
+      "notes": "Toasty malt, caramel, a little nutty.",
+      "color": "#7a3b16",
+      "level": 40,
+      "status": "pouring",
+      "icon": "mug"
+    },
+    {
+      "num": 4,
+      "name": "Midnight Shift",
+      "style": "Oatmeal Stout",
+      "abv": "6.1",
+      "ibu": "32",
+      "notes": "Coffee, dark chocolate, smooth as silk.",
+      "color": "#2a1508",
+      "level": 15,
+      "status": "pouring",
+      "icon": "pint"
+    },
+    {
+      "num": 5,
+      "name": "Bee's Knees",
+      "style": "Honey Blonde",
+      "abv": "5.2",
+      "ibu": "20",
+      "notes": "Local wildflower honey, finishes clean.",
+      "color": "#eec24a",
+      "level": 0,
+      "status": "kicked",
+      "icon": "growler"
+    },
+    {
+      "num": 6,
+      "name": "Harvest Moon",
+      "style": "Oktoberfest Lager",
+      "abv": "5.8",
+      "ibu": "23",
+      "notes": "Bready malt, clean lager finish. Lagering now.",
+      "color": "#c9761f",
+      "level": 100,
+      "status": "coming",
+      "icon": "keg"
+    }
+  ]
+}
