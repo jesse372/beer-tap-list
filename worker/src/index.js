@@ -126,9 +126,13 @@ export default {
       return json({ ok: false, error: "Bad JSON" }, 400, cors);
     }
 
-    if (!safeEqual(body.password, env.APP_PASSWORD)) {
-      await sleep(1000); // blunt the value of guessing
-      return json({ ok: false, error: "Wrong password" }, 401, cors);
+    // A password is optional. Leave the APP_PASSWORD secret unset and the editor
+    // needs no sign-in at all; set it later and the editor adapts on its own.
+    if (env.APP_PASSWORD) {
+      if (!safeEqual(body.password, env.APP_PASSWORD)) {
+        await sleep(1000); // blunt the value of guessing
+        return json({ ok: false, error: "Wrong password" }, 401, cors);
+      }
     }
 
     if (route === "/check") return json({ ok: true }, 200, cors);
@@ -144,6 +148,9 @@ export default {
         // Only ever touch the tap list's own files.
         if (!/^(taps\.json|bgphoto\.json)$/.test(f.path)) {
           return json({ ok: false, error: "Not allowed: " + f.path }, 400, cors);
+        }
+        if (f.content.length > 3_000_000) {
+          return json({ ok: false, error: "Too big: " + f.path }, 413, cors);
         }
       }
 

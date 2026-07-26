@@ -551,7 +551,7 @@
       var setupEl = $("setup");
       if(setupEl) setupEl.style.display = "none";
       $("setupbanner").style.display = "none";
-      if(getPw()) hideLogin(); else showLogin("");
+      hideLogin();      /* no sign-in unless the service actually returns a 401 */
       return;
     }
     var c = cfg();
@@ -1180,8 +1180,7 @@
   });
 
   function publishViaWorker(btn){
-    var pw = getPw();
-    if(!pw){ btn.disabled = false; showLogin("Sign in first."); return; }
+    var pw = getPw();   /* usually "" — the service only asks if it's configured to */
 
     /* Only re-send the photo when it actually changed — it's the big payload. */
     var photoChanged = data.bg === "photo" && data.bgPhoto &&
