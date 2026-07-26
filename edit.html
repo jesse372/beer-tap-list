@@ -382,6 +382,21 @@
         </div>
       </div>
       <div id="gh-testresult" class="hint"></div>
+
+      <div id="relinkbox" style="display:none;margin-top:18px">
+        <div class="note" style="margin-bottom:10px">
+          <strong>Bookmark this link.</strong> If you ever clear your browsing history,
+          this page forgets its settings. Opening this bookmark sets it all up again
+          in one click — nothing to type.
+        </div>
+        <label for="relink">Your setup link</label>
+        <input type="text" id="relink" readonly onclick="this.select()"
+               style="font-size:14px" spellcheck="false">
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-ghost btn-sm" id="relinkcopy">Copy link</button>
+          <span class="hint" id="relinkmsg" style="margin:0;align-self:center"></span>
+        </div>
+      </div>
       <hr style="border:none;border-top:1px solid var(--line);margin:22px 0">
       <button class="btn-ghost" id="download">No internet? Download the taps.json file instead</button>
     </div>
@@ -478,9 +493,25 @@
     try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch(e){}
     return c;
   }
+  function setupLink(c){
+    try {
+      var json = JSON.stringify({owner:c.owner, repo:c.repo, token:c.token, branch:c.branch || "main"});
+      var bytes = new TextEncoder().encode(json), bin = "", i;
+      for(i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      var b64 = btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      return location.origin + location.pathname + "#setup=" + b64;
+    } catch(e){ return ""; }
+  }
+
   function refreshSetupState(){
     var c = cfg();
     var ok = !!(c.owner && c.repo && c.token);
+
+    var box = $("relinkbox");
+    if(box){
+      box.style.display = ok ? "" : "none";
+      if(ok) $("relink").value = setupLink(c);
+    }
     var banner = $("setupbanner");
     if(banner) banner.style.display = ok ? "none" : "flex";
     var sum = $("setupsummary");
@@ -491,6 +522,24 @@
         : '⚙️ One-time setup — <span class="setupstate bad">not set up on this computer</span>';
     }
   }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    var b = document.getElementById("relinkcopy");
+    if(!b) return;
+    b.addEventListener("click", function(){
+      var f = document.getElementById("relink");
+      f.select(); f.setSelectionRange(0, 99999);
+      var done = false;
+      try { done = document.execCommand("copy"); } catch(e){}
+      if(navigator.clipboard && !done){
+        navigator.clipboard.writeText(f.value).then(function(){
+          document.getElementById("relinkmsg").textContent = "Copied.";
+        });
+        return;
+      }
+      document.getElementById("relinkmsg").textContent = done ? "Copied." : "Press Ctrl+C / Cmd+C to copy.";
+    });
+  });
 
   function loadCfg(){
     var c = cfg();
