@@ -135,3 +135,18 @@ cd ~/Projects/beer-tap-list && python3 -m http.server 8777
 # TV screen: http://localhost:8777/
 # Editor:    http://localhost:8777/edit.html
 ```
+
+---
+
+## Fire TV app
+
+There's a proper Fire Stick app too — see [`firetv-app/`](firetv-app/). It's a
+full-screen shell around this same site, so edits still publish instantly to it.
+
+Install on the Fire Stick with the **Downloader** app from:
+
+```
+jesse372.github.io/beer-tap-list/ontap.apk
+```
+
+Full instructions in [`firetv-app/README.md`](firetv-app/README.md).
