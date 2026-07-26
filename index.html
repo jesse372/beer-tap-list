@@ -534,6 +534,10 @@
       return '<div class="page' + (i === 0 ? " on" : "") + '" style="' +
         'grid-template-columns:repeat(' + cols + ',1fr);' +
         'grid-template-rows:repeat(' + rows + ',1fr);' +
+        /* Fill down the left column first, then the right — so the taps read
+           1,2,3,4 down one side and 5,6,7,8 down the other. Single-column
+           (portrait) layouts must stay row-flow or everything lands in one row. */
+        'grid-auto-flow:' + (cols > 1 ? "column" : "row") + ';' +
         '--s:' + scale.toFixed(3) + '">' + p.map(tapHTML).join("") + '</div>';
     }).join("");
 
