@@ -21,7 +21,8 @@
       "ready": "",
       "icon": "bottle",
       "level": 100,
-      "status": "pouring"
+      "status": "pouring",
+      "guest": true
     },
     {
       "num": 2,
@@ -119,7 +120,8 @@
       "ready": "",
       "icon": "bottle",
       "level": 100,
-      "status": "pouring"
+      "status": "pouring",
+      "guest": true
     },
     {
       "num": 9,
