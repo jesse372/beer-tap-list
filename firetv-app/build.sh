@@ -37,12 +37,25 @@ echo "→ linking resources + manifest"
 
 echo "→ compiling java"
 find "$OUT/gen" java -name '*.java' > "$OUT/sources.txt"
-"$JAVA_HOME/bin/javac" \
-  -source 8 -target 8 -nowarn \
-  -bootclasspath "$ANDROID_JAR" \
-  -classpath "$ANDROID_JAR" \
-  -d "$OUT/classes" \
-  @"$OUT/sources.txt" 2>&1 | grep -v "bootstrap class path" || true
+# NOTE: do not pipe javac - a pipeline hides its exit status and we would
+# happily ship an APK with classes silently missing (this has bitten once).
+if ! "$JAVA_HOME/bin/javac" \
+      -source 8 -target 8 -nowarn \
+      -bootclasspath "$ANDROID_JAR" \
+      -classpath "$ANDROID_JAR" \
+      -d "$OUT/classes" \
+      @"$OUT/sources.txt" > "$OUT/javac.log" 2>&1; then
+  echo "✗ javac failed:"; cat "$OUT/javac.log"; exit 1
+fi
+grep -v "bootstrap class path" "$OUT/javac.log" || true
+
+# Every source file must have produced a class, or the build is a lie.
+for src in $(find java -name '*.java'); do
+  cls=$(basename "$src" .java)
+  if ! find "$OUT/classes" -name "$cls.class" | grep -q .; then
+    echo "✗ $cls.class missing after compile"; exit 1
+  fi
+done
 
 echo "→ dexing"
 find "$OUT/classes" -name '*.class' > "$OUT/classes.txt"

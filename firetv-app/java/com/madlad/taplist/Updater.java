@@ -3,6 +3,7 @@ package com.madlad.taplist;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
@@ -147,7 +148,9 @@ class Updater {
         final AlertDialog dlg = new AlertDialog.Builder(activity)
                 .setTitle("Update available")
                 .setMessage(msg)
-                .setPositiveButton("Update now", (d, w) -> install())
+                .setPositiveButton("Update now", new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface d, int w) { install(); }
+                })
                 .setNegativeButton("Not now", null)
                 .setCancelable(true)
                 .create();
@@ -173,14 +176,16 @@ class Updater {
                         .setMessage("Fire TV needs permission to let On Tap install its own "
                                 + "updates. Turn On Tap ON on the next screen, then press "
                                 + "Update again.")
-                        .setPositiveButton("Open settings", (d, w) -> {
-                            try {
-                                Intent s = new Intent(
-                                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                                        Uri.parse("package:" + activity.getPackageName()));
-                                s.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                activity.startActivity(s);
-                            } catch (Throwable ignored) {}
+                        .setPositiveButton("Open settings", new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface d, int w) {
+                                try {
+                                    Intent s = new Intent(
+                                            Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                            Uri.parse("package:" + activity.getPackageName()));
+                                    s.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    activity.startActivity(s);
+                                } catch (Throwable ignored) {}
+                            }
                         })
                         .setNegativeButton("Cancel", null)
                         .show();
