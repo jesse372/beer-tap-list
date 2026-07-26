@@ -105,6 +105,32 @@
   }
   .sw.on{border-color:var(--ink)}
 
+  /* ---------- recipe library ---------- */
+  .libbar{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .libbar button{flex:1 1 200px}
+  .libpick{
+    position:fixed;left:0;right:0;top:0;bottom:0;z-index:60;
+    background:rgba(36,29,21,.55);display:none;
+    align-items:center;justify-content:center;padding:18px;
+  }
+  .libpick.open{display:flex}
+  .libbox{
+    background:var(--card);border-radius:16px;max-width:620px;width:100%;
+    max-height:82vh;overflow:auto;padding:18px;
+  }
+  .libbox h3{font-family:Georgia,serif;font-size:21px;margin-bottom:4px}
+  .librow{
+    display:flex;align-items:center;gap:12px;padding:11px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .librow:last-child{border-bottom:none}
+  .libdot{width:26px;height:26px;border-radius:7px;flex:0 0 auto;
+          box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+  .libinfo{flex:1 1 auto;min-width:0}
+  .libname{font-weight:700}
+  .libmeta{font-size:14px;color:var(--muted)}
+  .libempty{color:var(--muted);padding:14px 0}
+
   /* ---------- icon picker ---------- */
   .icons{display:flex;gap:9px;flex-wrap:wrap}
   .ic{
@@ -193,9 +219,27 @@
 
   <h2>The beers</h2>
   <div id="taps"></div>
-  <button id="add" style="width:100%;padding:13px;font-size:18px;border:2px dashed var(--line)">
-    + Add another beer
-  </button>
+  <div class="libbar">
+    <button id="add" style="padding:13px;font-size:18px;border:2px dashed var(--line)">
+      + Add another beer
+    </button>
+    <button id="fromlib" class="btn-ghost" style="padding:13px;font-size:18px">
+      + From my recipes
+    </button>
+  </div>
+
+  <div class="libpick" id="libpick">
+    <div class="libbox">
+      <h3>My recipes</h3>
+      <div class="hint" style="margin-bottom:10px">
+        Beers you've brewed before. Removing a beer saves it here automatically.
+      </div>
+      <div id="liblist"></div>
+      <div style="margin-top:16px;text-align:right">
+        <button class="btn-ghost" id="libclose">Close</button>
+      </div>
+    </div>
+  </div>
 
   <h2>Screen settings</h2>
   <details>
@@ -294,6 +338,14 @@
       <div class="checkline">
         <input type="checkbox" id="logoOnly">
         <label for="logoOnly">My logo already has the name in it — don't show the text name too</label>
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="dimAtNight">
+        <label for="dimAtNight">Dim the screen late at night</label>
+      </div>
+      <div class="row" id="dimrow" style="display:none">
+        <div class="field"><label for="dimFrom">Dim from</label><select id="dimFrom"><option value="0">12am</option><option value="1">1am</option><option value="2">2am</option><option value="3">3am</option><option value="4">4am</option><option value="5">5am</option><option value="6">6am</option><option value="7">7am</option><option value="8">8am</option><option value="9">9am</option><option value="10">10am</option><option value="11">11am</option><option value="12">12pm</option><option value="13">1pm</option><option value="14">2pm</option><option value="15">3pm</option><option value="16">4pm</option><option value="17">5pm</option><option value="18">6pm</option><option value="19">7pm</option><option value="20">8pm</option><option value="21">9pm</option><option value="22">10pm</option><option value="23">11pm</option></select></div>
+        <div class="field"><label for="dimTo">Back to normal at</label><select id="dimTo"><option value="0">12am</option><option value="1">1am</option><option value="2">2am</option><option value="3">3am</option><option value="4">4am</option><option value="5">5am</option><option value="6">6am</option><option value="7">7am</option><option value="8">8am</option><option value="9">9am</option><option value="10">10am</option><option value="11">11am</option><option value="12">12pm</option><option value="13">1pm</option><option value="14">2pm</option><option value="15">3pm</option><option value="16">4pm</option><option value="17">5pm</option><option value="18">6pm</option><option value="19">7pm</option><option value="20">8pm</option><option value="21">9pm</option><option value="22">10pm</option><option value="23">11pm</option></select></div>
       </div>
       <div class="checkline">
         <input type="checkbox" id="showClock"><label for="showClock">Show the clock in the corner</label>
@@ -541,6 +593,101 @@
     data.logo = ""; renderLogo(); touched();
   });
 
+  /* ---------------- recipe library ---------------- */
+  var LIB_FIELDS = ["name","style","abv","ibu","notes","color","srm","icon"];
+
+  function recipeOf(t){
+    var r = {}, i;
+    for(i = 0; i < LIB_FIELDS.length; i++) r[LIB_FIELDS[i]] = t[LIB_FIELDS[i]];
+    return r;
+  }
+
+  /* Match on name so rebrewing the same beer updates rather than duplicates. */
+  function libIndexOf(name){
+    var lib = data.library || [], i;
+    for(i = 0; i < lib.length; i++){
+      if(String(lib[i].name || "").toLowerCase() === String(name || "").toLowerCase()) return i;
+    }
+    return -1;
+  }
+
+  function saveToLibrary(t, quiet){
+    if(!t.name){ if(!quiet) alert("Give the beer a name first."); return false; }
+    if(!data.library) data.library = [];
+    var at = libIndexOf(t.name);
+    if(at >= 0) data.library[at] = recipeOf(t);
+    else data.library.push(recipeOf(t));
+    data.library.sort(function(a,b){
+      return String(a.name).toLowerCase() < String(b.name).toLowerCase() ? -1 : 1;
+    });
+    touched();
+    return true;
+  }
+
+  function renderLibrary(){
+    var box = $("liblist");
+    var lib = data.library || [];
+    if(!lib.length){
+      box.innerHTML = '<div class="libempty">Nothing saved yet. Recipes appear here ' +
+                      'when you remove a beer, or press &ldquo;Save recipe&rdquo; on one.</div>';
+      return;
+    }
+    box.innerHTML = lib.map(function(r, i){
+      var meta = [r.style, r.abv ? r.abv + "% ABV" : "", r.ibu ? r.ibu + " IBU" : ""]
+                 .filter(function(x){ return x; }).join("  ·  ");
+      return '<div class="librow">' +
+        '<div class="libdot" style="background:' + esc(r.color || "#e0a63a") + '"></div>' +
+        '<div class="libinfo">' +
+          '<div class="libname">' + esc(r.name) + '</div>' +
+          (meta ? '<div class="libmeta">' + esc(meta) + '</div>' : '') +
+        '</div>' +
+        '<button class="btn-sm" data-libadd="' + i + '">Put on tap</button>' +
+        '<button class="btn-sm btn-danger" data-libdel="' + i + '">Delete</button>' +
+      '</div>';
+    }).join("");
+  }
+
+  $("fromlib").addEventListener("click", function(){
+    renderLibrary();
+    $("libpick").className = "libpick open";
+  });
+  $("libclose").addEventListener("click", function(){ $("libpick").className = "libpick"; });
+  $("libpick").addEventListener("click", function(e){
+    if(e.target === this) this.className = "libpick";      /* click the backdrop to close */
+  });
+
+  $("liblist").addEventListener("click", function(e){
+    var btn = e.target.closest("button"); if(!btn) return;
+
+    if(btn.dataset.libdel != null){
+      var di = Number(btn.dataset.libdel);
+      var rec = (data.library || [])[di];
+      if(!rec) return;
+      if(!confirm('Delete "' + rec.name + '" from your recipes?')) return;
+      data.library.splice(di, 1);
+      renderLibrary(); touched();
+      return;
+    }
+
+    if(btn.dataset.libadd != null){
+      var ai = Number(btn.dataset.libadd);
+      var r = (data.library || [])[ai];
+      if(!r) return;
+      var maxNum = 0;
+      data.taps.forEach(function(t){ maxNum = Math.max(maxNum, Number(t.num) || 0); });
+      var t = blankTap(maxNum + 1);
+      LIB_FIELDS.forEach(function(f){ if(r[f] != null) t[f] = r[f]; });
+      t.level = 100; t.status = "pouring";
+      data.taps.push(t);
+      renderTaps(); touched();
+      $("libpick").className = "libpick";
+      var cards = document.querySelectorAll(".card");
+      var last = cards[cards.length - 1];
+      if(last) last.scrollIntoView({behavior:"smooth", block:"center"});
+      setStatus('Added "' + r.name + '" to the taps.');
+    }
+  });
+
   /* ---------------- background ---------------- */
   function renderBg(){
     var isPhoto = data.bg === "photo";
@@ -605,6 +752,10 @@
     $("hideKicked").checked  = !!data.hideKicked;
     $("logoOnly").checked    = !!data.logoOnly;
     $("logoSize").value      = data.logoSize || "m";
+    $("dimAtNight").checked  = !!data.dimAtNight;
+    $("dimFrom").value       = String(data.dimFrom == null ? 22 : data.dimFrom);
+    $("dimTo").value         = String(data.dimTo   == null ? 7  : data.dimTo);
+    $("dimrow").style.display = data.dimAtNight ? "" : "none";
     $("rotate").value        = String(Number(data.rotate) || 0);
     $("bg").value            = data.bg || "charcoal";
     renderBg();
@@ -622,6 +773,7 @@
           '<div class="spacer"></div>' +
           '<button class="btn-sm btn-ghost" data-act="up"'   + (i === 0 ? " disabled" : "") + '>↑</button>' +
           '<button class="btn-sm btn-ghost" data-act="down"' + (i === data.taps.length - 1 ? " disabled" : "") + '>↓</button>' +
+          '<button class="btn-sm btn-ghost" data-act="lib" title="Save this recipe">Save recipe</button>' +
           '<button class="btn-sm btn-danger" data-act="del">Remove</button>' +
         '</div>' +
 
@@ -679,6 +831,12 @@
           '</div>' +
         '</div>' +
 
+        (t.status === "coming"
+          ? '<div class="field"><label>Ready date (optional)</label>' +
+              '<input type="date" data-f="ready" value="' + esc(t.ready || "") + '">' +
+              '<div class="hint">The TV counts down — &ldquo;Ready in 12 days&rdquo;.</div></div>'
+          : '') +
+
         '<div class="field" style="margin-bottom:0"><label>Status</label>' +
           '<select data-f="status">' +
             '<option value="pouring"' + (t.status === "pouring" ? " selected" : "") + '>Pouring now</option>' +
@@ -705,6 +863,13 @@
   });
   $("showClock").addEventListener("change", function(){ data.showClock = this.checked; touched(); });
   $("logoOnly").addEventListener("change", function(){ data.logoOnly = this.checked; touched(); });
+  $("dimAtNight").addEventListener("change", function(){
+    data.dimAtNight = this.checked;
+    $("dimrow").style.display = this.checked ? "" : "none";
+    touched();
+  });
+  $("dimFrom").addEventListener("change", function(){ data.dimFrom = Number(this.value); touched(); });
+  $("dimTo").addEventListener("change", function(){ data.dimTo = Number(this.value); touched(); });
   $("logoSize").addEventListener("change", function(){ data.logoSize = this.value; touched(); });
   $("rotate").addEventListener("change", function(){ data.rotate = Number(this.value); touched(); });
   $("hideKicked").addEventListener("change", function(){ data.hideKicked = this.checked; touched(); });
@@ -731,6 +896,7 @@
     var i = Number(card.dataset.i);
     data.taps[i].status = e.target.value;
     if(e.target.value === "kicked") data.taps[i].level = 0;
+    if(e.target.value !== "coming") delete data.taps[i].ready;
     renderTaps(); touched();
   });
 
@@ -765,8 +931,15 @@
       renderTaps(); touched(); return;
     }
     var act = btn.dataset.act;
+    if(act === "lib"){
+      if(saveToLibrary(data.taps[i])) setStatus('Saved "' + data.taps[i].name + '" to your recipes.');
+      return;
+    }
     if(act === "del"){
-      if(!confirm('Remove "' + (data.taps[i].name || "this beer") + '" from the list?')) return;
+      var gone = data.taps[i];
+      var kept = gone.name ? " It's saved in your recipes, so you can put it back later." : "";
+      if(!confirm('Remove "' + (gone.name || "this beer") + '" from the list?' + kept)) return;
+      if(gone.name) saveToLibrary(gone, true);      /* never lose a recipe */
       data.taps.splice(i, 1); renderTaps(); touched();
     } else if(act === "up" && i > 0){
       var a = data.taps[i]; data.taps[i] = data.taps[i-1]; data.taps[i-1] = a;
@@ -928,6 +1101,7 @@
         notes: t.notes || "",
         color: t.color || "#e0a63a",
         srm: t.srm ? Number(t.srm) : null,
+        ready: t.ready || "",
         icon: t.icon || "",
         level: Number(t.level) || 0,
         status: t.status || "pouring"
@@ -937,6 +1111,10 @@
     if(json.perPage == null) json.perPage = "auto";
     if(!json.logoSize) json.logoSize = "m";
     if(!json.bg) json.bg = "charcoal";
+    if(!Array.isArray(json.library)) json.library = [];
+    if(json.dimAtNight == null) json.dimAtNight = false;
+    if(json.dimFrom == null) json.dimFrom = 22;
+    if(json.dimTo == null) json.dimTo = 7;
     json.rotate = Number(json.rotate) || 0;
     if(json.rotateSeconds == null) json.rotateSeconds = 20;
     if(json.showClock == null) json.showClock = true;
