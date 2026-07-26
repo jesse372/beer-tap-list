@@ -1052,6 +1052,18 @@
       $("setup").scrollIntoView({behavior:"smooth"});
       return;
     }
+    var blanks = [];
+    data.taps.forEach(function(t){
+      if(String(t.name || "").trim() === "") blanks.push(t.num);
+    });
+    if(blanks.length){
+      var which = blanks.length === 1 ? ("Tap " + blanks[0] + " has")
+                                      : ("Taps " + blanks.join(", ") + " have");
+      if(!confirm(which + " no beer name yet, so " +
+                  (blanks.length === 1 ? "it" : "they") +
+                  " won't appear on the TV.\n\nPublish anyway?")) return;
+    }
+
     var btn = this;
     btn.disabled = true;
     setStatus("Publishing…");

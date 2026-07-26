@@ -500,6 +500,11 @@
     tickClock();
 
     var taps = (data.taps || []).slice();
+
+    /* A half-added beer with no name has nothing to show — and with pagination it
+       would otherwise rotate in as a blank "Untitled" card. Skip it. */
+    taps = taps.filter(function(t){ return String(t.name || "").trim() !== ""; });
+
     if(data.hideKicked){
       taps = taps.filter(function(t){
         return !(t.status === "kicked" || (t.status !== "coming" && (Number(t.level) || 0) <= 0));
