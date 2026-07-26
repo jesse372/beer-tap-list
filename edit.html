@@ -148,6 +148,10 @@
   .banner{background:#fff6d8;border:2px solid var(--gold);border-radius:12px;padding:14px 16px;
           display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
   .banner .t{flex:1 1 200px}
+  .banner.danger{background:#fdecec;border-color:var(--red)}
+  .setupstate{font-weight:700}
+  .setupstate.ok{color:var(--green)}
+  .setupstate.bad{color:var(--red)}
   details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0;margin-bottom:16px}
   summary{padding:18px 20px;cursor:pointer;font-weight:700;font-size:18px;list-style:none}
   summary::-webkit-details-marker{display:none}
@@ -177,6 +181,14 @@
     <div class="t"><strong>You have unpublished changes</strong> from <span id="drafttime"></span>.</div>
     <button class="btn-sm" id="draft-restore">Use those</button>
     <button class="btn-sm btn-ghost" id="draft-discard">Throw them away</button>
+  </div>
+
+  <div id="setupbanner" style="display:none" class="banner danger">
+    <div class="t">
+      <strong>Publishing isn't set up on this computer.</strong>
+      Your changes can't reach the TV until it is — ask Jesse for the access token.
+    </div>
+    <button class="btn-sm" id="setupfix">Fix it</button>
   </div>
 
   <h2>The beers</h2>
@@ -293,7 +305,7 @@
   </details>
 
   <details id="setup">
-    <summary>⚙️ One-time setup (already done? leave this alone)</summary>
+    <summary id="setupsummary">⚙️ One-time setup</summary>
     <div class="inner">
       <div class="note">
         This is what lets the Publish button send your changes to the TV.
@@ -385,6 +397,20 @@
     try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch(e){}
     return c;
   }
+  function refreshSetupState(){
+    var c = cfg();
+    var ok = !!(c.owner && c.repo && c.token);
+    var banner = $("setupbanner");
+    if(banner) banner.style.display = ok ? "none" : "flex";
+    var sum = $("setupsummary");
+    if(sum){
+      sum.innerHTML = ok
+        ? '⚙️ One-time setup — <span class="setupstate ok">connected as ' +
+          esc(c.owner) + '/' + esc(c.repo) + ' \u2713</span>'
+        : '⚙️ One-time setup — <span class="setupstate bad">not set up on this computer</span>';
+    }
+  }
+
   function loadCfg(){
     var c = cfg();
     $("gh-owner").value  = c.owner  || "";
@@ -392,6 +418,7 @@
     $("gh-token").value  = c.token  || "";
     $("gh-branch").value = c.branch || "main";
     if(!c.token) $("setup").open = true;   /* nudge Jesse to finish setup */
+    refreshSetupState();
   }
   /* ---------------- draft ---------------- */
   function saveDraft(){
@@ -907,7 +934,11 @@
 
     loadCfg();
     ["gh-owner","gh-repo","gh-token","gh-branch"].forEach(function(id){
-      $(id).addEventListener("input", saveCfg);
+      $(id).addEventListener("input", function(){ saveCfg(); refreshSetupState(); });
+    });
+    $("setupfix").addEventListener("click", function(){
+      $("setup").open = true;
+      $("setup").scrollIntoView({behavior:"smooth", block:"start"});
     });
 
     renderAll();
