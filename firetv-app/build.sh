@@ -78,5 +78,20 @@ rm -f "$OUT/unsigned.apk" "$OUT/aligned.apk" "$OUT/base.apk" "$OUT/res.zip" \
       "$OUT/sources.txt" "$OUT/classes.txt" "$OUT"/ontap.apk.idsig
 rm -rf "$OUT/classes" "$OUT/gen" "$OUT/dex"
 
+# Publish the APK + version manifest to the site root, so the app can find them.
+# Generated from the manifest so the advertised version can never drift from the build.
+VC=$(grep -o 'android:versionCode="[0-9]*"' AndroidManifest.xml | grep -o '[0-9]*')
+VN=$(grep -o 'android:versionName="[^"]*"' AndroidManifest.xml | sed 's/.*="//;s/"//')
+
+cp "$OUT/ontap.apk" ../ontap.apk
+cat > ../version.json <<JSON
+{
+  "versionCode": $VC,
+  "versionName": "$VN",
+  "url": "https://jesse372.github.io/beer-tap-list/ontap.apk"
+}
+JSON
+
+echo "→ published ../ontap.apk and ../version.json (v$VN, code $VC)"
 echo
 echo "✓ $(cd "$OUT" && pwd)/ontap.apk  ($(du -h "$OUT/ontap.apk" | cut -f1))"

@@ -66,6 +66,14 @@ public class MainActivity extends Activity {
         setContentView(web);
         web.loadUrl(URL);
         hideSystemUi();
+
+        // Check for a new build shortly after startup, once the board is up.
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                new Updater(MainActivity.this).checkInBackground();
+            }
+        }, 8000);
     }
 
     /** Keep retrying until the network shows up, rather than sitting on an error page. */
