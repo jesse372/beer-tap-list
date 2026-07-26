@@ -351,6 +351,35 @@
   "use strict";
 
   var DRAFT_KEY = "tapdraft.v1", CFG_KEY = "tapcfg.v1";
+  var linkSetupApplied = false;
+
+  /* ---------------- one-click setup link ----------------
+     edit.html#setup=<base64 json> configures this browser in one visit.
+     It's in the hash, so it is never sent to the server, and it's wiped from
+     the address bar immediately so the token isn't left sitting in view. */
+  (function applySetupLink(){
+    var m = /(?:^|[#&])setup=([^&]+)/.exec(location.hash || "");
+    if(!m) return;
+    try {
+      var b64 = decodeURIComponent(m[1]).replace(/-/g, "+").replace(/_/g, "/");
+      while(b64.length % 4) b64 += "=";
+      var bin = atob(b64), bytes = new Uint8Array(bin.length), i;
+      for(i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var c = JSON.parse(new TextDecoder().decode(bytes));
+      if(c && c.token){
+        localStorage.setItem(CFG_KEY, JSON.stringify({
+          owner:  c.owner  || "",
+          repo:   c.repo   || "",
+          token:  c.token,
+          branch: c.branch || "main"
+        }));
+        linkSetupApplied = true;
+      }
+    } catch(e){ /* malformed link - fall through to the normal banner */ }
+
+    try { history.replaceState(null, "", location.pathname + location.search); }
+    catch(e){ location.hash = ""; }
+  })();
   /* Non-SRM colours, for fruit beers and sours that the scale doesn't describe. */
   var COLORS = [
     ["#e8b3c8","Pink / berry"], ["#c4467a","Raspberry"],
@@ -942,7 +971,11 @@
     });
 
     renderAll();
-    setStatus("Ready.");
+    if(linkSetupApplied){
+      setStatus("\u2713 Publishing is now set up on this computer. You're good to go.", "ok");
+    } else {
+      setStatus("Ready.");
+    }
 
     /* Pull the existing background photo in separately, so the preview shows it
        and we don't needlessly re-upload it on the next publish. */
