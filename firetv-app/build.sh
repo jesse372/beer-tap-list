@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# Build + sign the Fire TV APK. No Gradle, no AndroidX — just the SDK tools,
+# which keeps this dependency-free and fast.
+#
+#   ./build.sh          -> firetv-app/build/ontap.apk
+set -euo pipefail
+cd "$(dirname "$0")"
+
+JAVA_HOME="${JAVA_HOME:-$HOME/Android/jdk}"
+# d8 / apksigner / keytool are wrapper scripts that call `java` from PATH.
+export JAVA_HOME
+export PATH="$JAVA_HOME/bin:$PATH"
+
+SDK="${ANDROID_SDK_ROOT:-$HOME/Android/sdk}"
+BT="$SDK/build-tools/34.0.0"
+ANDROID_JAR="$SDK/platforms/android-34/android.jar"
+
+for f in "$JAVA_HOME/bin/javac" "$BT/aapt2" "$BT/d8" "$BT/zipalign" "$BT/apksigner" "$ANDROID_JAR"; do
+  [ -e "$f" ] || { echo "✗ missing: $f"; exit 1; }
+done
+
+OUT=build
+rm -rf "$OUT"; mkdir -p "$OUT/res" "$OUT/gen" "$OUT/classes" "$OUT/dex"
+
+echo "→ compiling resources"
+"$BT/aapt2" compile --dir res -o "$OUT/res.zip"
+
+echo "→ linking resources + manifest"
+"$BT/aapt2" link \
+  -o "$OUT/base.apk" \
+  -I "$ANDROID_JAR" \
+  --manifest AndroidManifest.xml \
+  --java "$OUT/gen" \
+  --min-sdk-version 22 \
+  --target-sdk-version 30 \
+  "$OUT/res.zip"
+
+echo "→ compiling java"
+find "$OUT/gen" java -name '*.java' > "$OUT/sources.txt"
+"$JAVA_HOME/bin/javac" \
+  -source 8 -target 8 -nowarn \
+  -bootclasspath "$ANDROID_JAR" \
+  -classpath "$ANDROID_JAR" \
+  -d "$OUT/classes" \
+  @"$OUT/sources.txt" 2>&1 | grep -v "bootstrap class path" || true
+
+echo "→ dexing"
+find "$OUT/classes" -name '*.class' > "$OUT/classes.txt"
+"$BT/d8" --min-api 22 --lib "$ANDROID_JAR" --output "$OUT/dex" @"$OUT/classes.txt"
+
+echo "→ packaging"
+cp "$OUT/base.apk" "$OUT/unsigned.apk"
+( cd "$OUT/dex" && zip -q ../unsigned.apk classes.dex )
+
+echo "→ aligning"
+"$BT/zipalign" -p -f 4 "$OUT/unsigned.apk" "$OUT/aligned.apk"
+
+# Self-signed key. Fine for sideloading; it is not going through any store.
+KS=keystore.jks
+if [ ! -f "$KS" ]; then
+  echo "→ creating signing key (first run only)"
+  "$JAVA_HOME/bin/keytool" -genkeypair -v \
+    -keystore "$KS" -alias ontap \
+    -keyalg RSA -keysize 2048 -validity 10950 \
+    -storepass ontap123 -keypass ontap123 \
+    -dname "CN=On Tap, OU=Home, O=MadLad Brewing, L=, S=, C=AU" >/dev/null 2>&1
+fi
+
+echo "→ signing"
+"$BT/apksigner" sign \
+  --ks "$KS" --ks-pass pass:ontap123 --key-pass pass:ontap123 \
+  --v1-signing-enabled true --v2-signing-enabled true \
+  --out "$OUT/ontap.apk" "$OUT/aligned.apk"
+
+"$BT/apksigner" verify --print-certs "$OUT/ontap.apk" >/dev/null && echo "→ signature OK"
+
+rm -f "$OUT/unsigned.apk" "$OUT/aligned.apk" "$OUT/base.apk" "$OUT/res.zip" \
+      "$OUT/sources.txt" "$OUT/classes.txt" "$OUT"/ontap.apk.idsig
+rm -rf "$OUT/classes" "$OUT/gen" "$OUT/dex"
+
+echo
+echo "✓ $(cd "$OUT" && pwd)/ontap.apk  ($(du -h "$OUT/ontap.apk" | cut -f1))"

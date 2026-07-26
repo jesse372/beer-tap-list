@@ -629,8 +629,12 @@
     if(av && av.paused) nudgeVideo();
   }, 30000);
 
-  /* ---------- full screen ---------- */
+  /* ---------- full screen ----------
+     Inside the Fire TV app we're already fullscreen with no address bar,
+     so the prompt and the fullscreen request are both pointless there. */
+  var inApp = /[?&]app=1\b/.test(location.search);
   var hint = el("fshint"), hintTimer = null;
+  if(inApp && hint){ hint.parentNode.removeChild(hint); hint = null; }
 
   function isFullscreen(){
     return !!(document.fullscreenElement || document.webkitFullscreenElement ||
@@ -645,7 +649,7 @@
     var d = document.documentElement;
     var fn = d.requestFullscreen || d.webkitRequestFullscreen ||
              d.webkitRequestFullScreen || d.mozRequestFullScreen || d.msRequestFullscreen;
-    if(fn){ try { fn.call(d); } catch(e){} }
+    if(!inApp && fn){ try { fn.call(d); } catch(e){} }
     hideHint();
     keepAwake();          /* the OK press is the user gesture autoplay may need */
   }
