@@ -209,6 +209,17 @@
     <button class="btn-sm btn-ghost" id="draft-discard">Throw them away</button>
   </div>
 
+  <div id="loginbox" style="display:none" class="banner">
+    <div class="t">
+      <strong>Sign in to publish.</strong>
+      Enter the password to send changes to the TV.
+    </div>
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password"
+           style="max-width:200px;width:auto">
+    <button class="btn-sm" id="pwgo">Sign in</button>
+    <span class="hint" id="pwmsg" style="margin:0;align-self:center"></span>
+  </div>
+
   <div id="setupbanner" style="display:none" class="banner danger">
     <div class="t">
       <strong>Publishing isn't set up on this computer.</strong>
@@ -417,7 +428,38 @@
 (function(){
   "use strict";
 
-  var DRAFT_KEY = "tapdraft.v1", CFG_KEY = "tapcfg.v1";
+  /* When this is set, the editor publishes through the Worker using a password
+     and the GitHub token is never in the browser at all. Empty = old behaviour. */
+  var WORKER_URL = "";
+
+  var DRAFT_KEY = "tapdraft.v1", CFG_KEY = "tapcfg.v1", PW_KEY = "tappw.v1";
+
+  function getPw(){ try { return localStorage.getItem(PW_KEY) || ""; } catch(e){ return ""; } }
+  function setPw(v){ try { localStorage.setItem(PW_KEY, v); } catch(e){} }
+  function clearPw(){ try { localStorage.removeItem(PW_KEY); } catch(e){} }
+
+  function workerPost(route, payload, cb){
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", WORKER_URL + route, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = 60000;
+    xhr.onload = function(){
+      var j = null;
+      try { j = JSON.parse(xhr.responseText); } catch(e){}
+      cb(null, xhr.status, j);
+    };
+    xhr.onerror = xhr.ontimeout = function(){
+      cb(new Error("Couldn't reach the tap list service — is the laptop online?"));
+    };
+    xhr.send(JSON.stringify(payload));
+  }
+
+  function showLogin(msg){
+    $("loginbox").style.display = "flex";
+    $("setupbanner").style.display = "none";
+    if(msg) $("pwmsg").textContent = msg;
+  }
+  function hideLogin(){ $("loginbox").style.display = "none"; }
   var linkSetupApplied = false;
 
   /* ---------------- one-click setup link ----------------
@@ -504,6 +546,14 @@
   }
 
   function refreshSetupState(){
+    if(WORKER_URL){
+      /* Password mode: no token, no setup section, nothing to lose. */
+      var setupEl = $("setup");
+      if(setupEl) setupEl.style.display = "none";
+      $("setupbanner").style.display = "none";
+      if(getPw()) hideLogin(); else showLogin("");
+      return;
+    }
     var c = cfg();
     var ok = !!(c.owner && c.repo && c.token);
 
@@ -539,6 +589,28 @@
       }
       document.getElementById("relinkmsg").textContent = done ? "Copied." : "Press Ctrl+C / Cmd+C to copy.";
     });
+  });
+
+  document.addEventListener("DOMContentLoaded", function(){
+    var go = document.getElementById("pwgo"), fld = document.getElementById("pw");
+    if(!go || !fld) return;
+    function attempt(){
+      var v = fld.value.trim();
+      if(!v){ document.getElementById("pwmsg").textContent = "Enter the password."; return; }
+      document.getElementById("pwmsg").textContent = "Checking…";
+      workerPost("/check", { password: v }, function(err, status, j){
+        if(err){ document.getElementById("pwmsg").textContent = err.message; return; }
+        if(status === 200 && j && j.ok){
+          setPw(v); fld.value = "";
+          hideLogin();
+          setStatus("Signed in — you can publish.", "ok");
+        } else {
+          document.getElementById("pwmsg").textContent = "Wrong password.";
+        }
+      });
+    }
+    go.addEventListener("click", attempt);
+    fld.addEventListener("keydown", function(e){ if(e.keyCode === 13) attempt(); });
   });
 
   function loadCfg(){
@@ -1107,7 +1179,52 @@
     });
   });
 
+  function publishViaWorker(btn){
+    var pw = getPw();
+    if(!pw){ btn.disabled = false; showLogin("Sign in first."); return; }
+
+    /* Only re-send the photo when it actually changed — it's the big payload. */
+    var photoChanged = data.bg === "photo" && data.bgPhoto &&
+                       data.bgPhoto !== (published && published.bgPhoto);
+    if(photoChanged){
+      data.bgV = String(Date.now());
+      setStatus("Uploading the background photo…");
+    }
+
+    var files = [];
+    if(photoChanged){
+      files.push({ path:"bgphoto.json", content: JSON.stringify({ photo: data.bgPhoto }) + "\n" });
+    }
+    files.push({ path:"taps.json", content: serialize() });   /* after bgV is set */
+
+    workerPost("/publish", { password: pw, message: "Update tap list", files: files },
+      function(err, status, j){
+        btn.disabled = false;
+        if(err){ setStatus(err.message, "err"); return; }
+        if(status === 200 && j && j.ok){
+          published = JSON.parse(JSON.stringify(data));
+          clearDraft();
+          setStatus("✓ Published! The TV will show it within about a minute.", "ok");
+          return;
+        }
+        if(status === 401){
+          clearPw();
+          showLogin("That password didn't work — try again.");
+          setStatus("Not signed in.", "err");
+          return;
+        }
+        setStatus((j && j.error) || ("Publishing failed (" + status + ")."), "err");
+      });
+  }
+
   $("publish").addEventListener("click", function(){
+    if(WORKER_URL){
+      var b = this;
+      b.disabled = true;
+      setStatus("Publishing…");
+      publishViaWorker(b);
+      return;
+    }
     var c = cfg();
     if(!c.owner || !c.repo || !c.token){
       $("setup").open = true;
