@@ -7,7 +7,7 @@
   "perPage": 8,
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-07-26T11:45:01.695Z",
+  "updated": "2026-07-26T22:47:16.908Z",
   "taps": [
     {
       "num": 1,
@@ -19,10 +19,10 @@
       "color": "#FFCA5A",
       "srm": 3,
       "ready": "",
+      "guest": true,
       "icon": "bottle",
       "level": 100,
-      "status": "pouring",
-      "guest": true
+      "status": "pouring"
     },
     {
       "num": 2,
@@ -34,6 +34,7 @@
       "color": "#FFD878",
       "srm": 2,
       "ready": "",
+      "guest": false,
       "icon": "pint",
       "level": 100,
       "status": "pouring"
@@ -48,6 +49,7 @@
       "color": "#5E0B00",
       "srm": 30,
       "ready": "",
+      "guest": false,
       "icon": "pint",
       "level": 100,
       "status": "pouring"
@@ -62,6 +64,7 @@
       "color": "#F39C00",
       "srm": 7,
       "ready": "",
+      "guest": false,
       "icon": "hop",
       "level": 100,
       "status": "pouring"
@@ -76,6 +79,7 @@
       "color": "#FFD878",
       "srm": 2,
       "ready": "",
+      "guest": false,
       "icon": "mug",
       "level": 100,
       "status": "pouring"
@@ -90,6 +94,7 @@
       "color": "#FFD878",
       "srm": 2,
       "ready": "",
+      "guest": false,
       "icon": "wheat",
       "level": 100,
       "status": "pouring"
@@ -104,6 +109,7 @@
       "color": "#e8b3c8",
       "srm": null,
       "ready": "",
+      "guest": false,
       "icon": "can",
       "level": 100,
       "status": "pouring"
@@ -118,21 +124,8 @@
       "color": "#FFCA5A",
       "srm": 3,
       "ready": "",
+      "guest": false,
       "icon": "bottle",
-      "level": 100,
-      "status": "pouring",
-      "guest": true
-    },
-    {
-      "num": 9,
-      "name": "",
-      "style": "",
-      "abv": "",
-      "ibu": "",
-      "notes": "",
-      "color": "#F8A600",
-      "srm": 6,
-      "icon": "pint",
       "level": 100,
       "status": "pouring"
     }
