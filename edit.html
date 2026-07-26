@@ -77,10 +77,30 @@
   .row{display:flex;gap:14px;flex-wrap:wrap}
   .row>.field{flex:1 1 150px;margin-bottom:11px}
 
-  /* ---------- colour swatches ---------- */
-  .swatches{display:flex;gap:9px;flex-wrap:wrap}
+  /* ---------- SRM colour spectrum ---------- */
+  .srmwrap{border:2px solid var(--line);border-radius:12px;padding:10px;background:#fffdf9}
+  .srmstrip{display:flex;flex-wrap:wrap;gap:3px}
+  .srm{
+    width:34px;height:40px;border-radius:6px;border:3px solid transparent;padding:0;
+    cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.22);
+    font-size:11px;font-weight:700;line-height:1;
+    display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;
+  }
+  .srm.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
+  .srmlabel{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    margin-top:9px;font-size:15px;color:var(--muted);
+  }
+  .srmchip{
+    width:34px;height:34px;border-radius:8px;flex:0 0 auto;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);
+  }
+  .srmval{font-weight:700;color:var(--ink);font-size:17px}
+  .srmother{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+  .srmother .cap{font-size:13px;font-weight:700;letter-spacing:.06em;
+                 text-transform:uppercase;color:var(--muted)}
   .sw{
-    width:42px;height:42px;border-radius:10px;border:3px solid transparent;
+    width:38px;height:38px;border-radius:9px;border:3px solid transparent;
     cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18);padding:0;
   }
   .sw.on{border-color:var(--ink)}
@@ -319,11 +339,24 @@
   "use strict";
 
   var DRAFT_KEY = "tapdraft.v1", CFG_KEY = "tapcfg.v1";
+  /* Non-SRM colours, for fruit beers and sours that the scale doesn't describe. */
   var COLORS = [
-    ["#f7e5a8","Pale straw"], ["#f2d16b","Gold"],   ["#e0a63a","Amber"],
-    ["#c9761f","Copper"],     ["#a04f18","Red"],    ["#7a3b16","Brown"],
-    ["#4a2410","Dark brown"], ["#2a1508","Black"],  ["#e8b3c8","Fruit / sour"]
+    ["#e8b3c8","Pink / berry"], ["#c4467a","Raspberry"],
+    ["#8e3b6b","Plum"],         ["#b8324a","Cherry"]
   ];
+
+  /* The SRM spectrum, 1-40. Numbers are shown on the darker half in cream. */
+  function srmButtons(t){
+    var out = "", i, hex, sel;
+    for(i = 1; i <= 40; i++){
+      hex = window.SRM[i];
+      sel = (Number(t.srm) === i) ? " on" : "";
+      out += '<button class="srm' + sel + '" data-srm="' + i + '" title="SRM ' + i +
+             ' - ' + window.srmName(i) + '" style="background:' + hex +
+             ';color:' + (i >= 14 ? "rgba(255,240,215,.85)" : "rgba(0,0,0,.5)") + '">' + i + '</button>';
+    }
+    return out;
+  }
 
   var $ = function(id){ return document.getElementById(id); };
   var data = null, published = null, saveTimer = null;
@@ -379,7 +412,7 @@
   /* ---------------- render ---------------- */
   function blankTap(n){
     return { num:n, name:"", style:"", abv:"", ibu:"", notes:"",
-             color:"#e0a63a", icon:"pint", level:100, status:"pouring" };
+             color:window.SRM[6], srm:6, icon:"pint", level:100, status:"pouring" };
   }
 
   /* ---------------- logo ---------------- */
@@ -559,11 +592,22 @@
           }).join("") +
         '</div></div>' +
 
-        '<div class="field"><label>Beer colour</label><div class="swatches">' +
-          COLORS.map(function(c){
-            return '<button class="sw' + (c[0].toLowerCase() === String(t.color).toLowerCase() ? " on" : "") +
-                   '" style="background:' + c[0] + '" data-color="' + c[0] + '" title="' + c[1] + '"></button>';
-          }).join("") +
+        '<div class="field"><label>Beer colour — SRM</label><div class="srmwrap">' +
+          '<div class="srmstrip">' +
+            srmButtons(t) +
+          '</div>' +
+          '<div class="srmlabel">' +
+            '<div class="srmchip" style="background:' + esc(t.color || "#e0a63a") + '"></div>' +
+            (t.srm ? '<span class="srmval">SRM ' + esc(t.srm) + '</span><span>' +
+                     esc(window.srmName(Number(t.srm))) + '</span>'
+                   : '<span class="srmval">Custom colour</span>') +
+          '</div>' +
+          '<div class="srmother"><span class="cap">Fruit &amp; sour</span>' +
+            COLORS.map(function(c){
+              return '<button class="sw' + (!t.srm && c[0].toLowerCase() === String(t.color).toLowerCase() ? " on" : "") +
+                     '" style="background:' + c[0] + '" data-color="' + c[0] + '" title="' + c[1] + '"></button>';
+            }).join("") +
+          '</div>' +
         '</div></div>' +
 
         '<div class="field"><label>How much is left in the keg?</label>' +
@@ -639,6 +683,12 @@
     var card = e.target.closest(".card"); if(!card) return;
     var i = Number(card.dataset.i);
 
+    if(btn.dataset.srm){
+      var srmN = Number(btn.dataset.srm);
+      data.taps[i].srm = srmN;
+      data.taps[i].color = window.SRM[srmN];
+      renderTaps(); touched(); return;
+    }
     if(btn.dataset.icon != null){
       data.taps[i].icon = btn.dataset.icon;
       var ics = card.querySelectorAll(".ic");
@@ -648,10 +698,8 @@
     }
     if(btn.dataset.color){
       data.taps[i].color = btn.dataset.color;
-      var sws = card.querySelectorAll(".sw");
-      for(var k = 0; k < sws.length; k++) sws[k].classList.remove("on");
-      btn.classList.add("on");
-      touched(); return;
+      data.taps[i].srm = null;                 /* not on the SRM scale */
+      renderTaps(); touched(); return;
     }
     if(btn.dataset.level != null){
       var lv = Number(btn.dataset.level);
@@ -823,6 +871,7 @@
         ibu: t.ibu == null ? "" : String(t.ibu),
         notes: t.notes || "",
         color: t.color || "#e0a63a",
+        srm: t.srm ? Number(t.srm) : null,
         icon: t.icon || "",
         level: Number(t.level) || 0,
         status: t.status || "pouring"

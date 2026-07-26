@@ -391,6 +391,7 @@
     var stats = "";
     if(t.abv) stats += '<div class="stat"><div class="v">' + esc(t.abv) + '%</div><div class="k">ABV</div></div>';
     if(t.ibu) stats += '<div class="stat"><div class="v">' + esc(t.ibu) + '</div><div class="k">IBU</div></div>';
+    if(t.srm) stats += '<div class="stat"><div class="v">' + esc(t.srm) + '</div><div class="k">SRM</div></div>';
     if(badge) stats += badge;
 
     var shown = (coming || kicked) ? 0 : level;

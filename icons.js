@@ -54,3 +54,26 @@ window.beerIconSVG = function(key, extraClass){
   }
   return "";
 };
+
+/* ---- SRM beer colour spectrum (Standard Reference Method) ----
+   1 = pale straw, 40 = black. These are the standard chart values. */
+window.SRM = {
+  1:"#FFE699",2:"#FFD878",3:"#FFCA5A",4:"#FFBF42",5:"#FBB123",6:"#F8A600",7:"#F39C00",8:"#EA8F00",
+  9:"#E58500",10:"#DE7C00",11:"#D77200",12:"#CF6900",13:"#CB6200",14:"#C35900",15:"#BB5100",16:"#B54C00",
+  17:"#B04500",18:"#A63E00",19:"#A13700",20:"#9B3200",21:"#952D00",22:"#8E2900",23:"#882300",24:"#821E00",
+  25:"#7B1A00",26:"#771900",27:"#701400",28:"#6A0E00",29:"#660D00",30:"#5E0B00",31:"#5A0A02",32:"#560903",
+  33:"#520907",34:"#4C0505",35:"#470606",36:"#440607",37:"#3F0708",38:"#3B0607",39:"#3A070B",40:"#36080A",
+};
+
+/* Rough style guide, shown next to the number so he doesn't need a chart. */
+window.SRM_NAMES = [
+  [1,2,"Pale straw"],[3,4,"Straw"],[5,6,"Pale gold"],[7,9,"Deep gold"],
+  [10,13,"Pale amber"],[14,17,"Amber"],[18,21,"Deep amber"],[22,26,"Copper"],
+  [27,32,"Deep copper"],[33,37,"Brown"],[38,40,"Black"]
+];
+
+window.srmName = function(n){
+  var t = window.SRM_NAMES, i;
+  for(i = 0; i < t.length; i++){ if(n >= t[i][0] && n <= t[i][1]) return t[i][2]; }
+  return "";
+};
