@@ -7,7 +7,7 @@
   "perPage": 8,
   "rotateSeconds": 20,
   "hideKicked": false,
-  "updated": "2026-07-25T08:41:30.879Z",
+  "updated": "2026-07-26T06:57:15.656Z",
   "taps": [
     {
       "num": 1,
@@ -17,6 +17,7 @@
       "ibu": "65",
       "notes": "Grapefruit and pine, dry bitter finish.",
       "color": "#e8b3c8",
+      "srm": null,
       "icon": "hop",
       "level": 100,
       "status": "pouring"
@@ -29,6 +30,7 @@
       "ibu": "18",
       "notes": "Light, crisp and easy. The lawnmower beer.",
       "color": "#f2d16b",
+      "srm": null,
       "icon": "growler",
       "level": 100,
       "status": "pouring"
@@ -41,6 +43,7 @@
       "ibu": "24",
       "notes": "Toasty malt, caramel, a little nutty.",
       "color": "#7a3b16",
+      "srm": null,
       "icon": "pint",
       "level": 100,
       "status": "pouring"
@@ -53,6 +56,7 @@
       "ibu": "32",
       "notes": "Coffee, dark chocolate, smooth as silk.",
       "color": "#a04f18",
+      "srm": null,
       "icon": "keg",
       "level": 100,
       "status": "pouring"
@@ -65,6 +69,7 @@
       "ibu": "20",
       "notes": "Local wildflower honey, finishes clean.",
       "color": "#eec24a",
+      "srm": null,
       "icon": "growler",
       "level": 100,
       "status": "pouring"
@@ -77,6 +82,7 @@
       "ibu": "23",
       "notes": "Bready malt, clean lager finish. Lagering now.",
       "color": "#c9761f",
+      "srm": null,
       "icon": "mug",
       "level": 100,
       "status": "pouring"
@@ -89,6 +95,7 @@
       "ibu": "1",
       "notes": "",
       "color": "#e0a63a",
+      "srm": null,
       "icon": "pint",
       "level": 100,
       "status": "pouring"
@@ -101,11 +108,13 @@
       "ibu": "50",
       "notes": "",
       "color": "#e0a63a",
+      "srm": null,
       "icon": "bottle",
       "level": 100,
       "status": "pouring"
     }
   ],
   "rotate": 0,
-  "bg": "charcoal"
+  "bg": "charcoal",
+  "logoSize": "m"
 }
