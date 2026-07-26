@@ -837,6 +837,11 @@
               '<div class="hint">The TV counts down — &ldquo;Ready in 12 days&rdquo;.</div></div>'
           : '') +
 
+        '<div class="checkline" style="margin:4px 0 11px">' +
+          '<input type="checkbox" id="guest' + i + '" data-f="guest"' + (t.guest ? " checked" : "") + '>' +
+          '<label for="guest' + i + '">Guest beer &mdash; not one of mine</label>' +
+        '</div>' +
+
         '<div class="field" style="margin-bottom:0"><label>Status</label>' +
           '<select data-f="status">' +
             '<option value="pouring"' + (t.status === "pouring" ? " selected" : "") + '>Pouring now</option>' +
@@ -879,6 +884,10 @@
     var card = e.target.closest(".card"); if(!card) return;
     var i = Number(card.dataset.i), f = e.target.dataset.f;
     if(f == null) return;
+    if(f === "guest"){
+      data.taps[i].guest = !!e.target.checked;
+      touched(); return;
+    }
     if(f === "level"){
       data.taps[i].level = Number(e.target.value);
       card.querySelector(".levelval").textContent = e.target.value + "%";
@@ -891,6 +900,11 @@
   });
 
   $("taps").addEventListener("change", function(e){
+    if(e.target.dataset.f === "guest"){
+      var gcard = e.target.closest(".card"); if(!gcard) return;
+      data.taps[Number(gcard.dataset.i)].guest = !!e.target.checked;
+      touched(); return;
+    }
     if(e.target.dataset.f !== "status") return;
     var card = e.target.closest(".card"); if(!card) return;
     var i = Number(card.dataset.i);
@@ -1114,6 +1128,7 @@
         color: t.color || "#e0a63a",
         srm: t.srm ? Number(t.srm) : null,
         ready: t.ready || "",
+        guest: !!t.guest,
         icon: t.icon || "",
         level: Number(t.level) || 0,
         status: t.status || "pouring"

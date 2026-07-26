@@ -243,6 +243,16 @@
   .namerow{display:flex;align-items:center;gap:calc((1.15 * var(--u)) * var(--s));min-width:0}
   .ico{flex:0 0 auto;color:var(--gold);
        width:calc((3.9 * var(--u)) * var(--s));height:calc((3.9 * var(--u)) * var(--s))}
+  .guest{
+    flex:0 0 auto;
+    font-family:var(--cond);font-weight:600;
+    font-size:calc(1.5 * var(--u) * var(--s));
+    letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
+    border:1px solid rgba(226,197,140,.28);
+    border-radius:calc(.45 * var(--u));
+    padding:calc(.3 * var(--u)) calc(.85 * var(--u));
+    white-space:nowrap;
+  }
   .name{
     flex:1 1 auto;min-width:0;
     font-family:var(--serif);font-weight:700;
@@ -422,10 +432,20 @@
     else if(kicked)      badge = '<div class="badge kicked">Kicked</div>';
     else if(level <= 20) badge = '<div class="badge low">Almost Gone</div>';
 
+    /* Blank means "not entered" - leave it off entirely.
+       A zero IBU or SRM tells nobody anything either, so that goes too. A zero
+       ABV is kept, because "0%" is a genuine claim about a drink. */
+    function has(v){ return String(v == null ? "" : v).trim() !== ""; }
+    function nonZero(v){
+      if(!has(v)) return false;
+      var num = parseFloat(String(v).replace(/[^0-9.\-]/g, ""));
+      return isNaN(num) ? true : num !== 0;
+    }
+
     var stats = "";
-    if(t.abv) stats += '<div class="stat"><div class="v">' + esc(t.abv) + '%</div><div class="k">ABV</div></div>';
-    if(t.ibu) stats += '<div class="stat"><div class="v">' + esc(t.ibu) + '</div><div class="k">IBU</div></div>';
-    if(t.srm) stats += '<div class="stat"><div class="v">' + esc(t.srm) + '</div><div class="k">SRM</div></div>';
+    if(has(t.abv))     stats += '<div class="stat"><div class="v">' + esc(String(t.abv).trim()) + '%</div><div class="k">ABV</div></div>';
+    if(nonZero(t.ibu)) stats += '<div class="stat"><div class="v">' + esc(String(t.ibu).trim()) + '</div><div class="k">IBU</div></div>';
+    if(nonZero(t.srm)) stats += '<div class="stat"><div class="v">' + esc(t.srm) + '</div><div class="k">SRM</div></div>';
     if(badge) stats += badge;
 
     var shown = (coming || kicked) ? 0 : level;
@@ -441,9 +461,10 @@
           '<div class="namerow">' +
             (window.beerIconSVG ? window.beerIconSVG(t.icon, "ico") : "") +
             '<div class="name">' + esc(t.name || "Untitled") + '</div>' +
+            (t.guest ? '<div class="guest">Guest</div>' : '') +
           '</div>' +
-          (t.style ? '<div class="style">' + esc(t.style) + '</div>' : '') +
-          (t.notes ? '<div class="notes">' + esc(t.notes) + '</div>' : '') +
+          (has(t.style) ? '<div class="style">' + esc(String(t.style).trim()) + '</div>' : '') +
+          (has(t.notes) ? '<div class="notes">' + esc(String(t.notes).trim()) + '</div>' : '') +
         '</div>' +
         '<div class="stats">' + stats + '</div>' +
       '</div>';
