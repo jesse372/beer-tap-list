@@ -175,10 +175,10 @@ window.GLASSWARE = {
  "chalice": {
   "label": "Goblet",
   "scale": 1.0,
-  "top": 9.5,
-  "bot": 39,
-  "body": "M7 9 H33 V26 A13 13 0 0 1 7 26 Z",
-  "extra": "M20 39 V47.5 M11.5 58 H28.5 Q28.5 47.5 20 47.5 Q11.5 47.5 11.5 58 Z"
+  "top": 10.5,
+  "bot": 35,
+  "body": "M6 10 H34 V21 A14 14 0 0 1 6 21 Z",
+  "extra": "M20 35 V45.5 M10 57.5 H30 Q30 45.5 20 45.5 Q10 45.5 10 57.5 Z"
  },
  "pilsner": {
   "label": "Pilsner",
