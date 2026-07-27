@@ -459,11 +459,12 @@
       return isNaN(num) ? true : num !== 0;
     }
 
-    var stats = "";
+    /* Badge goes FIRST so the ABV/IBU/SRM columns stay hard right and line up
+       across every card, the same way the GUEST chip sits ahead of them. */
+    var stats = badge;
     if(has(t.abv))     stats += '<div class="stat"><div class="v">' + esc(String(t.abv).trim()) + '%</div><div class="k">ABV</div></div>';
     if(nonZero(t.ibu)) stats += '<div class="stat"><div class="v">' + esc(String(t.ibu).trim()) + '</div><div class="k">IBU</div></div>';
     if(nonZero(t.srm)) stats += '<div class="stat"><div class="v">' + esc(t.srm) + '</div><div class="k">SRM</div></div>';
-    if(badge) stats += badge;
 
     var shown = (coming || kicked) ? 0 : level;
 
