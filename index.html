@@ -344,6 +344,31 @@
   }
   .screen{-webkit-transition:-webkit-transform 1.1s ease;transition:transform 1.1s ease}
 
+  #histgag{
+    position:fixed;left:50%;top:50%;z-index:9600;display:none;
+    -webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);
+    width:76vw;max-width:1180px;background:#fff;border-radius:10px;overflow:hidden;
+    box-shadow:0 3vh 9vh rgba(0,0,0,.8);
+    color:#202124;font-family:-apple-system,Arial,sans-serif;
+  }
+  #histgag.on{display:block}
+  #histgag .hbar{background:#dee1e6;padding:.9vh 1.4vh 0;display:flex;align-items:flex-end;gap:.7vh}
+  #histgag .htab{background:#fff;border-radius:.9vh .9vh 0 0;padding:.9vh 1.8vh;font-size:1.4vh;
+                 display:flex;gap:.9vh;align-items:center}
+  #histgag .hdot{width:1.5vh;height:1.5vh;border-radius:.35vh;background:#4285f4;display:inline-block}
+  #histgag .hurl{padding:1.1vh 1.8vh;display:flex;align-items:center;gap:1.2vh;border-bottom:1px solid #e8eaed;color:#5f6368;font-size:1.5vh}
+  #histgag .hbox{flex:1;background:#f1f3f4;border-radius:1.8vh;padding:.8vh 1.6vh;color:#3c4043}
+  #histgag h3{padding:1.6vh 3vh .4vh;font-size:2.4vh;font-weight:500}
+  #histgag .hday{padding:0 3vh 1.4vh;color:#5f6368;font-size:1.4vh}
+  #histgag .hrows{padding:0 3vh 2.2vh}
+  #histgag .hrow{display:flex;align-items:center;gap:1.6vh;padding:1vh 0;border-bottom:1px solid #f1f3f4;font-size:1.65vh}
+  #histgag .htime{color:#5f6368;font-size:1.4vh;width:8vh;flex:0 0 auto}
+  #histgag .hfav{width:1.8vh;height:1.8vh;border-radius:50%;background:#dadce0;flex:0 0 auto}
+  #histgag .hred .hfav{background:#202124}
+  #histgag .htitle{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #histgag .hsite{color:#5f6368;font-size:1.4vh}
+  #histgag .blk{background:#202124;color:#202124;border-radius:.2vh;letter-spacing:.2vh}
+
   #gagbanner{
     position:fixed;left:0;right:0;top:36%;z-index:9500;display:none;
     text-align:center;pointer-events:none;
@@ -405,6 +430,13 @@
      it is invisible and costs ~2KB. -->
 <div id="rain" aria-hidden="true"></div>
 <div id="gagbanner" aria-hidden="true"><span></span></div>
+<div id="histgag" aria-hidden="true">
+  <div class="hbar"><div class="htab"><span class="hdot"></span>History</div></div>
+  <div class="hurl"><span>&#8592; &#8594; &#8635;</span><div class="hbox">chrome://history</div></div>
+  <h3>History</h3>
+  <div class="hday" id="histday"></div>
+  <div class="hrows" id="histrows"></div>
+</div>
 <div id="dimveil"></div>
 
 <video id="awake" muted loop playsinline webkit-playsinline preload="auto"
@@ -847,7 +879,43 @@
       done(4200);
     }
 
-    var GAGS = [gagDoodles, gagDrain, gagFlip, gagNames, gagBanner];
+    /* 6 - somebody's browsing history, briefly */
+    var HIST = [
+      ["9:42 pm", "how much beer is too much beer", "google.com"],
+      ["9:44 pm", "is it normal to name your kegerator", "reddit.com"],
+      [null], [null], [null],
+      ["10:03 pm", "can you drink stout for breakfast", "google.com"],
+      [null],
+      ["10:15 pm", "how to tell wife i bought another keg", "wikihow.com"],
+      ["10:16 pm", "are mullets still cool 2026", "google.com"],
+      ["10:31 pm", "how to delete browsing history", "google.com"]
+    ];
+    var REDT = ["9:51 pm","9:52 pm","9:56 pm","10:09 pm"];
+    function gagHistory(){
+      var box = el("histgag");
+      if(!box){ done(400); return; }
+      var day = new Date();
+      el("histday").textContent = "Today \u2014 " +
+        day.toLocaleDateString(undefined, {weekday:"long", day:"numeric", month:"long", year:"numeric"});
+      var r = 0;
+      el("histrows").innerHTML = HIST.map(function(h){
+        if(h[0] === null){
+          var t = REDT[r++] || "9:59 pm";
+          return '<div class="hrow hred"><span class="htime">' + t + '</span><span class="hfav"></span>' +
+                 '<span class="htitle"><span class="blk">' +
+                 "\u2588".repeat(26) + '</span></span>' +
+                 '<span class="hsite"><span class="blk">' + "\u2588".repeat(10) + '</span></span></div>';
+        }
+        return '<div class="hrow"><span class="htime">' + esc(h[0]) + '</span><span class="hfav"></span>' +
+               '<span class="htitle">' + esc(h[1]) + '</span>' +
+               '<span class="hsite">' + esc(h[2]) + '</span></div>';
+      }).join("");
+      box.className = "on";
+      setTimeout(function(){ box.className = ""; }, 5000);
+      done(5600);
+    }
+
+    var GAGS = [gagDoodles, gagDrain, gagFlip, gagNames, gagBanner, gagHistory];
 
     function runGag(n){
       if(running || !data) return;
