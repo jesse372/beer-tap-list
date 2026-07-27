@@ -77,3 +77,12 @@ window.srmName = function(n){
   for(i = 0; i < t.length; i++){ if(n >= t[i][0] && n <= t[i][1]) return t[i][2]; }
   return "";
 };
+
+/* Strictly for the father-in-law. */
+window.DOODLE =
+  '<svg viewBox="0 0 44 64" fill="none" stroke="currentColor" stroke-width="3.4" ' +
+  'stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M15 46V21a7 7 0 0 1 14 0v25"/>' +
+    '<circle cx="12" cy="52" r="8"/>' +
+    '<circle cx="32" cy="52" r="8"/>' +
+  '</svg>';

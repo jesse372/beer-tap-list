@@ -311,6 +311,35 @@
     text-align:center;font-size:calc(3.2 * var(--u));color:var(--muted);padding:calc(6 * var(--u));line-height:1.55;
   }
 
+  /* the immature bit */
+  #laugh{
+    font-family:var(--cond);font-weight:500;
+    font-size:calc(1.75 * var(--u));
+    letter-spacing:.2em;text-transform:uppercase;
+    color:var(--dim);background:transparent;
+    border:1px solid rgba(226,197,140,.22);
+    border-radius:calc(.5 * var(--u));
+    padding:calc(.5 * var(--u)) calc(1.2 * var(--u));
+    cursor:pointer;
+  }
+  #laugh:focus{outline:none;border-color:var(--gold);color:var(--gold)}
+  #laugh[disabled]{opacity:.35}
+
+  #rain{
+    position:fixed;left:0;top:0;right:0;bottom:0;
+    pointer-events:none;z-index:9000;overflow:hidden;display:none;
+  }
+  #rain.on{display:block}
+  .drop{
+    position:absolute;top:0;color:var(--cream);opacity:.9;
+    animation-name:fall;animation-timing-function:linear;animation-fill-mode:forwards;
+  }
+  .drop svg{display:block;width:100%;height:auto}
+  @keyframes fall{
+    from{transform:translateY(-20vh) rotate(0deg)}
+    to  {transform:translateY(115vh) rotate(var(--spin,360deg))}
+  }
+
   #fshint{
     position:absolute;right:calc(2.6 * var(--u));bottom:calc(2.6 * var(--u));z-index:50;
     background:rgba(227,173,66,.95);color:#1a1408;
@@ -343,6 +372,7 @@
 
   <footer>
     <div id="foot-left">&nbsp;</div>
+    <button id="laugh" type="button">Want a laugh?</button>
     <div class="dots" id="dots"></div>
   </footer>
 
@@ -351,6 +381,7 @@
 
 <!-- 2x2 silent loop. Playing video is what actually stops Fire TV sleeping;
      it is invisible and costs ~2KB. -->
+<div id="rain" aria-hidden="true"></div>
 <div id="dimveil"></div>
 
 <video id="awake" muted loop playsinline webkit-playsinline preload="auto"
@@ -674,6 +705,47 @@
 
   load();
   setInterval(load, 60000);
+
+  /* ---------- the immature bit ---------- */
+  (function(){
+    var btn = el("laugh"), wrap = el("rain");
+    if(!btn || !wrap) return;
+
+    function shower(){
+      if(btn.disabled) return;
+      btn.disabled = true;
+      wrap.innerHTML = "";
+      wrap.className = "on";
+
+      var doodle = window.DOODLE || "";
+      for(var i = 0; i < 60; i++){
+        var d = document.createElement("div");
+        d.className = "drop";
+        d.style.left = (Math.random() * 97) + "vw";
+        d.style.width = (26 + Math.random() * 44) + "px";
+        d.style.animationDuration = (2.4 + Math.random() * 3.0) + "s";
+        d.style.animationDelay = (Math.random() * 6.5) + "s";
+        d.style.setProperty("--spin", (Math.random() * 1440 - 720).toFixed(0) + "deg");
+        d.innerHTML = doodle;
+        wrap.appendChild(d);
+      }
+
+      setTimeout(function(){
+        wrap.className = "";
+        wrap.innerHTML = "";
+        btn.disabled = false;        /* ready to go again */
+      }, 10000);
+    }
+
+    /* Don't let the press also toggle fullscreen. */
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      shower();
+    }, false);
+    btn.addEventListener("keydown", function(e){
+      if(e.keyCode === 13 || e.keyCode === 32){ e.stopPropagation(); e.preventDefault(); shower(); }
+    }, false);
+  })();
 
   /* ---------- keep the screen awake ----------
      Two independent mechanisms, because Fire TV sleeps at the OS level and

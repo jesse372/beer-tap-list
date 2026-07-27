@@ -168,22 +168,6 @@
   .status.ok{color:var(--green);font-weight:600}
   .status.err{color:var(--red);font-weight:600}
 
-  /* ---------- the immature bit ---------- */
-  #rain{
-    position:fixed;left:0;top:0;right:0;bottom:0;
-    pointer-events:none;z-index:9999;overflow:hidden;display:none;
-  }
-  #rain.on{display:block}
-  .drop{
-    position:absolute;top:0;color:#241d15;opacity:.8;
-    animation-name:fall;animation-timing-function:linear;animation-fill-mode:forwards;
-  }
-  .drop svg{display:block;width:100%;height:auto}
-  @keyframes fall{
-    from{transform:translateY(-20vh) rotate(0deg)}
-    to  {transform:translateY(115vh) rotate(var(--spin,360deg))}
-  }
-  .laughbar{margin:26px 0 10px;text-align:center}
 
   /* ---------- misc ---------- */
   .note{background:#fdf6e6;border:1px solid #ecdcb8;border-radius:12px;padding:14px 16px;
@@ -430,13 +414,7 @@
     </div>
   </details>
 
-  <div class="laughbar">
-    <button class="btn-ghost" id="laugh">Want a laugh?</button>
-  </div>
-
 </div>
-
-<div id="rain" aria-hidden="true"></div>
 
 <div class="publishbar">
   <div class="wrap">
@@ -1301,44 +1279,6 @@
   window.addEventListener("beforeunload", function(e){
     if(JSON.stringify(data) !== JSON.stringify(published)){ e.preventDefault(); e.returnValue = ""; }
   });
-
-  /* ---------------- strictly for the father-in-law ---------------- */
-  var DOODLE =
-    '<svg viewBox="0 0 44 64" fill="none" stroke="currentColor" stroke-width="3.4" ' +
-    'stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M15 46V21a7 7 0 0 1 14 0v25"/>' +
-      '<circle cx="12" cy="52" r="8"/>' +
-      '<circle cx="32" cy="52" r="8"/>' +
-    '</svg>';
-
-  (function(){
-    var btn = $("laugh"), wrap = $("rain");
-    if(!btn || !wrap) return;
-
-    btn.addEventListener("click", function(){
-      btn.disabled = true;
-      wrap.innerHTML = "";
-      wrap.className = "on";
-
-      for(var i = 0; i < 60; i++){
-        var d = document.createElement("div");
-        d.className = "drop";
-        d.style.left = (Math.random() * 97) + "vw";
-        d.style.width = (20 + Math.random() * 34) + "px";
-        d.style.animationDuration = (2.4 + Math.random() * 3.0) + "s";
-        d.style.animationDelay = (Math.random() * 6.5) + "s";
-        d.style.setProperty("--spin", (Math.random() * 1440 - 720).toFixed(0) + "deg");
-        d.innerHTML = DOODLE;
-        wrap.appendChild(d);
-      }
-
-      setTimeout(function(){
-        wrap.className = "";
-        wrap.innerHTML = "";
-        btn.disabled = false;      /* ready to go again */
-      }, 10000);
-    });
-  })();
 
   /* ---------------- boot ---------------- */
   function normalize(json){
