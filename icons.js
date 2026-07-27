@@ -94,72 +94,112 @@ window.GLASSWARE = {
   "label": "Pint",
   "body": "M9 4 H31 L27.6 56.5 Q27.4 60 24 60 H16 Q12.6 60 12.4 56.5 Z",
   "top": 4,
-  "bot": 60
+  "bot": 60,
+  "scale": 0.973
  },
  "nonic": {
   "label": "Nonic",
   "body": "M9 4 H31 L30 17 Q32.5 19.5 29.6 22 L27.6 56.5 Q27.4 60 24 60 H16 Q12.6 60 12.4 56.5 L10.4 22 Q7.5 19.5 10 17 Z",
   "top": 4,
-  "bot": 60
+  "bot": 60,
+  "scale": 0.975
  },
  "mug": {
   "label": "Stein",
   "body": "M8 7 H28.5 V56.5 Q28.5 60 25 60 H11.5 Q8 60 8 56.5 Z",
   "extra": "M28.5 17 h3.5 a7 7 0 0 1 0 14 h-3.5",
   "top": 7,
-  "bot": 60
+  "bot": 60,
+  "scale": 0.922
  },
  "weizen": {
   "label": "Weizen",
   "body": "M12 4 H28 L29.4 21 Q31.5 33 27 42.5 L26.2 56.5 Q26 60 23 60 H17 Q14 60 13.8 56.5 L13 42.5 Q8.5 33 10.6 21 Z",
   "top": 4,
-  "bot": 60
+  "bot": 60,
+  "scale": 1.012
  },
  "tulip": {
   "label": "Tulip",
   "body": "M11 6 H29 Q31.5 21 25.8 28.5 Q24 30.8 24 34 H16 Q16 30.8 14.2 28.5 Q8.5 21 11 6 Z",
   "extra": "M20 34 V52 M11.5 58 H28.5 Q28.5 52 20 52 Q11.5 52 11.5 58",
   "top": 6.5,
-  "bot": 34
+  "bot": 34,
+  "scale": 1.069
  },
  "snifter": {
   "label": "Snifter",
   "body": "M9.5 12 Q9.5 33 20 35.5 Q30.5 33 30.5 12 Q30.5 9 20 9 Q9.5 9 9.5 12 Z",
   "extra": "M20 35.5 V50 M12 57 H28 Q28 50 20 50 Q12 50 12 57",
   "top": 9.5,
-  "bot": 35.5
+  "bot": 35.5,
+  "scale": 1.156
  },
  "goblet": {
   "label": "Goblet",
   "body": "M10 8 H30 Q30 28 22 33 H18 Q10 28 10 8 Z",
   "extra": "M20 33 V51 M11 58 H29 Q29 51 20 51 Q11 51 11 58",
   "top": 8.5,
-  "bot": 33
+  "bot": 33,
+  "scale": 1.111
  },
  "can": {
   "label": "Can",
   "body": "M10 5 H30 Q31.5 5 31.5 8 V56 Q31.5 60 30 60 H10 Q8.5 60 8.5 56 V8 Q8.5 5 10 5 Z",
   "top": 5,
-  "bot": 60
+  "bot": 60,
+  "scale": 0.874
  },
  "bottle": {
   "label": "Bottle",
   "body": "M16.5 4 H23.5 V13 Q23.5 16 25.5 18.5 Q28 22 28 26 V56.5 Q28 60 24.5 60 H15.5 Q12 60 12 56.5 V26 Q12 22 14.5 18.5 Q16.5 16 16.5 13 Z",
   "top": 4,
-  "bot": 60
+  "bot": 60,
+  "scale": 1.012
  },
  "growler": {
   "label": "Growler",
   "body": "M14 4 H26 V9.5 L28.6 13.6 Q30.5 17 30.5 21 V56 Q30.5 60 27 60 H13 Q9.5 60 9.5 56 V21 Q9.5 17 11.4 13.6 L14 9.5 Z",
   "extra": "M30.5 24 h2.5 a5 5 0 0 1 0 10 h-2.5",
   "top": 4,
-  "bot": 60
+  "bot": 60,
+  "scale": 0.925
+ },
+ "ipa": {
+  "label": "IPA",
+  "scale": 1.0,
+  "top": 4.5,
+  "bot": 59,
+  "body": "M9 4 H31 L29.6 17 Q28.4 25.5 24.2 29.5 Q27.6 32 24.2 34.5 Q27.6 37 24.2 39.5 Q27.6 42 24.2 44.5 V56 Q24.2 59.5 20 59.5 Q15.8 59.5 15.8 56 V44.5 Q12.4 42 15.8 39.5 Q12.4 37 15.8 34.5 Q12.4 32 15.8 29.5 Q11.6 25.5 10.4 17 Z"
+ },
+ "chalice": {
+  "label": "Chalice",
+  "scale": 1.0,
+  "top": 10.5,
+  "bot": 37.5,
+  "body": "M8.5 13 Q8.5 30 14 35 Q17 37.5 20 37.5 Q23 37.5 26 35 Q31.5 30 31.5 13 Q31.5 10 20 10 Q8.5 10 8.5 13 Z",
+  "extra": "M20 37.5 V49 M10.5 57.5 H29.5 Q29.5 49 20 49 Q10.5 49 10.5 57.5"
  }
 };
 
 /* Existing icon choices map onto a vessel. */
 window.GLASS_FOR = {pint:"pint", mug:"mug", bottle:"bottle", can:"can",
                     growler:"growler", keg:"mug", hop:"pint", wheat:"weizen", "":"pint"};
+
+/* Pick the right glass for a beer: style first, then colour, then his choice. */
+window.glassFor = function(t){
+  var txt = ((t.style || "") + " " + (t.name || "")).toLowerCase();
+  var srm = Number(t.srm) || 0;
+
+  // IPAs and NEIPAs get the IPA glass
+  if(/\bneipa\b|\bipa\b|india pale|hazy pale/.test(txt)) return "ipa";
+
+  // Dark beers get the short round goblet
+  if(srm >= 24) return "chalice";
+  if(/stout|porter|schwarz|dunkel|brown ale|dark ale|black ale|barrel[- ]aged|imperial/.test(txt)) return "chalice";
+
+  return window.GLASS_FOR[t.icon] || t.icon || "pint";
+};
 
 /* Build the filled glass for a beer. level 0-100. */
 window.glassSVG = function(key, level, color, uid){
@@ -170,11 +210,16 @@ window.glassSVG = function(key, level, color, uid){
   var foam = lv > 6
     ? '<rect x="0" y="' + (y - 0.2).toFixed(1) + '" width="40" height="2.6" fill="#fffdf7" clip-path="url(#' + id + ')"/>'
     : '';
+  var sc = g.scale || 1;
+  /* scale about the base so all vessels share a footing, and keep the stroke
+     visually constant rather than growing with the shape */
+  var sw = (1.9 / sc).toFixed(2);
   return '<svg class="glasssvg" viewBox="0 0 40 64" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' +
     '<defs><clipPath id="' + id + '"><path d="' + g.body + '"/></clipPath></defs>' +
-    (lv > 0 ? '<rect x="0" y="' + y.toFixed(1) + '" width="40" height="64" fill="' + color + '" clip-path="url(#' + id + ')"/>' : '') +
-    foam +
-    '<path d="' + g.body + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>' +
-    (g.extra ? '<path d="' + g.extra + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' : '') +
-    '</svg>';
+    '<g transform="translate(20 60) scale(' + sc + ') translate(-20 -60)">' +
+      (lv > 0 ? '<rect x="0" y="' + y.toFixed(1) + '" width="40" height="64" fill="' + color + '" clip-path="url(#' + id + ')"/>' : '') +
+      foam +
+      '<path d="' + g.body + '" fill="none" stroke="currentColor" stroke-width="' + sw + '" stroke-linejoin="round"/>' +
+      (g.extra ? '<path d="' + g.extra + '" fill="none" stroke="currentColor" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round"/>' : '') +
+    '</g></svg>';
 };

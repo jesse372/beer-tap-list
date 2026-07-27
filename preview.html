@@ -483,7 +483,7 @@
       '<div class="tap' + (kicked || coming ? " out" : "") + '" style="--beer:' + esc(color) + '">' +
         '<div class="numbadge">' + esc(t.num != null ? t.num : "") + '</div>' +
         '<div class="glass shaped">' +
-          (window.glassSVG ? window.glassSVG(t.icon, shown, color, (t.num != null ? t.num : "x")) : "") +
+          (window.glassSVG ? window.glassSVG(window.glassFor ? window.glassFor(t) : t.icon, shown, color, (t.num != null ? t.num : "x")) : "") +
         '</div>' +
         '<div class="body">' +
           '<div class="namerow">' +
