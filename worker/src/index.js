@@ -117,8 +117,9 @@ export default {
 
     // The TV polls this a few times a minute; it only ever reads a timestamp.
     if (route === "/laugh" && request.method === "GET") {
-      const t = (await env.SIGNAL.get("laugh")) || "0";
-      return json({ t: Number(t) }, 200, {
+      const raw = (await env.SIGNAL.get("laugh")) || "0:0";
+      const [t, n] = raw.split(":");
+      return json({ t: Number(t), n: Number(n || 0) }, 200, {
         ...cors,
         "Cache-Control": "no-store",
       });
@@ -148,8 +149,11 @@ export default {
 
     // Fired from the laptop; the TV picks it up on its next poll.
     if (route === "/laugh") {
-      await env.SIGNAL.put("laugh", String(Date.now()));
-      return json({ ok: true }, 200, cors);
+      // Bump a counter alongside the timestamp so every screen runs the same gag.
+      const prev = (await env.SIGNAL.get("laugh")) || "0:0";
+      const n = (Number(prev.split(":")[1] || 0) + 1) % 1000;
+      await env.SIGNAL.put("laugh", Date.now() + ":" + n);
+      return json({ ok: true, n: n }, 200, cors);
     }
 
     if (route === "/publish") {

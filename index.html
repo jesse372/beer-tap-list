@@ -339,6 +339,30 @@
     to  {transform:translateY(115vh) rotate(var(--spin,360deg))}
   }
 
+  body.gagflip .screen{
+    -webkit-transform:rotate(180deg);transform:rotate(180deg);
+  }
+  .screen{-webkit-transition:-webkit-transform 1.1s ease;transition:transform 1.1s ease}
+
+  #gagbanner{
+    position:fixed;left:0;right:0;top:36%;z-index:9500;display:none;
+    text-align:center;pointer-events:none;
+  }
+  #gagbanner.on{display:block}
+  #gagbanner span{
+    display:inline-block;
+    font-family:var(--cond);font-weight:600;
+    font-size:calc(10 * var(--u));letter-spacing:.05em;text-transform:uppercase;
+    color:var(--gold);text-shadow:0 0 calc(3 * var(--u)) rgba(0,0,0,.9);
+    animation:sweep 3.4s ease-in-out;
+  }
+  @keyframes sweep{
+    0%{transform:translateX(-120vw) rotate(-6deg);opacity:0}
+    18%{transform:translateX(0) rotate(-2deg);opacity:1}
+    76%{transform:translateX(0) rotate(2deg);opacity:1}
+    100%{transform:translateX(120vw) rotate(6deg);opacity:0}
+  }
+
   #fshint{
     position:absolute;right:calc(2.6 * var(--u));bottom:calc(2.6 * var(--u));z-index:50;
     background:rgba(227,173,66,.95);color:#1a1408;
@@ -380,6 +404,7 @@
 <!-- 2x2 silent loop. Playing video is what actually stops Fire TV sleeping;
      it is invisible and costs ~2KB. -->
 <div id="rain" aria-hidden="true"></div>
+<div id="gagbanner" aria-hidden="true"><span></span></div>
 <div id="dimveil"></div>
 
 <video id="awake" muted loop playsinline webkit-playsinline preload="auto"
@@ -737,26 +762,25 @@
   })();
 
   /* ---------- the immature bit ----------
-     Triggered from the laptop, not from here. The board polls a tiny endpoint
-     and showers when the timestamp changes. */
+     Fired from the laptop. The Worker hands out a counter alongside the
+     timestamp, so every screen runs the same gag and each press moves on
+     to the next one. */
   (function(){
-    var wrap = el("rain");
+    var wrap = el("rain"), banner = el("gagbanner");
     if(!wrap) return;
 
     var SIGNAL_URL = "https://ontap-publish.madlad-taps.workers.dev/laugh";
     var POLL_MS = 3000;
-    var lastSeen = null;      /* null until the first read, so it can't fire on load */
-    var running = false;
+    var lastSeen = null, running = false;
 
-    function shower(){
-      if(running) return;
-      running = true;
-      wrap.innerHTML = "";
-      wrap.className = "on";
+    function done(ms){ setTimeout(function(){ running = false; }, ms); }
 
-      var doodle = window.DOODLE || "";
-      for(var i = 0; i < 60; i++){
-        var d = document.createElement("div");
+    /* 1 - the doodle shower */
+    function gagDoodles(){
+      wrap.innerHTML = ""; wrap.className = "on";
+      var doodle = window.DOODLE || "", i, d;
+      for(i = 0; i < 60; i++){
+        d = document.createElement("div");
         d.className = "drop";
         d.style.left = (Math.random() * 97) + "vw";
         d.style.width = (26 + Math.random() * 44) + "px";
@@ -766,12 +790,73 @@
         d.innerHTML = doodle;
         wrap.appendChild(d);
       }
+      setTimeout(function(){ wrap.className = ""; wrap.innerHTML = ""; }, 10000);
+      done(10500);
+    }
 
+    /* 2 - every keg suddenly empties, then comes back */
+    function gagDrain(){
+      var real = data.taps.map(function(t){ return t.level; });
+      data.taps.forEach(function(t){ t.level = 0; });
+      lastStamp = ""; render();
       setTimeout(function(){
-        wrap.className = "";
-        wrap.innerHTML = "";
-        running = false;             /* ready to go again */
-      }, 10000);
+        data.taps.forEach(function(t, i){ t.level = real[i]; });
+        lastStamp = ""; render();
+      }, 2600);
+      done(4200);
+    }
+
+    /* 3 - the whole board turns over */
+    function gagFlip(){
+      document.body.className = bodyClass + " gagflip";
+      setTimeout(function(){ applyDim(); }, 6000);
+      done(7600);
+    }
+
+    /* 4 - the beers get silly names for a bit */
+    var SILLY = ["Sneaky Weasel", "Chris Drank It All", "Lawnmower Juice", "Wobbly Boot",
+                 "Old Regret", "Two Pot Screamer", "Nanna's Cough Syrup", "Handbrake",
+                 "Dad's Special Brew", "Questionable Decision", "Shed Runoff", "Last Bus Home"];
+    function gagNames(){
+      var real = data.taps.map(function(t){ return t.name; });
+      var pool = SILLY.slice();
+      data.taps.forEach(function(t){
+        var k = Math.floor(Math.random() * pool.length);
+        t.name = pool.splice(k, 1)[0] || t.name;
+      });
+      lastStamp = ""; render();
+      setTimeout(function(){
+        data.taps.forEach(function(t, i){ t.name = real[i]; });
+        lastStamp = ""; render();
+      }, 7000);
+      done(8600);
+    }
+
+    /* 5 - a shout across the screen */
+    var SHOUTS = ["Get on the beers", "Cheers big ears", "Who drank it all?",
+                  "One more won't hurt", "Beer o'clock"];
+    function gagBanner(){
+      if(!banner){ done(400); return; }
+      var sp = banner.firstChild;
+      sp.textContent = SHOUTS[Math.floor(Math.random() * SHOUTS.length)];
+      banner.className = "on";
+      sp.style.animation = "none";
+      void sp.offsetWidth;              /* force the animation to restart */
+      sp.style.animation = "";
+      setTimeout(function(){ banner.className = ""; }, 3600);
+      done(4200);
+    }
+
+    var GAGS = [gagDoodles, gagDrain, gagFlip, gagNames, gagBanner];
+
+    function runGag(n){
+      if(running || !data) return;
+      running = true;
+      var rot = Number(data.rotate) || 0;
+      var idx = ((Number(n) || 0) % GAGS.length + GAGS.length) % GAGS.length;
+      /* flipping only reads properly on an upright board */
+      if(GAGS[idx] === gagFlip && rot !== 0) idx = (idx + 1) % GAGS.length;
+      try { GAGS[idx](); } catch(e){ running = false; }
     }
 
     function poll(){
@@ -780,12 +865,13 @@
       x.timeout = 8000;
       x.onload = function(){
         if(x.status < 200 || x.status >= 300) return;
-        var t = null;
-        try { t = JSON.parse(x.responseText).t; } catch(e){ return; }
-        if(lastSeen === null){ lastSeen = t; return; }   /* first read just syncs */
-        if(t && t !== lastSeen){ lastSeen = t; shower(); }
+        var j = null;
+        try { j = JSON.parse(x.responseText); } catch(e){ return; }
+        if(!j) return;
+        if(lastSeen === null){ lastSeen = j.t; return; }   /* first read just syncs */
+        if(j.t && j.t !== lastSeen){ lastSeen = j.t; runGag(j.n); }
       };
-      x.onerror = x.ontimeout = function(){};            /* silent - never break the board */
+      x.onerror = x.ontimeout = function(){};
       x.send();
     }
 
