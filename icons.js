@@ -86,3 +86,95 @@ window.DOODLE =
     '<circle cx="12" cy="52" r="8"/>' +
     '<circle cx="32" cy="52" r="8"/>' +
   '</svg>';
+
+/* ---- glassware silhouettes: body path, optional handle/stem, and the
+   y-range the liquid occupies (so stemmed glasses fill their bowl) ---- */
+window.GLASSWARE = {
+ "pint": {
+  "label": "Pint",
+  "body": "M9 4 H31 L27.6 56.5 Q27.4 60 24 60 H16 Q12.6 60 12.4 56.5 Z",
+  "top": 4,
+  "bot": 60
+ },
+ "nonic": {
+  "label": "Nonic",
+  "body": "M9 4 H31 L30 17 Q32.5 19.5 29.6 22 L27.6 56.5 Q27.4 60 24 60 H16 Q12.6 60 12.4 56.5 L10.4 22 Q7.5 19.5 10 17 Z",
+  "top": 4,
+  "bot": 60
+ },
+ "mug": {
+  "label": "Stein",
+  "body": "M8 7 H28.5 V56.5 Q28.5 60 25 60 H11.5 Q8 60 8 56.5 Z",
+  "extra": "M28.5 17 h3.5 a7 7 0 0 1 0 14 h-3.5",
+  "top": 7,
+  "bot": 60
+ },
+ "weizen": {
+  "label": "Weizen",
+  "body": "M12 4 H28 L29.4 21 Q31.5 33 27 42.5 L26.2 56.5 Q26 60 23 60 H17 Q14 60 13.8 56.5 L13 42.5 Q8.5 33 10.6 21 Z",
+  "top": 4,
+  "bot": 60
+ },
+ "tulip": {
+  "label": "Tulip",
+  "body": "M11 6 H29 Q31.5 21 25.8 28.5 Q24 30.8 24 34 H16 Q16 30.8 14.2 28.5 Q8.5 21 11 6 Z",
+  "extra": "M20 34 V52 M11.5 58 H28.5 Q28.5 52 20 52 Q11.5 52 11.5 58",
+  "top": 6.5,
+  "bot": 34
+ },
+ "snifter": {
+  "label": "Snifter",
+  "body": "M9.5 12 Q9.5 33 20 35.5 Q30.5 33 30.5 12 Q30.5 9 20 9 Q9.5 9 9.5 12 Z",
+  "extra": "M20 35.5 V50 M12 57 H28 Q28 50 20 50 Q12 50 12 57",
+  "top": 9.5,
+  "bot": 35.5
+ },
+ "goblet": {
+  "label": "Goblet",
+  "body": "M10 8 H30 Q30 28 22 33 H18 Q10 28 10 8 Z",
+  "extra": "M20 33 V51 M11 58 H29 Q29 51 20 51 Q11 51 11 58",
+  "top": 8.5,
+  "bot": 33
+ },
+ "can": {
+  "label": "Can",
+  "body": "M10 5 H30 Q31.5 5 31.5 8 V56 Q31.5 60 30 60 H10 Q8.5 60 8.5 56 V8 Q8.5 5 10 5 Z",
+  "top": 5,
+  "bot": 60
+ },
+ "bottle": {
+  "label": "Bottle",
+  "body": "M16.5 4 H23.5 V13 Q23.5 16 25.5 18.5 Q28 22 28 26 V56.5 Q28 60 24.5 60 H15.5 Q12 60 12 56.5 V26 Q12 22 14.5 18.5 Q16.5 16 16.5 13 Z",
+  "top": 4,
+  "bot": 60
+ },
+ "growler": {
+  "label": "Growler",
+  "body": "M14 4 H26 V9.5 L28.6 13.6 Q30.5 17 30.5 21 V56 Q30.5 60 27 60 H13 Q9.5 60 9.5 56 V21 Q9.5 17 11.4 13.6 L14 9.5 Z",
+  "extra": "M30.5 24 h2.5 a5 5 0 0 1 0 10 h-2.5",
+  "top": 4,
+  "bot": 60
+ }
+};
+
+/* Existing icon choices map onto a vessel. */
+window.GLASS_FOR = {pint:"pint", mug:"mug", bottle:"bottle", can:"can",
+                    growler:"growler", keg:"mug", hop:"pint", wheat:"weizen", "":"pint"};
+
+/* Build the filled glass for a beer. level 0-100. */
+window.glassSVG = function(key, level, color, uid){
+  var g = window.GLASSWARE[window.GLASS_FOR[key] || key] || window.GLASSWARE.pint;
+  var lv = Math.max(0, Math.min(100, Number(level) || 0));
+  var y  = g.bot - (g.bot - g.top) * lv / 100;
+  var id = "gc" + uid;
+  var foam = lv > 6
+    ? '<rect x="0" y="' + (y - 0.2).toFixed(1) + '" width="40" height="2.6" fill="#fffdf7" clip-path="url(#' + id + ')"/>'
+    : '';
+  return '<svg class="glasssvg" viewBox="0 0 40 64" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' +
+    '<defs><clipPath id="' + id + '"><path d="' + g.body + '"/></clipPath></defs>' +
+    (lv > 0 ? '<rect x="0" y="' + y.toFixed(1) + '" width="40" height="64" fill="' + color + '" clip-path="url(#' + id + ')"/>' : '') +
+    foam +
+    '<path d="' + g.body + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>' +
+    (g.extra ? '<path d="' + g.extra + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' : '') +
+    '</svg>';
+};
