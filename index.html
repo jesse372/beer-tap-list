@@ -312,19 +312,6 @@
   }
 
   /* the immature bit */
-  #laugh{
-    font-family:var(--cond);font-weight:500;
-    font-size:calc(1.75 * var(--u));
-    letter-spacing:.2em;text-transform:uppercase;
-    color:var(--dim);background:transparent;
-    border:1px solid rgba(226,197,140,.22);
-    border-radius:calc(.5 * var(--u));
-    padding:calc(.5 * var(--u)) calc(1.2 * var(--u));
-    cursor:pointer;
-  }
-  #laugh:focus{outline:none;border-color:var(--gold);color:var(--gold)}
-  #laugh[disabled]{opacity:.35}
-
   #rain{
     position:fixed;left:0;top:0;right:0;bottom:0;
     pointer-events:none;z-index:9000;overflow:hidden;display:none;
@@ -372,7 +359,6 @@
 
   <footer>
     <div id="foot-left">&nbsp;</div>
-    <button id="laugh" type="button">Want a laugh?</button>
     <div class="dots" id="dots"></div>
   </footer>
 
@@ -706,14 +692,21 @@
   load();
   setInterval(load, 60000);
 
-  /* ---------- the immature bit ---------- */
+  /* ---------- the immature bit ----------
+     Triggered from the laptop, not from here. The board polls a tiny endpoint
+     and showers when the timestamp changes. */
   (function(){
-    var btn = el("laugh"), wrap = el("rain");
-    if(!btn || !wrap) return;
+    var wrap = el("rain");
+    if(!wrap) return;
+
+    var SIGNAL_URL = "https://ontap-publish.madlad-taps.workers.dev/laugh";
+    var POLL_MS = 3000;
+    var lastSeen = null;      /* null until the first read, so it can't fire on load */
+    var running = false;
 
     function shower(){
-      if(btn.disabled) return;
-      btn.disabled = true;
+      if(running) return;
+      running = true;
       wrap.innerHTML = "";
       wrap.className = "on";
 
@@ -733,18 +726,27 @@
       setTimeout(function(){
         wrap.className = "";
         wrap.innerHTML = "";
-        btn.disabled = false;        /* ready to go again */
+        running = false;             /* ready to go again */
       }, 10000);
     }
 
-    /* Don't let the press also toggle fullscreen. */
-    btn.addEventListener("click", function(e){
-      e.stopPropagation();
-      shower();
-    }, false);
-    btn.addEventListener("keydown", function(e){
-      if(e.keyCode === 13 || e.keyCode === 32){ e.stopPropagation(); e.preventDefault(); shower(); }
-    }, false);
+    function poll(){
+      var x = new XMLHttpRequest();
+      x.open("GET", SIGNAL_URL + "?t=" + Date.now(), true);
+      x.timeout = 8000;
+      x.onload = function(){
+        if(x.status < 200 || x.status >= 300) return;
+        var t = null;
+        try { t = JSON.parse(x.responseText).t; } catch(e){ return; }
+        if(lastSeen === null){ lastSeen = t; return; }   /* first read just syncs */
+        if(t && t !== lastSeen){ lastSeen = t; shower(); }
+      };
+      x.onerror = x.ontimeout = function(){};            /* silent - never break the board */
+      x.send();
+    }
+
+    poll();
+    setInterval(poll, POLL_MS);
   })();
 
   /* ---------- keep the screen awake ----------

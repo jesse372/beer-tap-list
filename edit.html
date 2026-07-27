@@ -414,6 +414,11 @@
     </div>
   </details>
 
+  <div style="margin:26px 0 10px;text-align:center">
+    <button class="btn-ghost" id="laugh">Want a laugh?</button>
+    <div class="hint" id="laughmsg" style="margin-top:6px">&nbsp;</div>
+  </div>
+
 </div>
 
 <div class="publishbar">
@@ -1279,6 +1284,25 @@
   window.addEventListener("beforeunload", function(e){
     if(JSON.stringify(data) !== JSON.stringify(published)){ e.preventDefault(); e.returnValue = ""; }
   });
+
+  /* ---------------- strictly for the father-in-law ----------------
+     This does nothing here — it tells the TV to do it. */
+  (function(){
+    var btn = $("laugh"), msg = $("laughmsg");
+    if(!btn) return;
+    btn.addEventListener("click", function(){
+      if(!WORKER_URL){ msg.textContent = "Not connected."; return; }
+      btn.disabled = true;
+      msg.textContent = "Go and look at the telly…";
+      workerPost("/laugh", {}, function(err, status){
+        if(err || status !== 200) msg.textContent = "Couldn't reach the TV.";
+        setTimeout(function(){
+          btn.disabled = false;
+          msg.innerHTML = "&nbsp;";
+        }, 11000);
+      });
+    });
+  })();
 
   /* ---------------- boot ---------------- */
   function normalize(json){

@@ -22,7 +22,7 @@ function corsHeaders(env, request) {
   return {
     // Echo the origin only when it matches, so this can't be driven from elsewhere.
     "Access-Control-Allow-Origin": origin === allowed ? origin : allowed,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -112,12 +112,21 @@ export default {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: cors });
     }
+    const url = new URL(request.url);
+    const route = url.pathname.replace(/\/+$/, "");
+
+    // The TV polls this a few times a minute; it only ever reads a timestamp.
+    if (route === "/laugh" && request.method === "GET") {
+      const t = (await env.SIGNAL.get("laugh")) || "0";
+      return json({ t: Number(t) }, 200, {
+        ...cors,
+        "Cache-Control": "no-store",
+      });
+    }
+
     if (request.method !== "POST") {
       return json({ ok: false, error: "POST only" }, 405, cors);
     }
-
-    const url = new URL(request.url);
-    const route = url.pathname.replace(/\/+$/, "");
 
     let body;
     try {
@@ -136,6 +145,12 @@ export default {
     }
 
     if (route === "/check") return json({ ok: true }, 200, cors);
+
+    // Fired from the laptop; the TV picks it up on its next poll.
+    if (route === "/laugh") {
+      await env.SIGNAL.put("laugh", String(Date.now()));
+      return json({ ok: true }, 200, cors);
+    }
 
     if (route === "/publish") {
       const files = Array.isArray(body.files) ? body.files : [];

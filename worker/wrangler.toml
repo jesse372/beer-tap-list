@@ -12,3 +12,8 @@ GH_OWNER = "jesse372"
 GH_REPO = "beer-tap-list"
 GH_BRANCH = "main"
 ALLOWED_ORIGIN = "https://jesse372.github.io"
+
+# Signalling channel for the "Want a laugh?" button (laptop -> TV).
+[[kv_namespaces]]
+binding = "SIGNAL"
+id = "7dd65713fe9b4571a451abbd7e6031df"
