@@ -692,6 +692,38 @@
   load();
   setInterval(load, 60000);
 
+  /* ---------- pick up new versions of this page by itself ----------
+     The Fire Stick can't be reached remotely, so the board watches its own
+     ETag and reloads when it changes. Requires two consecutive matching reads
+     so a flapping CDN node can't cause a reload loop. */
+  (function(){
+    var mine = null, candidate = null, seen = 0;
+
+    function check(){
+      var x = new XMLHttpRequest();
+      x.open("HEAD", "index.html?v=" + Date.now(), true);
+      x.timeout = 10000;
+      x.onload = function(){
+        if(x.status < 200 || x.status >= 300) return;
+        var tag = x.getResponseHeader("ETag");
+        if(!tag) return;
+        if(mine === null){ mine = tag; return; }     /* first read = what we're running */
+        if(tag === mine){ candidate = null; seen = 0; return; }
+        if(tag === candidate){
+          seen++;
+          if(seen >= 2){ location.reload(); }        /* confirmed twice - safe to reload */
+        } else {
+          candidate = tag; seen = 1;
+        }
+      };
+      x.onerror = x.ontimeout = function(){};
+      x.send();
+    }
+
+    check();
+    setInterval(check, 300000);                       /* every 5 minutes */
+  })();
+
   /* ---------- the immature bit ----------
      Triggered from the laptop, not from here. The board polls a tiny endpoint
      and showers when the timestamp changes. */
