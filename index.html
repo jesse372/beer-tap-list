@@ -161,6 +161,13 @@
     background:linear-gradient(90deg,var(--gold) 0%,rgba(227,173,66,.35) 45%,rgba(227,173,66,.06) 100%);
   }
   .brand{display:flex;align-items:center;gap:calc(1.5 * var(--uw));min-width:0}
+  /* centred banner logo across the top */
+  body.banner header{display:block;text-align:center;position:relative}
+  body.banner .brand{display:block}
+  body.banner .mark{line-height:0}
+  body.banner .mark img{height:auto;max-height:calc(13 * var(--u));max-width:82vw;margin:0 auto}
+  body.banner .right{position:absolute;right:0;bottom:calc(2.2 * var(--u));text-align:right}
+  body.banner .ontap{display:none}
   .mark{line-height:0;flex:0 0 auto;font-size:calc(6 * var(--u))}
   .mark img{display:block;max-width:calc(30 * var(--uw));object-fit:contain;height:calc(8.5 * var(--u))}
   .mark.sz-s img{height:calc(6 * var(--u))}
@@ -224,6 +231,11 @@
   }
 
   /* glass */
+  .glasssvg{width:100%;height:100%;display:block;color:var(--cream);opacity:.93}
+  .glass.shaped{
+    background:none;border:none;border-radius:0;overflow:visible;max-height:100%;
+    width:calc((6.4 * var(--u)) * var(--s));height:calc((13.5 * var(--u)) * var(--s));
+  }
   .glass{
     flex:0 0 auto;
     width:calc((4.8 * var(--u)) * var(--s));height:calc((13 * var(--u)) * var(--s));max-height:100%;
@@ -378,7 +390,7 @@
   <source src="keepawake.webm" type="video/webm">
 </video>
 
-<script src="icons.js?v=1785133722"></script>
+<script src="icons.js?v=1785154358"></script>
 <script>
 (function(){
   "use strict";
@@ -471,9 +483,8 @@
     return '' +
       '<div class="tap' + (kicked || coming ? " out" : "") + '" style="--beer:' + esc(color) + '">' +
         '<div class="numbadge">' + esc(t.num != null ? t.num : "") + '</div>' +
-        '<div class="glass">' +
-          (shown > 4 ? '<div class="foam"></div>' : '') +
-          '<div class="fill" style="height:' + shown + '%;background:' + esc(color) + '"></div>' +
+        '<div class="glass shaped">' +
+          (window.glassSVG ? window.glassSVG(window.glassFor ? window.glassFor(t) : t.icon, shown, color, (t.num != null ? t.num : "x")) : "") +
         '</div>' +
         '<div class="body">' +
           '<div class="namerow">' +
@@ -511,7 +522,7 @@
 
     var bg = data.bg || "charcoal";
     if(!/^(charcoal|chalk|oak|slate|copper|photo)$/.test(bg)) bg = "charcoal";
-    bodyClass = (rot ? "rot" + rot + " " : "") + "bg-" + bg;
+    bodyClass = (rot ? "rot" + rot + " " : "") + "bg-" + bg + (data.logoBanner ? " banner" : "");
     document.body.className = bodyClass;
     applyDim();
     applyBgPhoto(bg);
