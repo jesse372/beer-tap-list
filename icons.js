@@ -173,12 +173,19 @@ window.GLASSWARE = {
   "body": "M9 4 H31 L29.6 17 Q28.4 25.5 24.2 29.5 Q27.6 32 24.2 34.5 Q27.6 37 24.2 39.5 Q27.6 42 24.2 44.5 V56 Q24.2 59.5 20 59.5 Q15.8 59.5 15.8 56 V44.5 Q12.4 42 15.8 39.5 Q12.4 37 15.8 34.5 Q12.4 32 15.8 29.5 Q11.6 25.5 10.4 17 Z"
  },
  "chalice": {
-  "label": "Chalice",
+  "label": "Goblet",
   "scale": 1.0,
-  "top": 10.5,
-  "bot": 37.5,
-  "body": "M8.5 13 Q8.5 30 14 35 Q17 37.5 20 37.5 Q23 37.5 26 35 Q31.5 30 31.5 13 Q31.5 10 20 10 Q8.5 10 8.5 13 Z",
-  "extra": "M20 37.5 V49 M10.5 57.5 H29.5 Q29.5 49 20 49 Q10.5 49 10.5 57.5"
+  "top": 9.5,
+  "bot": 39,
+  "body": "M7 9 H33 V26 A13 13 0 0 1 7 26 Z",
+  "extra": "M20 39 V47.5 M11.5 58 H28.5 Q28.5 47.5 20 47.5 Q11.5 47.5 11.5 58 Z"
+ },
+ "pilsner": {
+  "label": "Pilsner",
+  "scale": 1.0,
+  "top": 4.5,
+  "bot": 57,
+  "body": "M11.8 4 H28.2 L25.4 47 Q25.2 51.5 22.6 53.5 V57 Q22.6 59.5 20 59.5 Q17.4 59.5 17.4 57 V53.5 Q14.8 51.5 14.6 47 Z"
  }
 };
 
@@ -186,19 +193,27 @@ window.GLASSWARE = {
 window.GLASS_FOR = {pint:"pint", mug:"mug", bottle:"bottle", can:"can",
                     growler:"growler", keg:"mug", hop:"pint", wheat:"weizen", "":"pint"};
 
-/* Pick the right glass for a beer: style first, then colour, then his choice. */
+/* Pick the glass a beer person would actually pour it into.
+   Rules run in order, most specific first; the first match wins. */
+window.GLASS_RULES = [
+  [/neipa|new england|hazy|juicy|india pale|\bipa\b|\bdipa\b|\bxpa\b/, "ipa"],
+  [/berliner/,                                                              "tulip"],
+  [/hefe|weizen|weiss|wei\u00dfe|witbier|\bwit\b|wheat|kristall/,          "weizen"],
+  [/imperial|barrel[- ]?aged|barley ?wine|quad|dubbel|tripel|trappist|abbey|belgian (dark|strong)|wee heavy|scotch ale|old ale|russian/, "chalice"],
+  [/saison|farmhouse|sour|gose|lambic|gueuze|geuze|wild|brett|kriek|berliner|fruit/, "tulip"],
+  [/stout|porter|schwarzbier|black ale/,                                    "chalice"],
+  [/m\u00e4rzen|marzen|oktoberfest|festbier|bock|dunkel|vienna|munich/,   "mug"],
+  [/pilsner|\bpils\b|helles|k\u00f6lsch|kolsch|cream ale|lager/,              "pilsner"],
+  [/bitter|\besb\b|\bmild\b|english|irish|amber ale|red ale|brown ale/,      "nonic"],
+  [/pale ale|\bapa\b|blonde|golden ale|session|pacific ale|\bale\b/,         "pint"]
+];
+
 window.glassFor = function(t){
   var txt = ((t.style || "") + " " + (t.name || "")).toLowerCase();
-  var srm = Number(t.srm) || 0;
-
-  // IPAs and NEIPAs get the IPA glass
-  if(/\bneipa\b|\bipa\b|india pale|hazy pale/.test(txt)) return "ipa";
-
-  // Dark beers get the short round goblet
-  if(srm >= 24) return "chalice";
-  if(/stout|porter|schwarz|dunkel|brown ale|dark ale|black ale|barrel[- ]aged|imperial/.test(txt)) return "chalice";
-
-  return window.GLASS_FOR[t.icon] || t.icon || "pint";
+  var i, r = window.GLASS_RULES;
+  for(i = 0; i < r.length; i++){ if(r[i][0].test(txt)) return r[i][1]; }
+  if((Number(t.srm) || 0) >= 24) return "chalice";      /* anything genuinely dark */
+  return window.GLASS_FOR[t.icon] || t.icon || "pint";  /* fall back to his pick */
 };
 
 /* Build the filled glass for a beer. level 0-100. */
