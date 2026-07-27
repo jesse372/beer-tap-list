@@ -124,7 +124,7 @@
       "color": "#FFCA5A",
       "srm": 3,
       "ready": "",
-      "guest": false,
+      "guest": true,
       "icon": "bottle",
       "level": 90,
       "status": "pouring"
