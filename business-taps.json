@@ -231,7 +231,7 @@
       "icon": "mug"
     }
   ],
-  "dimAtNight": true,
+  "dimAtNight": false,
   "dimFrom": 22,
   "dimTo": 7,
   "pricing": {

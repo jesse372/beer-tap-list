@@ -682,8 +682,7 @@
     var cols  = (portrait || perPage <= 3) ? 1 : 2;
     var rows  = Math.ceil(perPage / cols);
     /* Fill the card height properly — 4 rows still needs to read from the sofa. */
-    var budget = pricing().on ? 2.9 : 3.6;
-    var scale  = Math.max(portrait ? 0.5 : 0.78, Math.min(1.3, budget / rows));
+    var scale = Math.max(portrait ? 0.5 : 0.78, Math.min(1.3, 3.6 / rows));
 
     main.innerHTML = pages.map(function(p, i){
       /* A page of nothing but upcoming beers is a section, not a short tap list,
@@ -723,7 +722,7 @@
 
     pageIndex = 0;
     startRotate(Math.max(6, Number(data.rotateSeconds) || 20));
-    fitToCards(scale);
+    fitToCards(scale, pricing().on);
   }
 
   /* ---------- make sure nothing is ever clipped ----------
@@ -733,7 +732,8 @@
 
      One scale is applied to EVERY page, not per page, so a beer is never a
      different size on one screen than another. */
-  function fitToCards(startScale){
+  function fitToCards(startScale, allowGrow){
+    var STEP = 0.035, FLOOR = 0.5, CEIL = 1.9;
     function overflowing(){
       var t = main.querySelectorAll(".tap"), i;
       for(i = 0; i < t.length; i++){
@@ -742,12 +742,31 @@
       return false;
     }
     function run(){
-      var pages = main.querySelectorAll(".page");
-      var s = Number(startScale) || 1, guard = 0;
-      while(guard++ < 16 && s > 0.5 && overflowing()){
-        s -= 0.035;
-        for(var i = 0; i < pages.length; i++){
-          pages[i].style.setProperty("--s", s.toFixed(3));
+      var pages = main.querySelectorAll(".page"), guard = 0;
+      var s = Number(startScale) || 1;
+      function apply(v){
+        for(var i = 0; i < pages.length; i++) pages[i].style.setProperty("--s", v.toFixed(3));
+      }
+      /* Start clean — this may be a re-run after the fonts arrived. */
+      var cards = main.querySelectorAll(".tap"), i;
+      for(i = 0; i < cards.length; i++) cards[i].style.removeProperty("--s");
+      apply(s);
+
+      /* Climb while EVERY card still fits, then take back the overshoot. */
+      if(allowGrow){
+        while(guard++ < 30 && s < CEIL && !overflowing()){ s += STEP; apply(s); }
+        if(overflowing()){ s -= STEP; apply(s); }
+      }
+
+      /* Anything still too tall is shrunk on its own, rather than dragging the
+         whole board down with it. One beer with a very long name used to cost
+         every other card a quarter of its size. If the size is systematically
+         wrong then every card shrinks anyway, which is the old behaviour. */
+      for(i = 0; i < cards.length; i++){
+        var c = cards[i], cs = s, g2 = 0;
+        while(g2++ < 40 && cs > FLOOR && c.scrollHeight - c.clientHeight > 1){
+          cs -= STEP;
+          c.style.setProperty("--s", cs.toFixed(3));
         }
       }
     }
@@ -758,7 +777,6 @@
     }
     setTimeout(run, 60);
   }
-
 
   function startRotate(seconds){
     if(rotateTimer) clearInterval(rotateTimer);

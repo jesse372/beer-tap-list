@@ -373,9 +373,7 @@
       <div class="checkline">
         <input type="checkbox" id="hideKicked"><label for="hideKicked">Hide empty kegs from the TV completely</label>
       </div>
-      <!-- Business mode is hidden unless the editor is opened with ?business=1, so a
-           home brewer never meets a pricing feature he has no use for. -->
-      <div class="checkline" id="pricingline" style="display:none">
+      <div class="checkline" id="pricingline">
         <input type="checkbox" id="pricingOn"><label for="pricingOn">Business mode &mdash; show prices on the TV</label>
       </div>
       <div id="pricingrow" style="display:none">
@@ -939,13 +937,9 @@
     $("dimrow").style.display = data.dimAtNight ? "" : "none";
     $("rotate").value        = String(Number(data.rotate) || 0);
     $("bg").value            = data.bg || "charcoal";
-    /* Show the control to anyone who asked for it with ?business=1 — and also to
-       anyone whose board already has prices turned on, so the setting can never
-       become unreachable once it is in use. */
-    var showBiz = /[?&]business=1/.test(location.search || "") || pricingOn();
-    $("pricingline").style.display = showBiz ? "" : "none";
+    /* Business mode is offered to everyone — it is simply off until switched on. */
     $("pricingOn").checked   = pricingOn();
-    $("pricingrow").style.display = (showBiz && pricingOn()) ? "" : "none";
+    $("pricingrow").style.display = pricingOn() ? "" : "none";
     renderSizes();
     renderBg();
     renderLogo();
