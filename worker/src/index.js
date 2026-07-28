@@ -150,8 +150,13 @@ export default {
     // Fired from the laptop; the TV picks it up on its next poll.
     if (route === "/laugh") {
       // Bump a counter alongside the timestamp so every screen runs the same gag.
-      const prev = (await env.SIGNAL.get("laugh")) || "0:0";
-      const n = (Number(prev.split(":")[1] || 0) + 1) % 1000;
+      let n;
+      if (Number.isInteger(body.n) && body.n >= 0 && body.n < 1000) {
+        n = body.n;                       // fire a specific gag
+      } else {
+        const prev = (await env.SIGNAL.get("laugh")) || "0:0";
+        n = (Number(prev.split(":")[1] || 0) + 1) % 1000;
+      }
       await env.SIGNAL.put("laugh", Date.now() + ":" + n);
       return json({ ok: true, n: n }, 200, cors);
     }
