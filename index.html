@@ -359,10 +359,8 @@
   #histgag .hrow{display:flex;align-items:center;gap:1.6vh;padding:1vh 0;border-bottom:1px solid #f1f3f4;font-size:1.65vh}
   #histgag .htime{color:#5f6368;font-size:1.4vh;width:8vh;flex:0 0 auto}
   #histgag .hfav{width:1.8vh;height:1.8vh;border-radius:50%;background:#dadce0;flex:0 0 auto}
-  #histgag .hred .hfav{background:#202124}
   #histgag .htitle{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #histgag .hsite{color:#5f6368;font-size:1.4vh}
-  #histgag .blk{background:#202124;color:#202124;border-radius:.2vh;letter-spacing:.2vh}
 
   #fshint{
     position:absolute;right:calc(2.6 * var(--u));bottom:calc(2.6 * var(--u));z-index:50;
@@ -741,7 +739,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-082634";
+  var BUILD = "20260728-083033";
 
   (function(){
     function check(){
@@ -820,10 +818,10 @@
       var r = 0;
       el("histrows").innerHTML = HIST.map(function(h){
         if(h[0] === null){
+          /* no title at all - the blank says more than a black bar did */
           var t = REDT[r++] || "9:59 pm";
-          return '<div class="hrow hred"><span class="htime">' + t + '</span><span class="hfav"></span>' +
-                 '<span class="htitle"><span class="blk">' +
-                 "\u2588".repeat(24) + '</span></span>' +
+          return '<div class="hrow"><span class="htime">' + t + '</span><span class="hfav"></span>' +
+                 '<span class="htitle"></span>' +
                  '<span class="hsite">' + esc(h[1]) + '</span></div>';
         }
         return '<div class="hrow"><span class="htime">' + esc(h[0]) + '</span><span class="hfav"></span>' +
