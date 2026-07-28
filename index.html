@@ -559,7 +559,10 @@
     if(nonZero(t.ibu)) stats += '<div class="stat"><div class="v">' + esc(String(t.ibu).trim()) + '</div><div class="k">IBU</div></div>';
     if(nonZero(t.srm)) stats += '<div class="stat"><div class="v">' + esc(t.srm) + '</div><div class="k">SRM</div></div>';
 
-    var shown = (coming || kicked) ? 0 : level;
+    /* A beer that is coming pours FULL — it is a keg waiting to be tapped, and an
+       empty glass under a Coming Soon banner reads as though it has already gone.
+       Kicked stays empty, because that one really is finished. */
+    var shown = kicked ? 0 : (coming ? 100 : level);
 
     return '' +
       '<div class="tap' + (kicked ? " out" : "") + '" style="--beer:' + esc(color) + '">' +
@@ -809,7 +812,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-213737";
+  var BUILD = "20260728-214027";
 
   (function(){
     function check(){
