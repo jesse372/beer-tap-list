@@ -304,6 +304,35 @@
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   }
 
+  /* Prices (business mode). The amount is the loud part and the pour name is a
+     quiet label beside it, so the row scans as money first from across the room.
+     Wraps rather than shrinks, because an unreadable price is worse than two lines. */
+  /* A priced card wraps, letting the price row take a full-width line of its own
+     below the beer and its stats. Notes give way to one line to pay for it. */
+  .tap.priced{flex-wrap:wrap;align-content:center}
+  /* The price row costs a line, and it buys it from the tasting note — a paying
+     customer wants the number far more than "grapefruit and pine". */
+  .tap.priced .notes{display:none}
+  .prices{
+    flex:1 0 100%;
+    display:flex;flex-wrap:wrap;align-items:baseline;
+    gap:calc((.4 * var(--u)) * var(--s)) calc((2.6 * var(--u)) * var(--s));
+    margin-top:calc((.6 * var(--u)) * var(--s));
+    padding-top:calc((.6 * var(--u)) * var(--s));
+    border-top:1px solid var(--line);
+  }
+  .price{display:flex;align-items:baseline;gap:calc((.62 * var(--u)) * var(--s))}
+  .price b{
+    font-family:var(--sans);font-weight:700;color:var(--gold);
+    font-size:calc((2.75 * var(--u)) * var(--s));line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .price i{
+    font-family:var(--cond);font-style:normal;font-weight:600;color:var(--muted);
+    font-size:calc((1.5 * var(--u)) * var(--s));
+    letter-spacing:.2em;text-transform:uppercase;
+  }
+
   /* stats */
   .stats{flex:0 0 auto;display:flex;align-items:center;gap:calc((1.9 * var(--u)) * var(--s))}
   .stat{text-align:center}
@@ -521,6 +550,45 @@
     return Math.round((d.getTime() - today.getTime()) / 86400000);
   }
 
+  /* ---------- business mode: pour sizes and prices ----------
+     Sizes are whatever the venue calls them. Prices live on each beer, keyed by
+     the size's id, so renaming "Middy" to "Pot" or reordering sizes never
+     detaches a price from the pour it belongs to. */
+  var DEFAULT_SIZES = [
+    { id:"s1", name:"Middy",    ml:285 },
+    { id:"s2", name:"Schooner", ml:425 },
+    { id:"s3", name:"Pint",     ml:570 }
+  ];
+  function pricing(){
+    var p = (data && data.pricing) || {};
+    return {
+      on: !!p.on,
+      currency: p.currency || "$",
+      sizes: (p.sizes && p.sizes.length) ? p.sizes : DEFAULT_SIZES
+    };
+  }
+  /* $13 rather than $13.00, but $7.50 keeps its cents — how a menu is written. */
+  function money(cur, v){
+    var n = Number(v);
+    if(!isFinite(n)) return "";
+    return cur + (n % 1 === 0 ? String(n) : n.toFixed(2));
+  }
+  function priceHTML(t){
+    var pr = pricing();
+    if(!pr.on) return "";
+    var cells = [], i, sz, v;
+    for(i = 0; i < pr.sizes.length; i++){
+      sz = pr.sizes[i];
+      v  = t.prices ? t.prices[sz.id] : null;
+      /* A pour with no price for this beer is simply left off, so a keg sold only
+         by the pint does not show two blank columns. */
+      if(v == null || String(v).trim() === "") continue;
+      cells.push('<span class="price"><b>' + esc(money(pr.currency, v)) + '</b><i>' +
+                 esc(sz.name || (sz.ml ? sz.ml + "ml" : "")) + '</i></span>');
+    }
+    return cells.length ? '<div class="prices">' + cells.join("") + '</div>' : "";
+  }
+
   function comingText(t){
     var n = daysUntil(t.ready);
     if(n === null) return "Coming Soon";
@@ -564,8 +632,14 @@
        Kicked stays empty, because that one really is finished. */
     var shown = kicked ? 0 : (coming ? 100 : level);
 
+    /* The price row is a sibling of the text column, not a child of it, so it can
+       wrap onto its own full-width line under the whole card. Inside .body it was
+       trapped in the narrow text column and three pours spilled over two lines. */
+    var priceRow = priceHTML(t);
+
     return '' +
-      '<div class="tap' + (kicked ? " out" : "") + '" style="--beer:' + esc(color) + '">' +
+      '<div class="tap' + (kicked ? " out" : "") + (priceRow ? " priced" : "") +
+           '" style="--beer:' + esc(color) + '">' +
         '<div class="numbadge">' + esc(t.num != null ? t.num : "") + '</div>' +
         '<div class="glass shaped">' +
           (window.glassSVG ? window.glassSVG(window.glassFor ? window.glassFor(t) : t.icon, shown, color, (t.num != null ? t.num : "x")) : "") +
@@ -580,6 +654,7 @@
           (has(t.notes) ? '<div class="notes">' + esc(String(t.notes).trim()) + '</div>' : '') +
         '</div>' +
         '<div class="stats">' + stats + '</div>' +
+        priceRow +
       '</div>';
   }
 
@@ -654,10 +729,14 @@
 
     /* "auto" fits everything on one screen up to 8, so it only paginates when it must. */
     var perPage = data.perPage;
+    /* Prices add a line to every card, so business mode drops the ceiling to 6 —
+       eight priced beers on one screen leaves the prices too small to read, which
+       defeats the point of showing them. */
+    var maxPer = pricing().on ? 6 : 8;
     if(perPage === "auto" || perPage == null || !Number(perPage)){
-      perPage = Math.min(8, taps.length);
+      perPage = Math.min(maxPer, taps.length);
     }
-    perPage = Math.max(1, Math.min(8, Number(perPage)));
+    perPage = Math.max(1, Math.min(maxPer, Number(perPage)));
 
     pages = chunk(taps, perPage);
 
@@ -669,8 +748,11 @@
        changes size as the board rotates. */
     var cols  = (portrait || perPage <= 3) ? 1 : 2;
     var rows  = Math.ceil(perPage / cols);
-    /* Fill the card height properly — 4 rows still needs to read from the sofa. */
-    var scale = Math.max(portrait ? 0.5 : 0.78, Math.min(1.3, 3.6 / rows));
+    /* Fill the card height properly — 4 rows still needs to read from the sofa.
+       Business mode adds a whole price line to every card, so it works to a
+       tighter budget or the content overflows the box it is given. */
+    var budget = pricing().on ? 2.9 : 3.6;
+    var scale  = Math.max(portrait ? 0.5 : 0.78, Math.min(1.3, budget / rows));
 
     main.innerHTML = pages.map(function(p, i){
       /* A page of nothing but upcoming beers is a section, not a short tap list,
@@ -710,6 +792,40 @@
 
     pageIndex = 0;
     startRotate(Math.max(6, Number(data.rotateSeconds) || 20));
+    fitToCards(scale);
+  }
+
+  /* ---------- make sure nothing is ever clipped ----------
+     Card height is fixed by the grid, but what goes in a card is not: a long name
+     wraps, prices add a line, a note runs on. Rather than guess a scale that suits
+     the content we happen to have today, shrink until it genuinely fits.
+
+     One scale is applied to EVERY page, not per page, so a beer is never a
+     different size on one screen than another. */
+  function fitToCards(startScale){
+    function overflowing(){
+      var t = main.querySelectorAll(".tap"), i;
+      for(i = 0; i < t.length; i++){
+        if(t[i].scrollHeight - t[i].clientHeight > 1) return true;
+      }
+      return false;
+    }
+    function run(){
+      var pages = main.querySelectorAll(".page");
+      var s = Number(startScale) || 1, guard = 0;
+      while(guard++ < 16 && s > 0.5 && overflowing()){
+        s -= 0.035;
+        for(var i = 0; i < pages.length; i++){
+          pages[i].style.setProperty("--s", s.toFixed(3));
+        }
+      }
+    }
+    /* Web fonts change every measurement, so wait for them where the browser
+       supports it, and measure again on the next frame regardless. */
+    if(document.fonts && document.fonts.ready && document.fonts.ready.then){
+      document.fonts.ready.then(function(){ setTimeout(run, 0); });
+    }
+    setTimeout(run, 60);
   }
 
   function startRotate(seconds){
@@ -812,7 +928,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-214027";
+  var BUILD = "20260728-220122";
 
   (function(){
     function check(){
