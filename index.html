@@ -741,7 +741,7 @@
      ETag and reloads when it changes. Requires two consecutive matching reads
      so a flapping CDN node can't cause a reload loop. */
   (function(){
-    var mine = null, candidate = null, seen = 0;
+    var mine = null, candidate = null, seen = 0, stale = 0;
 
     function check(){
       var x = new XMLHttpRequest();
@@ -752,20 +752,27 @@
         var tag = x.getResponseHeader("ETag");
         if(!tag) return;
         if(mine === null){ mine = tag; return; }     /* first read = what we're running */
-        if(tag === mine){ candidate = null; seen = 0; return; }
+        if(tag === mine){ candidate = null; seen = 0; stale = 0; return; }
         if(tag === candidate){
           seen++;
-          if(seen >= 2){ location.reload(); }        /* confirmed twice - safe to reload */
+          if(seen >= 2){ location.reload(); }        /* same new version twice in a row */
         } else {
           candidate = tag; seen = 1;
         }
+        /* belt and braces: if we've been on a stale version for 4 checks, just reload */
+        stale++;
+        if(stale >= 4){ location.reload(); }
       };
       x.onerror = x.ontimeout = function(){};
       x.send();
     }
 
     check();
-    setInterval(check, 300000);                       /* every 5 minutes */
+    setInterval(check, 60000);                        /* every minute */
+    /* and immediately whenever the screen comes back to the foreground */
+    document.addEventListener("visibilitychange", function(){
+      if(!document.hidden) check();
+    }, false);
   })();
 
   /* ---------- the immature bit ----------
