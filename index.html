@@ -309,33 +309,23 @@
      Wraps rather than shrinks, because an unreadable price is worse than two lines. */
   /* A priced card wraps, letting the price row take a full-width line of its own
      below the beer and its stats. Notes give way to one line to pay for it. */
-  .tap.priced{flex-wrap:wrap;align-content:center}
-  /* The price row costs a line, and it buys it from the tasting note — a paying
-     customer wants the number far more than "grapefruit and pine". */
+  /* Prices occupy the tasting note's line, so a priced card has exactly the same
+     shape as an ordinary one — same glass, same rows, same beers per screen. */
   .tap.priced .notes{display:none}
-  /* The glass is what gives a card its weight, and its height comes from --s — so on
-     a taller priced card it was left stranded at 59% of the card against 77% on the
-     ordinary board. Sizing it from the CARD instead breaks that dependency: growing
-     it no longer feeds back into the scale and shrinks the type to pay for itself. */
-  .tap.priced .glass{height:68%}
   .prices{
-    flex:1 0 100%;
     display:flex;flex-wrap:wrap;align-items:baseline;
-    gap:calc((.4 * var(--u)) * var(--s)) calc((2.6 * var(--u)) * var(--s));
-    margin-top:calc((.6 * var(--u)) * var(--s));
-    padding-top:calc((.6 * var(--u)) * var(--s));
-    border-top:1px solid var(--line);
+    gap:calc((.25 * var(--u)) * var(--s)) calc((1.9 * var(--u)) * var(--s));
   }
   .price{display:flex;align-items:baseline;gap:calc((.62 * var(--u)) * var(--s))}
   .price b{
     font-family:var(--sans);font-weight:700;color:var(--gold);
-    font-size:calc((2.75 * var(--u)) * var(--s));line-height:1;
+    font-size:calc((2.45 * var(--u)) * var(--s));line-height:1.2;
     font-variant-numeric:tabular-nums;
   }
   .price i{
     font-family:var(--cond);font-style:normal;font-weight:600;color:var(--muted);
-    font-size:calc((1.5 * var(--u)) * var(--s));
-    letter-spacing:.2em;text-transform:uppercase;
+    font-size:calc((1.42 * var(--u)) * var(--s));
+    letter-spacing:.16em;text-transform:uppercase;
   }
 
   /* stats */
@@ -657,9 +647,9 @@
           '</div>' +
           (has(t.style) ? '<div class="style">' + esc(String(t.style).trim()) + '</div>' : '') +
           (has(t.notes) ? '<div class="notes">' + esc(String(t.notes).trim()) + '</div>' : '') +
+          priceRow +
         '</div>' +
         '<div class="stats">' + stats + '</div>' +
-        priceRow +
       '</div>';
   }
 
@@ -734,10 +724,8 @@
 
     /* "auto" fits everything on one screen up to 8, so it only paginates when it must. */
     var perPage = data.perPage;
-    /* Prices add a line to every card, so business mode drops the ceiling to 6 —
-       eight priced beers on one screen leaves the prices too small to read, which
-       defeats the point of showing them. */
-    var maxPer = pricing().on ? 6 : 8;
+    /* Business mode is the ordinary board with prices — same beers per screen. */
+    var maxPer = 8;
     if(perPage === "auto" || perPage == null || !Number(perPage)){
       perPage = Math.min(maxPer, taps.length);
     }
@@ -795,10 +783,7 @@
 
     pageIndex = 0;
     startRotate(Math.max(6, Number(data.rotateSeconds) || 20));
-    /* Priced cards carry fewer lines of text but sit in the same box, so they are
-       allowed to grow into it. Without that they read as small type marooned in a
-       large empty card. */
-    fitToCards(scale, pricing().on);
+    fitToCards(scale, false);
   }
 
   /* ---------- make sure nothing is ever clipped ----------
@@ -963,7 +948,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-222835";
+  var BUILD = "20260728-223617";
 
   (function(){
     function check(){
