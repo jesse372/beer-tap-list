@@ -362,6 +362,25 @@
   #histgag .htitle{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #histgag .hsite{color:#5f6368;font-size:1.4vh}
 
+  /* Explicit edges rather than inset: Fire OS webviews are old. */
+  #stillgag{
+    position:fixed;left:0;top:0;right:0;bottom:0;z-index:9700;display:none;
+    background:rgba(0,0,0,.78);align-items:center;justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  #stillgag.on{display:flex}
+  #stillgag .sbox{text-align:center;padding:0 4vh;max-width:78vw}
+  #stillgag .stitle{color:#fff;font-size:5.2vh;font-weight:400;line-height:1.2;margin:0 0 1.6vh}
+  #stillgag .ssub{color:#b3b3b3;font-size:2.4vh;margin:0 0 4.4vh;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #stillgag .srow{display:flex;gap:1.6vh;justify-content:center}
+  #stillgag .sbtn{
+    font-size:2.2vh;padding:1.3vh 3.8vh;border-radius:.4vh;
+    border:1px solid transparent;background:#fff;color:#000;font-weight:500;
+  }
+  #stillgag .sbtn.alt{background:transparent;color:#d2d2d2;border-color:#8c8c8c}
+  #stillgag .scount{color:#7a7a7a;font-size:1.8vh;margin-top:3.2vh;height:2.4vh}
+
   #fshint{
     position:absolute;right:calc(2.6 * var(--u));bottom:calc(2.6 * var(--u));z-index:50;
     background:rgba(227,173,66,.95);color:#1a1408;
@@ -409,6 +428,17 @@
   <h3>History</h3>
   <div class="hday" id="histday"></div>
   <div class="hrows" id="histrows"></div>
+</div>
+<div id="stillgag" aria-hidden="true">
+  <div class="sbox">
+    <div class="stitle">Are you still drinking?</div>
+    <div class="ssub" id="stillsub"></div>
+    <div class="srow">
+      <span class="sbtn">Continue</span>
+      <span class="sbtn alt">Exit</span>
+    </div>
+    <div class="scount" id="stillcount"></div>
+  </div>
 </div>
 <div id="dimveil"></div>
 
@@ -739,7 +769,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-083609";
+  var BUILD = "20260728-085326";
 
   (function(){
     function check(){
@@ -833,7 +863,53 @@
       done(5600);
     }
 
-    var GAGS = [gagDoodles, gagHistory];
+    /* 3 - netflix asks the room a fair question */
+    function gagStill(){
+      var box = el("stillgag");
+      if(!box){ done(400); return; }
+
+      /* Name a beer that is actually pouring, the way Netflix names the show.
+         Falls back through: live taps -> any named tap -> nothing at all. */
+      var taps = (data && data.taps) || [], live = [], i, t, label = "";
+      for(i = 0; i < taps.length; i++){
+        t = taps[i];
+        if(!t || String(t.name || "").trim() === "") continue;
+        if(t.status === "kicked" || t.status === "coming") continue;
+        if((Number(t.level) || 0) <= 0 && t.status !== "on") continue;
+        live.push(t);
+      }
+      if(!live.length){
+        for(i = 0; i < taps.length; i++){
+          t = taps[i];
+          if(t && String(t.name || "").trim() !== "") live.push(t);
+        }
+      }
+      if(live.length){
+        t = live[Math.floor(Math.random() * live.length)];
+        label = String(t.name || "").trim();
+        if(t.num) label += " · Tap " + t.num;
+      }
+      el("stillsub").textContent = label;
+
+      var n = 5;
+      el("stillcount").textContent = "Resuming in " + n;
+      box.className = "on";
+
+      var tick = setInterval(function(){
+        n--;
+        el("stillcount").textContent = n > 0 ? "Resuming in " + n : "";
+        if(n <= 0) clearInterval(tick);
+      }, 1000);
+
+      setTimeout(function(){
+        clearInterval(tick);
+        box.className = "";
+        el("stillcount").textContent = "";
+      }, 6000);
+      done(6600);
+    }
+
+    var GAGS = [gagDoodles, gagHistory, gagStill];
 
     function runGag(n){
       if(running || !data) return;
@@ -844,7 +920,8 @@
 
     function poll(){
       var x = new XMLHttpRequest();
-      x.open("GET", SIGNAL_URL + "?t=" + Date.now() + "&build=082041&gags=" + GAGS.length, true);
+      x.open("GET", SIGNAL_URL + "?t=" + Date.now() +
+             "&build=" + encodeURIComponent(BUILD) + "&gags=" + GAGS.length, true);
       x.timeout = 8000;
       x.onload = function(){
         if(x.status < 200 || x.status >= 300) return;
