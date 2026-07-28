@@ -737,39 +737,27 @@
   setInterval(load, 60000);
 
   /* ---------- pick up new versions of this page by itself ----------
-     The Fire Stick can't be reached remotely, so the board watches its own
-     ETag and reloads when it changes. Requires two consecutive matching reads
-     so a flapping CDN node can't cause a reload loop. */
-  (function(){
-    var mine = null, candidate = null, seen = 0, stale = 0;
+     BUILD is baked into whatever page is actually running. build.txt on the
+     server says what the current build is. If they differ, this page is stale
+     and reloads. Unlike comparing ETags, this cannot be fooled by a cached
+     page, because BUILD travels with the page itself. */
+  var BUILD = "20260728-082258";
 
+  (function(){
     function check(){
       var x = new XMLHttpRequest();
-      x.open("HEAD", "index.html?v=" + Date.now(), true);
+      x.open("GET", "build.txt?v=" + Date.now(), true);
       x.timeout = 10000;
       x.onload = function(){
         if(x.status < 200 || x.status >= 300) return;
-        var tag = x.getResponseHeader("ETag");
-        if(!tag) return;
-        if(mine === null){ mine = tag; return; }     /* first read = what we're running */
-        if(tag === mine){ candidate = null; seen = 0; stale = 0; return; }
-        if(tag === candidate){
-          seen++;
-          if(seen >= 2){ location.reload(); }        /* same new version twice in a row */
-        } else {
-          candidate = tag; seen = 1;
-        }
-        /* belt and braces: if we've been on a stale version for 4 checks, just reload */
-        stale++;
-        if(stale >= 4){ location.reload(); }
+        var latest = (x.responseText || "").trim();
+        if(latest && latest !== BUILD){ location.reload(); }
       };
       x.onerror = x.ontimeout = function(){};
       x.send();
     }
-
     check();
-    setInterval(check, 60000);                        /* every minute */
-    /* and immediately whenever the screen comes back to the foreground */
+    setInterval(check, 60000);
     document.addEventListener("visibilitychange", function(){
       if(!document.hidden) check();
     }, false);
