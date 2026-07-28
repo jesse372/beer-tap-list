@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 5,
   "hideKicked": false,
-  "updated": "2026-07-28T05:58:33.076Z",
+  "updated": "2026-07-28T06:01:07.700Z",
   "taps": [
     {
       "num": 1,
@@ -140,7 +140,8 @@
       "srm": 32,
       "icon": "",
       "level": 100,
-      "status": "coming"
+      "status": "coming",
+      "ready": "2026-08-07"
     },
     {
       "num": 10,
@@ -154,7 +155,7 @@
       "icon": "pint",
       "level": 100,
       "status": "coming",
-      "ready": "2026-07-28"
+      "ready": "2026-08-07"
     }
   ],
   "rotate": 0,
