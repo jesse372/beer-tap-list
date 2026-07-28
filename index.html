@@ -222,13 +222,17 @@
   .tap.out{opacity:.4}
   .tap.out::before{opacity:.3}
 
-  /* Heading for a page holding nothing but upcoming beers. */
+  /* Heading for a page holding nothing but upcoming beers. A solid gold bar, so it
+     carries the length of the room. text-indent cancels the trailing letter-space,
+     which would otherwise sit the text slightly left of true centre. */
   .pagehead{
-    grid-column:1/-1;align-self:end;
-    font-family:var(--cond);font-weight:600;color:var(--gold);
-    font-size:calc(2.6 * var(--u));letter-spacing:.28em;text-transform:uppercase;
-    padding-bottom:calc(.9 * var(--u));
-    border-bottom:1px solid var(--line-strong);
+    grid-column:1/-1;align-self:end;text-align:center;
+    background:var(--gold);color:#1a1408;
+    font-family:var(--cond);font-weight:600;text-transform:uppercase;
+    font-size:calc(3.9 * var(--u));
+    letter-spacing:.3em;text-indent:.3em;
+    padding:calc(1 * var(--u)) 0;
+    border-radius:calc(.8 * var(--u));
   }
 
   /* tap number */
@@ -805,7 +809,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-213141";
+  var BUILD = "20260728-213737";
 
   (function(){
     function check(){
