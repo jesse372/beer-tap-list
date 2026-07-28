@@ -313,6 +313,11 @@
   /* The price row costs a line, and it buys it from the tasting note — a paying
      customer wants the number far more than "grapefruit and pine". */
   .tap.priced .notes{display:none}
+  /* The glass is what gives a card its weight, and its height comes from --s — so on
+     a taller priced card it was left stranded at 59% of the card against 77% on the
+     ordinary board. Sizing it from the CARD instead breaks that dependency: growing
+     it no longer feeds back into the scale and shrinks the type to pay for itself. */
+  .tap.priced .glass{height:68%}
   .prices{
     flex:1 0 100%;
     display:flex;flex-wrap:wrap;align-items:baseline;
