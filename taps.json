@@ -5,9 +5,9 @@
   "logoOnly": true,
   "showClock": true,
   "perPage": "auto",
-  "rotateSeconds": 10,
+  "rotateSeconds": 5,
   "hideKicked": false,
-  "updated": "2026-07-28T05:57:18.567Z",
+  "updated": "2026-07-28T05:58:33.076Z",
   "taps": [
     {
       "num": 1,
