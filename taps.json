@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-07-27T23:48:44.967Z",
+  "updated": "2026-07-28T05:49:58.330Z",
   "taps": [
     {
       "num": 1,
@@ -128,6 +128,19 @@
       "icon": "",
       "level": 90,
       "status": "pouring"
+    },
+    {
+      "num": 9,
+      "name": "Hello Darkness My Old Friend",
+      "style": "Black IPA",
+      "abv": "6.3",
+      "ibu": "60",
+      "notes": "",
+      "color": "#560903",
+      "srm": 32,
+      "icon": "",
+      "level": 100,
+      "status": "coming"
     }
   ],
   "rotate": 0,
