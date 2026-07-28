@@ -739,7 +739,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-083033";
+  var BUILD = "20260728-083609";
 
   (function(){
     function check(){
@@ -818,10 +818,10 @@
       var r = 0;
       el("histrows").innerHTML = HIST.map(function(h){
         if(h[0] === null){
-          /* no title at all - the blank says more than a black bar did */
+          /* title reads like the other rows, no censor bars */
           var t = REDT[r++] || "9:59 pm";
           return '<div class="hrow"><span class="htime">' + t + '</span><span class="hfav"></span>' +
-                 '<span class="htitle"></span>' +
+                 '<span class="htitle">Pornhub.com</span>' +
                  '<span class="hsite">' + esc(h[1]) + '</span></div>';
         }
         return '<div class="hrow"><span class="htime">' + esc(h[0]) + '</span><span class="hfav"></span>' +
