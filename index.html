@@ -741,7 +741,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-082258";
+  var BUILD = "20260728-082634";
 
   (function(){
     function check(){
@@ -798,16 +798,19 @@
 
     /* 6 - somebody's browsing history, briefly */
     var HIST = [
-      ["9:42 pm", "how much beer is too much beer", "google.com"],
+      ["9:38 pm", "how to tell if a keg has gone off", "google.com"],
       ["9:44 pm", "is it normal to name your kegerator", "reddit.com"],
-      [null], [null], [null],
-      ["10:03 pm", "can you drink stout for breakfast", "google.com"],
-      [null],
-      ["10:15 pm", "how to tell wife i bought another keg", "wikihow.com"],
-      ["10:16 pm", "are mullets still cool 2026", "google.com"],
+      [null, "pornhub.com"],
+      [null, "pornhub.com"],
+      ["9:58 pm", "can my wife see what i search on the wifi", "google.com"],
+      [null, "pornhub.com"],
+      ["10:04 pm", "does incognito actually work", "google.com"],
+      [null, "pornhub.com"],
+      ["10:12 pm", "clear router history telstra", "whirlpool.net.au"],
+      [null, "pornhub.com"],
       ["10:31 pm", "how to delete browsing history", "google.com"]
     ];
-    var REDT = ["9:51 pm","9:52 pm","9:56 pm","10:09 pm"];
+    var REDT = ["9:51 pm", "9:53 pm", "10:01 pm", "10:07 pm", "10:19 pm"];
     function gagHistory(){
       var box = el("histgag");
       if(!box){ done(400); return; }
@@ -820,8 +823,8 @@
           var t = REDT[r++] || "9:59 pm";
           return '<div class="hrow hred"><span class="htime">' + t + '</span><span class="hfav"></span>' +
                  '<span class="htitle"><span class="blk">' +
-                 "\u2588".repeat(26) + '</span></span>' +
-                 '<span class="hsite"><span class="blk">' + "\u2588".repeat(10) + '</span></span></div>';
+                 "\u2588".repeat(24) + '</span></span>' +
+                 '<span class="hsite">' + esc(h[1]) + '</span></div>';
         }
         return '<div class="hrow"><span class="htime">' + esc(h[0]) + '</span><span class="hfav"></span>' +
                '<span class="htitle">' + esc(h[1]) + '</span>' +
