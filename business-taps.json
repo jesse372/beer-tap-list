@@ -1,0 +1,258 @@
+{
+  "brewery": "The Tap Room",
+  "tagline": "Twelve taps · Poured fresh",
+  "logoOnly": false,
+  "showClock": true,
+  "perPage": "auto",
+  "rotateSeconds": 15,
+  "hideKicked": false,
+  "updated": "2026-07-28T06:01:07.700Z",
+  "taps": [
+    {
+      "num": 1,
+      "name": "Lemon, Lime Bitters",
+      "style": "Boozy Soft Drink",
+      "abv": "6",
+      "ibu": "0",
+      "notes": "",
+      "color": "#e8b3c8",
+      "srm": null,
+      "ready": "",
+      "guest": true,
+      "icon": "",
+      "level": 50,
+      "status": "pouring",
+      "prices": {
+        "s1": 5.5,
+        "s2": 7.5,
+        "s3": 10.0
+      }
+    },
+    {
+      "num": 2,
+      "name": "Bush Chook",
+      "style": "Light Lager",
+      "abv": "4.4",
+      "ibu": "18",
+      "notes": "Light, crisp and easy. ",
+      "color": "#FFD878",
+      "srm": 2,
+      "ready": "",
+      "guest": false,
+      "icon": "",
+      "level": 50,
+      "status": "pouring",
+      "prices": {
+        "s1": 6.0,
+        "s2": 8.0,
+        "s3": 11.0
+      }
+    },
+    {
+      "num": 3,
+      "name": "Coconut Porter",
+      "style": "English Porter",
+      "abv": "4.3",
+      "ibu": "52",
+      "notes": "Chris's Beer",
+      "color": "#5E0B00",
+      "srm": 30,
+      "ready": "",
+      "guest": false,
+      "icon": "",
+      "level": 50,
+      "status": "pouring",
+      "prices": {
+        "s1": 6.5,
+        "s2": 9.0,
+        "s3": 12.5
+      }
+    },
+    {
+      "num": 4,
+      "name": "Prysma in the Galaxy",
+      "style": "New England IPA",
+      "abv": "6.2",
+      "ibu": "32",
+      "notes": "Used Prysma Galaxy",
+      "color": "#F39C00",
+      "srm": 7,
+      "ready": "",
+      "guest": false,
+      "icon": "",
+      "level": 100,
+      "status": "pouring",
+      "prices": {
+        "s3": 14.0
+      }
+    },
+    {
+      "num": 5,
+      "name": "Munich Helles HC",
+      "style": "International Lager",
+      "abv": "5",
+      "ibu": "18",
+      "notes": "",
+      "color": "#FFD878",
+      "srm": 2,
+      "ready": "",
+      "guest": false,
+      "icon": "mug",
+      "level": 100,
+      "status": "pouring",
+      "prices": {
+        "s1": 6.0,
+        "s2": 8.0,
+        "s3": 11.0
+      }
+    },
+    {
+      "num": 6,
+      "name": "Krush Pacific Ale",
+      "style": "Pacific Ale",
+      "abv": "4.6",
+      "ibu": "25",
+      "notes": "",
+      "color": "#FFD878",
+      "srm": 2,
+      "ready": "",
+      "guest": false,
+      "icon": "",
+      "level": 50,
+      "status": "pouring",
+      "prices": {
+        "s1": 6.5,
+        "s2": 8.5,
+        "s3": 12.0
+      }
+    },
+    {
+      "num": 7,
+      "name": "Blueberry Mango Sour",
+      "style": "Catalina Sour",
+      "abv": "5",
+      "ibu": "5",
+      "notes": "",
+      "color": "#e8b3c8",
+      "srm": null,
+      "ready": "",
+      "guest": false,
+      "icon": "",
+      "level": 50,
+      "status": "pouring",
+      "prices": {
+        "s1": 7.0,
+        "s2": 9.5,
+        "s3": 13.0
+      }
+    },
+    {
+      "num": 8,
+      "name": "Coopers Lager",
+      "style": "Pale Lager",
+      "abv": "4.5",
+      "ibu": "35",
+      "notes": "",
+      "color": "#FFCA5A",
+      "srm": 3,
+      "ready": "",
+      "guest": false,
+      "icon": "",
+      "level": 90,
+      "status": "pouring",
+      "prices": {
+        "s1": 5.5,
+        "s2": 7.5,
+        "s3": 10.5
+      }
+    },
+    {
+      "num": 9,
+      "name": "Hello Darkness My Old Friend",
+      "style": "Black IPA",
+      "abv": "6.3",
+      "ibu": "60",
+      "notes": "",
+      "color": "#560903",
+      "srm": 32,
+      "icon": "",
+      "level": 100,
+      "status": "coming",
+      "ready": "2026-08-07",
+      "prices": {
+        "s1": 7.0,
+        "s2": 9.5,
+        "s3": 13.5
+      }
+    },
+    {
+      "num": 10,
+      "name": "Helles of a Ride V1",
+      "style": "Munich Helles",
+      "abv": "5.1",
+      "ibu": "18",
+      "notes": "",
+      "color": "#FFBF42",
+      "srm": 4,
+      "icon": "pint",
+      "level": 100,
+      "status": "coming",
+      "ready": "2026-08-07",
+      "prices": {
+        "s1": 6.0,
+        "s2": 8.0,
+        "s3": 11.0
+      }
+    }
+  ],
+  "rotate": 0,
+  "bg": "charcoal",
+  "logoSize": "l",
+  "bgV": "1785065831352",
+  "library": [
+    {
+      "name": "Coconut Porter",
+      "style": "English Porter",
+      "abv": "4.3",
+      "ibu": "52",
+      "notes": "Chris's Beer",
+      "color": "#5E0B00",
+      "srm": 30,
+      "icon": ""
+    },
+    {
+      "name": "Munich Helles HC",
+      "style": "International Lager",
+      "abv": "5",
+      "ibu": "18",
+      "notes": "",
+      "color": "#FFD878",
+      "srm": 2,
+      "icon": "mug"
+    }
+  ],
+  "dimAtNight": true,
+  "dimFrom": 22,
+  "dimTo": 7,
+  "pricing": {
+    "on": true,
+    "currency": "$",
+    "sizes": [
+      {
+        "id": "s1",
+        "name": "Middy",
+        "ml": 285
+      },
+      {
+        "id": "s2",
+        "name": "Schooner",
+        "ml": 425
+      },
+      {
+        "id": "s3",
+        "name": "Pint",
+        "ml": 570
+      }
+    ]
+  }
+}

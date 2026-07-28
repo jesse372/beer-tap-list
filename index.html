@@ -880,11 +880,20 @@
     x.send();
   }
 
-  /* ---------- load + refresh ---------- */
-  var CACHE_KEY = "tapcache.v1";
+  /* ---------- load + refresh ----------
+     ?demo=business reads a separate file, so the business version can be looked at
+     on a real screen without touching the board this site actually runs. Only that
+     one name is accepted — the parameter picks from a list, it is not a path. */
+  var DEMOS = { business: "business-taps.json" };
+  function dataFile(){
+    var m = /[?&]demo=([a-z]+)/i.exec(location.search || "");
+    return (m && DEMOS[m[1].toLowerCase()]) || "taps.json";
+  }
+  /* A demo must not poison the cache the real board falls back to. */
+  var CACHE_KEY = "tapcache.v1" + (dataFile() === "taps.json" ? "" : ".demo");
 
   function load(){
-    var url = "taps.json?t=" + Date.now();
+    var url = dataFile() + "?t=" + Date.now();
     var done = false;
 
     function apply(json){
@@ -928,7 +937,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-220122";
+  var BUILD = "20260728-220626";
 
   (function(){
     function check(){
