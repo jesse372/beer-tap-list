@@ -216,17 +216,20 @@
     content:"";position:absolute;top:0;bottom:0;left:0;width:calc(.55 * var(--u));
     background:var(--beer,#e3ad42);opacity:.85;
   }
-  /* Kicked is genuinely gone, so it may fade into the background. */
+  /* Kicked is genuinely gone, so it may fade into the background. A beer that is
+     coming gets no dimming and no tint — it renders exactly like every other card,
+     and the page heading is what marks it out. */
   .tap.out{opacity:.4}
   .tap.out::before{opacity:.3}
-  /* Coming soon is the opposite: it still has to read from the sofa, so it gets a
-     DIFFERENT card rather than a dimmer one — teal wash, teal spine, solid badge. */
-  .tap.soon{
-    background:linear-gradient(180deg,rgba(121,179,156,.13),rgba(121,179,156,.035));
-    border-color:rgba(121,179,156,.40);
+
+  /* Heading for a page holding nothing but upcoming beers. */
+  .pagehead{
+    grid-column:1/-1;align-self:end;
+    font-family:var(--cond);font-weight:600;color:var(--gold);
+    font-size:calc(2.6 * var(--u));letter-spacing:.28em;text-transform:uppercase;
+    padding-bottom:calc(.9 * var(--u));
+    border-bottom:1px solid var(--line-strong);
   }
-  .tap.soon::before{background:#79b39c;opacity:1}
-  .tap.soon .badge.coming{background:#79b39c;color:#0d1a16;border-color:#79b39c}
 
   /* tap number */
   .numbadge{
@@ -278,7 +281,12 @@
     flex:1 1 auto;min-width:0;
     font-family:var(--serif);font-weight:700;
     font-size:calc((3.4 * var(--u)) * var(--s));line-height:1.08;letter-spacing:-.004em;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    /* A long name wraps to a second line instead of being cut off — the card has
+       the height for it, and half a beer name is no use from across the room.
+       -webkit-line-clamp is already relied on for the rotated heading, so it is
+       safe on Fire TV's Silk. */
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    white-space:normal;overflow:hidden;
   }
   .style{
     font-family:var(--cond);font-weight:600;
@@ -550,7 +558,7 @@
     var shown = (coming || kicked) ? 0 : level;
 
     return '' +
-      '<div class="tap' + (coming ? " soon" : (kicked ? " out" : "")) + '" style="--beer:' + esc(color) + '">' +
+      '<div class="tap' + (kicked ? " out" : "") + '" style="--beer:' + esc(color) + '">' +
         '<div class="numbadge">' + esc(t.num != null ? t.num : "") + '</div>' +
         '<div class="glass shaped">' +
           (window.glassSVG ? window.glassSVG(window.glassFor ? window.glassFor(t) : t.icon, shown, color, (t.num != null ? t.num : "x")) : "") +
@@ -649,23 +657,39 @@
     /* A rotated (portrait) board is narrow — one column reads far better there. */
     var portrait = (rot === 90 || rot === 270);
 
-    /* Lay out each page from ITS OWN card count, not from perPage. A last page
-       holding 2 beers used to inherit the full page's 2x4 grid, so it stranded
-       both cards in the top-left at half width and truncated their names. */
+    /* Card size is set ONCE, from the fullest page, and every page reuses it — a
+       short last page must not grow its cards to fill the space, or the same beer
+       changes size as the board rotates. */
+    var cols  = (portrait || perPage <= 3) ? 1 : 2;
+    var rows  = Math.ceil(perPage / cols);
+    /* Fill the card height properly — 4 rows still needs to read from the sofa. */
+    var scale = Math.max(portrait ? 0.5 : 0.78, Math.min(1.3, 3.6 / rows));
+
     main.innerHTML = pages.map(function(p, i){
-      var n    = p.length;
-      var cols = (portrait || n <= 3) ? 1 : 2;
-      var rows = Math.ceil(n / cols);
-      /* Fill the card height properly — 4 rows still needs to read from the sofa. */
-      var scale = Math.max(portrait ? 0.5 : 0.78, Math.min(1.3, 3.6 / rows));
+      /* A page of nothing but upcoming beers is a section, not a short tap list,
+         so it gets a heading and reads left-to-right under it. */
+      var allComing = p.length > 0 && p.every(function(t){ return t.status === "coming"; });
+      var full      = p.length === perPage;
+      /* Card height is pinned to what a FULL page produces, written as a share of
+         the page rather than 1fr. That way a heading can sit above the cards while
+         they keep exactly the height they have on page one, and the leftover space
+         collects harmlessly at the bottom instead of inflating the cards. */
+      var rowH = 'calc((100% - ' + ((rows - 1) * 1.5) + ' * var(--u)) / ' + rows + ')';
       return '<div class="page' + (i === 0 ? " on" : "") + '" style="' +
         'grid-template-columns:repeat(' + cols + ',1fr);' +
-        'grid-template-rows:repeat(' + rows + ',1fr);' +
+        'grid-template-rows:' + (allComing
+          ? 'auto repeat(' + Math.ceil(p.length / cols) + ',' + rowH + ')'
+          : 'repeat(' + rows + ',1fr)') + ';' +
+        (allComing ? 'align-content:start;' : '') +
         /* Fill down the left column first, then the right — so the taps read
            1,2,3,4 down one side and 5,6,7,8 down the other. Single-column
-           (portrait) layouts must stay row-flow or everything lands in one row. */
-        'grid-auto-flow:' + (cols > 1 ? "column" : "row") + ';' +
-        '--s:' + scale.toFixed(3) + '">' + p.map(tapHTML).join("") + '</div>';
+           (portrait) layouts must stay row-flow or everything lands in one row.
+           A part-full page also flows by row, so its cards spread across rather
+           than stacking in column one and stranding half the screen. */
+        'grid-auto-flow:' + (cols > 1 && full ? "column" : "row") + ';' +
+        '--s:' + scale.toFixed(3) + '">' +
+        (allComing ? '<div class="pagehead">Coming Soon</div>' : '') +
+        p.map(tapHTML).join("") + '</div>';
     }).join("");
 
     el("dots").innerHTML = pages.length > 1
@@ -781,7 +805,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-212135";
+  var BUILD = "20260728-213141";
 
   (function(){
     function check(){
