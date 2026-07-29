@@ -674,14 +674,14 @@
   function tapHTML(t){
     var level  = Math.max(0, Math.min(100, levelFor(t)));
     var status = t.status || "pouring";
-    var kicked = status === "kicked" || (status === "pouring" && level <= 0);
+    var kicked = status === "kicked" || (levelsTracked() && status === "pouring" && level <= 0);
     var coming = status === "coming";
     var color  = t.color || "#e3ad42";
 
     var badge = "";
     if(coming)           badge = '<div class="badge coming">' + esc(comingText(t)) + '</div>';
     else if(kicked)      badge = '<div class="badge kicked">Kicked</div>';
-    else if(!biz && level <= 20) badge = '<div class="badge low">Almost Gone</div>';
+    else if(levelsTracked() && level <= 20) badge = '<div class="badge low">Almost Gone</div>';
 
     /* Blank means "not entered" - leave it off entirely.
        A zero IBU or SRM tells nobody anything either, so that goes too. A zero
@@ -703,10 +703,7 @@
     /* A beer that is coming pours FULL — it is a keg waiting to be tapped, and an
        empty glass under a Coming Soon banner reads as though it has already gone.
        Kicked stays empty, because that one really is finished. */
-    /* Business mode hides what is left in the keg: a customer wants to know what it
-       costs, not that it is two thirds gone. Kicked still reads as kicked. */
-    var biz   = pricing().on;
-    var shown = kicked ? 0 : ((coming || biz) ? 100 : level);
+    var shown = kicked ? 0 : (coming ? 100 : level);
 
     /* The price row is a sibling of the text column, not a child of it, so it can
        wrap onto its own full-width line under the whole card. Inside .body it was
@@ -792,7 +789,7 @@
 
     if(data.hideKicked){
       taps = taps.filter(function(t){
-        return !(t.status === "kicked" || (t.status !== "coming" && levelFor(t) <= 0));
+        return !(t.status === "kicked" || (levelsTracked() && t.status !== "coming" && levelFor(t) <= 0));
       });
     }
 
@@ -858,7 +855,7 @@
       : "";
 
     var pouring = taps.filter(function(t){
-      return t.status !== "coming" && !(t.status === "kicked" || levelFor(t) <= 0);
+      return t.status !== "coming" && !(t.status === "kicked" || (levelsTracked() && levelFor(t) <= 0));
     }).length;
     el("foot-left").textContent = pouring + (pouring === 1 ? " beer pouring" : " beers pouring");
 
@@ -988,21 +985,39 @@
      litres or kilograms into a percentage. The board simply prefers a fresh reading
      over the slider, and falls back to the slider the moment one goes quiet — so a
      flat battery leaves the board working exactly as it did before. */
-  var WORKER_BASE   = "https://ontap-publish.madlad-taps.workers.dev";
-  var SENSOR        = {};
-  var SENSOR_MAX_AGE = 6 * 60 * 60 * 1000;   /* a reading older than this is ignored */
+  var WORKER_BASE = "https://ontap-publish.madlad-taps.workers.dev";
+  var SENSOR      = {};
+
+  /* Keg levels are off until someone connects something that actually measures one.
+     The slider was never kept up to date — every tap sat on a round number — so a
+     board showing "half full" was decorating a guess. With nothing connected the
+     glasses simply draw full and nothing claims to know what is left. */
+  function sensorCfg(){
+    var c = (data && data.sensors) || {};
+    return {
+      on: !!c.on,
+      url: String(c.url || "").trim() || (WORKER_BASE + "/levels"),
+      staleMs: (Number(c.staleHours) > 0 ? Number(c.staleHours) : 6) * 3600 * 1000
+    };
+  }
+  function levelsTracked(){ return sensorCfg().on; }
 
   function levelFor(t){
+    if(!levelsTracked()) return 100;      /* not measuring — draw it full, claim nothing */
     var s = SENSOR[String(t.num)];
-    if(s && isFinite(s.pct) && (Date.now() - s.at) < SENSOR_MAX_AGE) return s.pct;
-    return Number(t.level) || 0;
+    if(s && isFinite(s.pct) && (Date.now() - s.at) < sensorCfg().staleMs) return s.pct;
+    return Number(t.level) || 0;          /* connected, but this tap isn't reporting */
   }
 
+  var pollLevels = null;
   (function(){
     var last = "";
     function poll(){
+      /* Nothing connected means nothing to ask. This also keeps the board from
+         calling an endpoint that may not exist and logging an error every minute. */
+      if(!levelsTracked()) return;
       var x = new XMLHttpRequest();
-      x.open("GET", WORKER_BASE + "/levels?t=" + Date.now(), true);
+      x.open("GET", sensorCfg().url + "?t=" + Date.now(), true);
       x.timeout = 8000;
       x.onload = function(){
         if(x.status < 200 || x.status >= 300) return;
@@ -1016,6 +1031,7 @@
       x.onerror = x.ontimeout = function(){};
       x.send();
     }
+    pollLevels = poll;
     poll();
     setInterval(poll, 60000);
   })();
@@ -1067,6 +1083,7 @@
       try { localStorage.setItem(CACHE_KEY, stamp); } catch(e){}
       if(stamp === lastStamp) return;      /* unchanged - don't restart the rotation */
       lastStamp = stamp; data = json; render();
+      if(pollLevels) pollLevels();
     }
     function fail(){
       if(done) return; done = true;
@@ -1141,7 +1158,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260729-211319";
+  var BUILD = "20260729-212436";
 
   (function(){
     function check(){

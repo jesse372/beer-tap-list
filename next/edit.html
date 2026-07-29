@@ -373,6 +373,19 @@
       <div class="checkline">
         <input type="checkbox" id="hideKicked"><label for="hideKicked">Hide empty kegs from the TV completely</label>
       </div>
+      <div class="checkline">
+        <input type="checkbox" id="sensorsOn"><label for="sensorsOn">I have keg level sensors connected</label>
+      </div>
+      <div id="sensorrow" style="display:none">
+        <div class="field" style="margin-bottom:0">
+          <label for="sensorUrl">Where the levels come from (optional)</label>
+          <input type="text" id="sensorUrl" placeholder="Leave blank to use the built-in service">
+          <div class="hint">Load cells, flow meters, a Plaato, Home Assistant, an ESP32 &mdash;
+            anything that can send a reading. See <strong>SENSORS.md</strong> for how to point
+            yours at the board. Until something is connected the TV shows full glasses and
+            doesn&rsquo;t claim to know what&rsquo;s left.</div>
+        </div>
+      </div>
       <div class="checkline" id="pricingline">
         <input type="checkbox" id="pricingOn"><label for="pricingOn">Business mode &mdash; show prices on the TV</label>
       </div>
@@ -939,6 +952,9 @@
     return data.pricing;
   }
   function sizeList(){ return pricingObj().sizes; }
+  function sensorsConnected(){
+    return !!(data.sensors && typeof data.sensors === "object" && data.sensors.on);
+  }
   var DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   function happyObj(){
     var p = pricingObj();
@@ -1002,6 +1018,10 @@
     $("rotate").value        = String(Number(data.rotate) || 0);
     $("bg").value            = data.bg || "charcoal";
     /* Business mode is offered to everyone — it is simply off until switched on. */
+    var sen = (data.sensors && typeof data.sensors === "object") ? data.sensors : {};
+    $("sensorsOn").checked = !!sen.on;
+    $("sensorrow").style.display = sen.on ? "" : "none";
+    $("sensorUrl").value = sen.url || "";
     renderHappy();
     $("pricingOn").checked   = pricingOn();
     $("pricingrow").style.display = pricingOn() ? "" : "none";
@@ -1066,7 +1086,8 @@
           '</div>' +
         '</div></div>' +
 
-        '<div class="field"><label>How much is left in the keg?</label>' +
+        (sensorsConnected()
+          ? '<div class="field"><label>How much is left in the keg?</label>' +
           '<div class="levelrow">' +
             '<input type="range" min="0" max="100" step="5" value="' + (Number(t.level) || 0) + '" data-f="level" style="flex:1 1 220px">' +
             '<div class="levelval">' + (Number(t.level) || 0) + '%</div>' +
@@ -1077,7 +1098,8 @@
             '<button class="btn-sm btn-ghost" data-level="15">Almost gone</button>' +
             '<button class="btn-sm btn-ghost" data-level="0">Empty</button>' +
           '</div>' +
-        '</div>' +
+        '</div>'
+          : '') +
 
         (pricingOn()
           ? '<div class="field"><label>Prices</label><div class="pricegrid">' +
@@ -1166,6 +1188,19 @@
     }
     renderSizes(); renderTaps(); touched();
   });
+  $("sensorsOn").addEventListener("change", function(){
+    if(!data.sensors || typeof data.sensors !== "object") data.sensors = {};
+    data.sensors.on = this.checked;
+    $("sensorrow").style.display = this.checked ? "" : "none";
+    renderTaps();          /* the keg slider only means something when measured */
+    touched();
+  });
+  $("sensorUrl").addEventListener("input", function(){
+    if(!data.sensors || typeof data.sensors !== "object") data.sensors = {};
+    data.sensors.url = this.value.trim();
+    touched();
+  });
+
   $("happyOn").addEventListener("change", function(){
     happyObj().on = this.checked;
     $("happyrow").style.display = this.checked ? "" : "none";
