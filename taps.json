@@ -236,12 +236,12 @@
       "icon": "mug"
     }
   ],
-  "dimAtNight": true,
+  "dimAtNight": false,
   "dimFrom": 22,
   "dimTo": 7,
   "logoBanner": true,
   "pricing": {
-    "on": true,
+    "on": false,
     "currency": "$",
     "sizes": [
       {
@@ -273,6 +273,6 @@
       }
     }
   },
-  "showQR": true,
+  "showQR": false,
   "qrCaption": "Fucking great beer"
 }

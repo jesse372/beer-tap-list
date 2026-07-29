@@ -454,22 +454,6 @@
     box-shadow:0 calc(.5 * var(--u)) calc(1.6 * var(--u)) rgba(0,0,0,.55);
   }
 
-  /* QR to the phone menu. Bottom-left, clear of the full-screen hint on the right. */
-  #qrbox{
-    position:absolute;left:calc(2.6 * var(--u));bottom:calc(2.6 * var(--u));z-index:55;
-    display:none;text-align:center;
-  }
-  #qrbox.on{display:block}
-  #qrimg{
-    display:block;width:calc(13 * var(--u));height:calc(13 * var(--u));
-    background:#fff;padding:calc(.7 * var(--u));border-radius:calc(.6 * var(--u));
-  }
-  #qrcap{
-    font-family:var(--cond);font-weight:600;color:var(--muted);
-    font-size:calc(1.5 * var(--u));letter-spacing:.16em;text-transform:uppercase;
-    margin-top:calc(.6 * var(--u));
-  }
-
   #fshint{
     position:absolute;right:calc(2.6 * var(--u));bottom:calc(2.6 * var(--u));z-index:50;
     background:rgba(227,173,66,.95);color:#1a1408;
@@ -508,9 +492,6 @@
 
   <div id="fshint">Press OK for full screen</div>
   <div id="previewbadge" aria-hidden="true">Preview &mdash; not published</div>
-  <div id="qrbox" aria-hidden="true">
-    <img id="qrimg" alt="">
-    <div id="qrcap">Scan for the menu</div>
   </div>
 </div>
 
@@ -700,7 +681,7 @@
     var badge = "";
     if(coming)           badge = '<div class="badge coming">' + esc(comingText(t)) + '</div>';
     else if(kicked)      badge = '<div class="badge kicked">Kicked</div>';
-    else if(level <= 20) badge = '<div class="badge low">Almost Gone</div>';
+    else if(!biz && level <= 20) badge = '<div class="badge low">Almost Gone</div>';
 
     /* Blank means "not entered" - leave it off entirely.
        A zero IBU or SRM tells nobody anything either, so that goes too. A zero
@@ -722,7 +703,10 @@
     /* A beer that is coming pours FULL — it is a keg waiting to be tapped, and an
        empty glass under a Coming Soon banner reads as though it has already gone.
        Kicked stays empty, because that one really is finished. */
-    var shown = kicked ? 0 : (coming ? 100 : level);
+    /* Business mode hides what is left in the keg: a customer wants to know what it
+       costs, not that it is two thirds gone. Kicked still reads as kicked. */
+    var biz   = pricing().on;
+    var shown = kicked ? 0 : ((coming || biz) ? 100 : level);
 
     /* The price row is a sibling of the text column, not a child of it, so it can
        wrap onto its own full-width line under the whole card. Inside .body it was
@@ -877,21 +861,6 @@
       return t.status !== "coming" && !(t.status === "kicked" || levelFor(t) <= 0);
     }).length;
     el("foot-left").textContent = pouring + (pouring === 1 ? " beer pouring" : " beers pouring");
-
-    var qb = el("qrbox");
-    if(qb){
-      /* Independent of business mode — a menu is worth scanning with or without
-         prices on it. Hidden if the image is missing rather than showing a gap. */
-      var wantQR = !!data.showQR;
-      if(wantQR){
-        var qi = el("qrimg");
-        if(qi && !qi.getAttribute("src")) qi.setAttribute("src", "menu-qr.svg");
-        qi.onerror = function(){ qb.className = ""; };
-      }
-      qb.className = wantQR ? "on" : "";
-      var cap = el("qrcap");
-      if(cap) cap.textContent = data.qrCaption || "Scan for the menu";
-    }
 
     var hb = el("happybar");
     if(hb){
@@ -1149,19 +1118,22 @@
   /* In preview, follow the editor live. The storage event fires in OTHER tabs, which
      is exactly the case here — edit in one tab, watch it change in this one. The slow
      poll is a safety net for browsers that hold the event back. */
-  if(PREVIEW || STAGING){
+  function paintBadge(){
     var pb = el("previewbadge");
-    if(pb){
-      pb.textContent = PREVIEW ? "Preview — not published"
-                               : "Staging — not the live board";
-      pb.style.display = "block";
-    }
+    if(!pb) return;
+    /* Once the draft is published there is nothing left to preview, and the page is
+       showing exactly what everyone else sees — so the badge goes. Without this it
+       lingered on a tab left open and looked like the board had got stuck. */
+    var showing = STAGING || (PREVIEW && draftData());
+    pb.textContent = STAGING ? "Staging — not the live board" : "Preview — not published";
+    pb.style.display = showing ? "block" : "none";
   }
+  paintBadge();
   if(PREVIEW){
     window.addEventListener("storage", function(e){
-      if(!e || e.key === DRAFT_KEY) load();
+      if(!e || e.key === DRAFT_KEY){ load(); paintBadge(); }
     }, false);
-    setInterval(load, 2000);
+    setInterval(function(){ load(); paintBadge(); }, 2000);
   }
 
   /* ---------- pick up new versions of this page by itself ----------
@@ -1169,7 +1141,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260729-124522";
+  var BUILD = "20260729-211319";
 
   (function(){
     function check(){
@@ -1259,8 +1231,9 @@
                '<span class="hsite">' + esc(h[2]) + '</span></div>';
       }).join("");
       box.className = "on";
-      setTimeout(function(){ box.className = ""; }, 5000);
-      done(5600);
+      /* Long enough for a room to notice, read it, and start pointing. */
+      setTimeout(function(){ box.className = ""; }, 15000);
+      done(15600);
     }
 
     /* 3 - netflix asks the room a fair question */

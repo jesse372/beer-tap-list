@@ -373,15 +373,6 @@
       <div class="checkline">
         <input type="checkbox" id="hideKicked"><label for="hideKicked">Hide empty kegs from the TV completely</label>
       </div>
-      <div class="checkline">
-        <input type="checkbox" id="showQR"><label for="showQR">Show a QR code on the TV &mdash; guests scan it for the menu on their phone</label>
-      </div>
-      <div class="field" id="qrcaprow" style="display:none">
-        <label for="qrCaption">Wording under the QR code</label>
-        <input type="text" id="qrCaption" placeholder="Scan for the menu">
-        <div class="hint">Works with or without business mode. Prices only appear on the
-          phone menu if you have them switched on.</div>
-      </div>
       <div class="checkline" id="pricingline">
         <input type="checkbox" id="pricingOn"><label for="pricingOn">Business mode &mdash; show prices on the TV</label>
       </div>
@@ -1012,9 +1003,6 @@
     $("bg").value            = data.bg || "charcoal";
     /* Business mode is offered to everyone — it is simply off until switched on. */
     renderHappy();
-    $("showQR").checked      = !!data.showQR;
-    $("qrcaprow").style.display = data.showQR ? "" : "none";
-    $("qrCaption").value     = data.qrCaption || "";
     $("pricingOn").checked   = pricingOn();
     $("pricingrow").style.display = pricingOn() ? "" : "none";
     renderSizes();
@@ -1153,15 +1141,6 @@
   $("hideKicked").addEventListener("change", function(){ data.hideKicked = this.checked; touched(); });
 
   /* Business mode */
-  $("showQR").addEventListener("change", function(){
-    data.showQR = this.checked;
-    $("qrcaprow").style.display = this.checked ? "" : "none";
-    touched();
-  });
-  $("qrCaption").addEventListener("input", function(){
-    data.qrCaption = this.value; touched();
-  });
-
   $("pricingOn").addEventListener("change", function(){
     pricingObj().on = this.checked;
     $("pricingrow").style.display = this.checked ? "" : "none";
