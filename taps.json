@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-07-29T12:41:40.463Z",
+  "updated": "2026-07-29T12:46:32.367Z",
   "taps": [
     {
       "num": 1,
@@ -22,7 +22,12 @@
       "guest": true,
       "icon": "can",
       "level": 50,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 1,
+        "s2": 4,
+        "s3": 8
+      }
     },
     {
       "num": 2,
@@ -37,7 +42,12 @@
       "guest": false,
       "icon": "pint",
       "level": 50,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 2,
+        "s2": 4,
+        "s3": 8
+      }
     },
     {
       "num": 3,
@@ -52,7 +62,12 @@
       "guest": false,
       "icon": "pint",
       "level": 50,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 2,
+        "s2": 4,
+        "s3": 8
+      }
     },
     {
       "num": 4,
@@ -67,7 +82,12 @@
       "guest": false,
       "icon": "hop",
       "level": 100,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 2,
+        "s2": 4,
+        "s3": 8
+      }
     },
     {
       "num": 5,
@@ -82,7 +102,12 @@
       "guest": false,
       "icon": "wheat",
       "level": 100,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 2,
+        "s2": 4,
+        "s3": 8
+      }
     },
     {
       "num": 6,
@@ -97,7 +122,12 @@
       "guest": false,
       "icon": "mug",
       "level": 50,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 2,
+        "s2": 4,
+        "s3": 8
+      }
     },
     {
       "num": 7,
@@ -112,7 +142,12 @@
       "guest": false,
       "icon": "can",
       "level": 50,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 2,
+        "s2": 4,
+        "s3": 8
+      }
     },
     {
       "num": 8,
@@ -127,7 +162,12 @@
       "guest": false,
       "icon": "growler",
       "level": 90,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 2,
+        "s2": 4,
+        "s3": 8
+      }
     },
     {
       "num": 9,
@@ -142,7 +182,12 @@
       "guest": false,
       "icon": "pint",
       "level": 100,
-      "status": "coming"
+      "status": "coming",
+      "prices": {
+        "s1": 4,
+        "s2": 8,
+        "s3": 10
+      }
     },
     {
       "num": 10,
@@ -157,7 +202,12 @@
       "guest": false,
       "icon": "mug",
       "level": 100,
-      "status": "coming"
+      "status": "coming",
+      "prices": {
+        "s1": 3,
+        "s2": 6,
+        "s3": 9
+      }
     }
   ],
   "rotate": 0,
@@ -212,8 +262,8 @@
     ],
     "happy": {
       "on": true,
-      "from": "16:00",
-      "to": "18:00",
+      "from": "20:00",
+      "to": "21:00",
       "label": "Happy Hour",
       "days": [],
       "prices": {}
