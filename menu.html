@@ -92,6 +92,15 @@
   .price i{font-family:var(--cond);font-style:normal;font-weight:600;color:var(--muted);
     letter-spacing:.14em;text-transform:uppercase;font-size:11.5px}
 
+  .thumb{flex:0 0 auto;width:54px;height:54px;border-radius:8px;object-fit:cover;
+         background:rgba(255,255,255,.05);border:1px solid var(--line)}
+  .custom{margin-top:7px;font-size:13px;color:var(--muted);line-height:1.55}
+  .custom b{color:var(--cream);font-weight:600}
+  .xitem{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:baseline}
+  .xitem .xn{flex:1 1 auto;min-width:0}
+  .xitem .xname{font-family:var(--serif);font-weight:700;font-size:17px}
+  .xitem .xd{color:var(--muted);font-size:13.5px;margin-top:3px;line-height:1.4}
+  .xitem .xp{flex:0 0 auto;font-family:var(--sans);font-weight:700;color:var(--gold);font-size:17px}
   footer{margin-top:26px;text-align:center;color:var(--dim);
     font-family:var(--cond);letter-spacing:.18em;text-transform:uppercase;font-size:11.5px}
   .msg{text-align:center;color:var(--muted);padding:40px 0}
@@ -240,14 +249,22 @@
     if(nonZero(t.ibu)) meta.push('<span><b>' + esc(String(t.ibu).trim()) + '</b> IBU</span>');
     if(nonZero(t.srm)) meta.push('<span><b>' + esc(t.srm) + '</b> SRM</span>');
 
+    var customs = (Array.isArray(t.custom) ? t.custom : []).filter(function(c){
+      return has(c && c.k) || has(c && c.v);
+    });
     return '<div class="beer' + (kicked ? " out" : "") + '" style="--beer:' + esc(t.color || "#e3ad42") + '">' +
       '<div class="num">' + esc(t.num != null ? t.num : "") + '</div>' +
       '<div class="swatch"></div>' +
+      (has(t.image) ? '<img class="thumb" alt="" src="' + esc(t.image) +
+        '" onerror="this.style.display=\'none\'">' : '') +
       '<div class="info">' +
         '<div class="name">' + esc(t.name || "Untitled") + '</div>' +
         (has(t.style) ? '<div class="style">' + esc(String(t.style).trim()) + '</div>' : '') +
         (has(t.notes) ? '<div class="notes">' + esc(String(t.notes).trim()) + '</div>' : '') +
         (meta.length ? '<div class="meta">' + meta.join("") + '</div>' : '') +
+        (customs.length ? '<div class="custom">' + customs.map(function(c){
+            return (has(c.k) ? '<b>' + esc(c.k) + ':</b> ' : '') + esc(c.v || "");
+          }).join("<br>") + '</div>' : '') +
         pricesHTML(t) +
         (t.guest ? '<div class="badge guest">Guest</div> ' : '') + badge +
       '</div>' +
@@ -295,6 +312,27 @@
         html += '<div class="sect">Coming Soon</div>' + coming.map(beerHTML).join("");
       }
     }
+    /* Food and merch are not poured, so they sit under their own headings with a
+       plain price rather than pour sizes. */
+    var ex = data.extras;
+    if(ex && ex.on && Array.isArray(ex.groups)){
+      var cur = pricing().currency;
+      ex.groups.forEach(function(g){
+        var items = (g.items || []).filter(function(i){ return String(i.name || "").trim() !== ""; });
+        if(!items.length) return;
+        html += '<div class="sect">' + esc(g.name || "Also available") + '</div>' +
+          items.map(function(i){
+            return '<div class="xitem"><div class="xn">' +
+              '<div class="xname">' + esc(i.name) + '</div>' +
+              (has(i.desc) ? '<div class="xd">' + esc(i.desc) + '</div>' : '') +
+            '</div>' +
+            (i.price != null && String(i.price).trim() !== ''
+              ? '<div class="xp">' + esc(money(cur, i.price)) + '</div>' : '') +
+            '</div>';
+          }).join("");
+      });
+    }
+
     el("list").innerHTML = html;
 
     var n = pouring.filter(function(t){

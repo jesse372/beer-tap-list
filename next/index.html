@@ -206,6 +206,20 @@
   }
   #happybar.on{display:block}
 
+  /* Food/merch screens: a heading, then a simple priced list. Deliberately plainer
+     than a beer card — these have no glass, no ABV and no keg behind them. */
+  .page.xpage{display:block;overflow:hidden}
+  .xlist{margin-top:calc(2 * var(--u))}
+  .xrow{display:flex;align-items:baseline;gap:calc(2 * var(--uw));
+        padding:calc(1.6 * var(--u)) 0;border-bottom:1px solid var(--line)}
+  .xrow .xn{flex:1 1 auto;min-width:0}
+  .xrow .xname{font-family:var(--serif);font-weight:700;
+               font-size:calc((3.1 * var(--u)) * var(--s));line-height:1.2}
+  .xrow .xd{font-family:var(--sans);color:var(--muted);
+            font-size:calc((1.95 * var(--u)) * var(--s));margin-top:calc(.4 * var(--u))}
+  .xrow .xp{flex:0 0 auto;font-family:var(--sans);font-weight:700;color:var(--gold);
+            font-size:calc((3 * var(--u)) * var(--s));font-variant-numeric:tabular-nums}
+
   main{flex:1 1 auto;min-height:0;position:relative;padding-top:calc(2.1 * var(--u))}
   .page{
     position:absolute;top:calc(2.1 * var(--u));right:0;bottom:0;left:0;
@@ -811,6 +825,20 @@
 
     pages = chunk(taps, perPage);
 
+    /* Food and merch, if the venue wants them on the TV, ride along as extra pages
+       rather than crowding the beers. Each section becomes its own screen. */
+    var extraPages = [];
+    var ex = data.extras;
+    if(ex && ex.on && ex.showOnTV && Array.isArray(ex.groups)){
+      ex.groups.forEach(function(g){
+        var items = (g.items || []).filter(function(i){ return String(i.name || "").trim() !== ""; });
+        while(items.length){
+          extraPages.push({ name: g.name || "Also available", items: items.slice(0, 8) });
+          items = items.slice(8);
+        }
+      });
+    }
+
     /* A rotated (portrait) board is narrow — one column reads far better there. */
     var portrait = (rot === 90 || rot === 270);
 
@@ -849,6 +877,24 @@
         (allComing ? '<div class="pagehead">Coming Soon</div>' : '') +
         p.map(tapHTML).join("") + '</div>';
     }).join("");
+
+    if(extraPages.length){
+      var cur = pricing().currency;
+      main.innerHTML += extraPages.map(function(pg){
+        return '<div class="page xpage" style="--s:' + scale.toFixed(3) + '">' +
+          '<div class="pagehead">' + esc(pg.name) + '</div>' +
+          '<div class="xlist">' + pg.items.map(function(i){
+            return '<div class="xrow">' +
+              '<div class="xn"><div class="xname">' + esc(i.name) + '</div>' +
+              (String(i.desc || "").trim() ? '<div class="xd">' + esc(i.desc) + '</div>' : '') +
+              '</div>' +
+              (i.price != null && String(i.price).trim() !== ''
+                ? '<div class="xp">' + esc(money(cur, i.price)) + '</div>' : '') +
+            '</div>';
+          }).join("") + '</div></div>';
+      }).join("");
+      pages = pages.concat(extraPages);      /* so the dots and rotation count them */
+    }
 
     el("dots").innerHTML = pages.length > 1
       ? pages.map(function(_, i){ return '<div class="dot' + (i === 0 ? " on" : "") + '"></div>'; }).join("")
@@ -1158,7 +1204,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260729-214317";
+  var BUILD = "20260729-215702";
 
   (function(){
     function check(){

@@ -81,6 +81,16 @@
   .qr img{width:26mm;height:26mm;display:block}
   .qr span{font-family:var(--cond);font-weight:600;letter-spacing:.14em;text-transform:uppercase;
            font-size:8pt;color:var(--soft);display:block;margin-top:1.5mm}
+  .thumb{flex:0 0 auto;width:18mm;height:18mm;object-fit:cover;border:1px solid var(--rule)}
+  .custom{font-family:var(--cond);letter-spacing:.06em;font-size:9pt;color:var(--soft);
+          margin-top:1.5mm;line-height:1.5}
+  .custom b{color:var(--ink);font-weight:600}
+  .xitem{display:flex;gap:5mm;padding:2.6mm 0;border-bottom:1px solid var(--rule);
+         break-inside:avoid;page-break-inside:avoid}
+  .xitem .xn{flex:1 1 auto}
+  .xitem .xname{font-family:var(--serif);font-weight:700;font-size:12.5pt}
+  .xitem .xd{font-size:9.5pt;color:var(--soft);margin-top:1mm}
+  .xitem .xp{flex:0 0 auto;font-family:var(--sans);font-weight:700;font-size:12pt}
   .noqr .qr{display:none}
 
   /* Compact: the same menu, scaled. Most sizes here are in points, which do not
@@ -203,13 +213,21 @@
     if(has(t.abv))     meta.push(esc(String(t.abv).trim()) + "% ABV");
     if(nonZero(t.ibu)) meta.push(esc(String(t.ibu).trim()) + " IBU");
     if(t.guest)        meta.push("Guest");
+    var customs = (Array.isArray(t.custom) ? t.custom : []).filter(function(c){
+      return has(c && c.k) || has(c && c.v);
+    });
     return '<div class="beer">' +
       '<div class="num">' + esc(t.num != null ? t.num : "") + '</div>' +
+      (has(t.image) ? '<img class="thumb" alt="" src="' + esc(t.image) +
+        '" onerror="this.style.display=\'none\'">' : '') +
       '<div class="info">' +
         '<div class="name">' + esc(t.name || "Untitled") + '</div>' +
         (has(t.style) ? '<div class="style">' + esc(String(t.style).trim()) + '</div>' : '') +
         (has(t.notes) ? '<div class="notes">' + esc(String(t.notes).trim()) + '</div>' : '') +
         (meta.length ? '<div class="meta">' + meta.join(" &middot; ") + '</div>' : '') +
+        (customs.length ? '<div class="custom">' + customs.map(function(c){
+            return (has(c.k) ? '<b>' + esc(c.k) + ':</b> ' : '') + esc(c.v || "");
+          }).join("<br>") + '</div>' : '') +
       '</div>' + priceRows(t) +
     '</div>';
   }
@@ -238,8 +256,28 @@
     });
     var coming = taps.filter(function(t){ return t.status === "coming"; });
 
-    el("list").innerHTML = pouring.map(beerHTML).join("") +
+    var out = pouring.map(beerHTML).join("") +
       (coming.length ? '<div class="sect">Coming Soon</div>' + coming.map(beerHTML).join("") : "");
+
+    var ex = data.extras;
+    if(ex && ex.on && Array.isArray(ex.groups)){
+      var cur = pricing().currency;
+      ex.groups.forEach(function(g){
+        var items = (g.items || []).filter(function(i){ return String(i.name || "").trim() !== ""; });
+        if(!items.length) return;
+        out += '<div class="sect">' + esc(g.name || "Also available") + '</div>' +
+          items.map(function(i){
+            return '<div class="xitem"><div class="xn">' +
+              '<div class="xname">' + esc(i.name) + '</div>' +
+              (has(i.desc) ? '<div class="xd">' + esc(i.desc) + '</div>' : '') +
+            '</div>' +
+            (i.price != null && String(i.price).trim() !== ''
+              ? '<div class="xp">' + esc(money(cur, i.price)) + '</div>' : '') +
+            '</div>';
+          }).join("");
+      });
+    }
+    el("list").innerHTML = out;
 
     el("foott").innerHTML = esc(data.brewery || "") +
       (data.tagline ? "<br>" + esc(data.tagline) : "");

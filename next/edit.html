@@ -188,6 +188,14 @@
   .hint{font-size:14px;color:var(--muted);margin-top:6px}
   code{background:#efe6d5;padding:2px 6px;border-radius:5px;font-size:15px}
   /* business mode: pour sizes and per-beer prices */
+  .groupbox{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+  .grouphead{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+  .grouphead input{flex:1 1 auto;font-weight:700}
+  .itemrow{display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+  .itemrow .iname{flex:2 1 160px;min-width:0}
+  .itemrow .idesc{flex:3 1 220px;min-width:0}
+  .itemrow .iprice{flex:0 0 110px}
+  .muted{color:var(--muted);font-weight:400}
   .sizerow{display:flex;gap:10px;align-items:center;margin-bottom:9px}
   .sizerow .sname{flex:2 1 130px;min-width:0}
   .sizerow .sml{flex:1 1 90px;max-width:130px}
@@ -484,6 +492,26 @@
     <div class="hint" id="laughmsg" style="margin-top:6px">&nbsp;</div>
   </div>
 
+</div>
+
+<div class="wrap">
+  <details id="extras">
+    <summary>🍟 Food &amp; merch <span class="muted" id="extrascount"></span></summary>
+    <div class="pad">
+      <div class="checkline">
+        <input type="checkbox" id="extrasOn"><label for="extrasOn">Show food, merch and other non-beer items</label>
+      </div>
+      <div id="extrasrow" style="display:none">
+        <div class="checkline">
+          <input type="checkbox" id="extrasTV"><label for="extrasTV">Also show them on the TV, on a screen of their own</label>
+        </div>
+        <div id="groups"></div>
+        <button class="btn-sm btn-ghost" type="button" id="addgroup">+ Add a section</button>
+        <div class="hint">A section is a heading like Kitchen, Snacks or Merch, with items under it.
+          Prices are plain numbers &mdash; these aren&rsquo;t poured, so they have no pour sizes.</div>
+      </div>
+    </div>
+  </details>
 </div>
 
 <div class="publishbar">
@@ -960,6 +988,44 @@
     return data.pricing;
   }
   function sizeList(){ return pricingObj().sizes; }
+  function extrasObj(){
+    if(!data.extras || typeof data.extras !== "object"){
+      data.extras = { on:false, showOnTV:false, groups:[] };
+    }
+    if(!Array.isArray(data.extras.groups)) data.extras.groups = [];
+    return data.extras;
+  }
+  function newId(p){ return p + Date.now().toString(36) + Math.floor(Math.random()*99); }
+
+  function renderGroups(){
+    var e = extrasObj();
+    $("extrasOn").checked = !!e.on;
+    $("extrasTV").checked = !!e.showOnTV;
+    $("extrasrow").style.display = e.on ? "" : "none";
+    var n = e.groups.reduce(function(a,g){ return a + ((g.items||[]).length); }, 0);
+    $("extrascount").textContent = e.on && n ? "— " + n + (n===1?" item":" items") : "";
+
+    $("groups").innerHTML = e.groups.map(function(g, gi){
+      return '<div class="groupbox" data-g="' + gi + '">' +
+        '<div class="grouphead">' +
+          '<input type="text" placeholder="Section name (Kitchen, Merch…)" ' +
+            'value="' + esc(g.name || "") + '" data-gname="1">' +
+          '<button class="btn-sm btn-ghost" type="button" data-delgroup="1">Remove section</button>' +
+        '</div>' +
+        (g.items || []).map(function(it, ii){
+          return '<div class="itemrow" data-i="' + ii + '">' +
+            '<input class="iname" type="text" placeholder="Name" value="' + esc(it.name || "") + '" data-if="name">' +
+            '<input class="idesc" type="text" placeholder="Description (optional)" value="' + esc(it.desc || "") + '" data-if="desc">' +
+            '<input class="iprice" type="number" min="0" step="0.10" inputmode="decimal" placeholder="Price" ' +
+              'value="' + esc(it.price == null ? "" : it.price) + '" data-if="price">' +
+            '<button class="btn-sm btn-ghost" type="button" data-delitem="1">✕</button>' +
+          '</div>';
+        }).join("") +
+        '<button class="btn-sm btn-ghost" type="button" data-additem="1">+ Add an item</button>' +
+      '</div>';
+    }).join("");
+  }
+
   function sensorsConnected(){
     return !!(data.sensors && typeof data.sensors === "object" && data.sensors.on);
   }
@@ -1031,6 +1097,7 @@
     $("sensorrow").style.display = sen.on ? "" : "none";
     $("sensorUrl").value = sen.url || "";
     renderHappy();
+    renderGroups();
     $("pricingOn").checked   = pricingOn();
     $("pricingrow").style.display = pricingOn() ? "" : "none";
     renderSizes();
@@ -1108,6 +1175,24 @@
           '</div>' +
         '</div>'
           : '') +
+
+        '<div class="field"><label>Picture (optional)</label>' +
+          '<input type="url" placeholder="https://… link to an image" value="' + esc(t.image || "") + '" data-f="image">' +
+          '<div class="hint">Paste a link to a picture. It shows on the phone and printed menus, ' +
+            'not on the TV &mdash; the board has no room for it.</div></div>' +
+
+        '<div class="field"><label>Extra details (optional)</label>' +
+          '<div class="customs">' +
+            (Array.isArray(t.custom) ? t.custom : []).map(function(c, ci){
+              return '<div class="itemrow" data-c="' + ci + '">' +
+                '<input class="iname" type="text" placeholder="Label (Hops, Malt, Brewed…)" ' +
+                  'value="' + esc(c.k || "") + '" data-cf="k">' +
+                '<input class="idesc" type="text" placeholder="Value" value="' + esc(c.v || "") + '" data-cf="v">' +
+                '<button class="btn-sm btn-ghost" type="button" data-delcustom="1">✕</button>' +
+              '</div>';
+            }).join("") +
+          '</div>' +
+          '<button class="btn-sm btn-ghost" type="button" data-addcustom="1">+ Add a detail</button></div>' +
 
         (pricingOn()
           ? '<div class="field"><label>Prices</label><div class="pricegrid">' +
@@ -1196,6 +1281,48 @@
     }
     renderSizes(); renderTaps(); touched();
   });
+  $("extrasOn").addEventListener("change", function(){
+    extrasObj().on = this.checked;
+    $("extrasrow").style.display = this.checked ? "" : "none";
+    renderGroups(); touched();
+  });
+  $("extrasTV").addEventListener("change", function(){
+    extrasObj().showOnTV = this.checked; touched();
+  });
+  $("addgroup").addEventListener("click", function(){
+    extrasObj().groups.push({ id:newId("g"), name:"", items:[] });
+    renderGroups(); touched();
+  });
+  $("groups").addEventListener("input", function(ev){
+    var box = ev.target.closest("[data-g]"); if(!box) return;
+    var g = extrasObj().groups[Number(box.dataset.g)]; if(!g) return;
+    if(ev.target.dataset.gname){ g.name = ev.target.value; touched(); return; }
+    var row = ev.target.closest("[data-i]"); if(!row) return;
+    var it = (g.items || [])[Number(row.dataset.i)]; if(!it) return;
+    var f = ev.target.dataset.if; if(!f) return;
+    if(f === "price"){
+      var raw = String(ev.target.value).trim();
+      if(raw === "") delete it.price; else it.price = Number(raw);
+    } else it[f] = ev.target.value;
+    touched();
+  });
+  $("groups").addEventListener("click", function(ev){
+    var btn = ev.target.closest("button"); if(!btn) return;
+    var box = ev.target.closest("[data-g]"); if(!box) return;
+    var e = extrasObj(), gi = Number(box.dataset.g), g = e.groups[gi]; if(!g) return;
+    if(btn.dataset.delgroup){ e.groups.splice(gi, 1); renderGroups(); touched(); return; }
+    if(btn.dataset.additem){
+      g.items = g.items || [];
+      g.items.push({ id:newId("i"), name:"", desc:"" });
+      renderGroups(); touched(); return;
+    }
+    if(btn.dataset.delitem){
+      var row = ev.target.closest("[data-i]"); if(!row) return;
+      g.items.splice(Number(row.dataset.i), 1);
+      renderGroups(); touched();
+    }
+  });
+
   $("sensorsOn").addEventListener("change", function(){
     if(!data.sensors || typeof data.sensors !== "object") data.sensors = {};
     data.sensors.on = this.checked;
@@ -1245,6 +1372,16 @@
     var card = e.target.closest(".card"); if(!card) return;
     var i = Number(card.dataset.i), f = e.target.dataset.f;
     /* Prices are keyed by size id, not by field name, so they are handled first. */
+    var cf = e.target.dataset.cf;
+    if(cf){
+      var crow = e.target.closest("[data-c]");
+      if(crow){
+        var arr = data.taps[i].custom = Array.isArray(data.taps[i].custom) ? data.taps[i].custom : [];
+        var rec = arr[Number(crow.dataset.c)];
+        if(rec){ rec[cf] = e.target.value; touched(); }
+      }
+      return;
+    }
     var pid = e.target.dataset.price;
     if(pid){
       var tp = data.taps[i];
@@ -1290,6 +1427,20 @@
     var card = e.target.closest(".card"); if(!card) return;
     var i = Number(card.dataset.i);
 
+    if(btn.dataset.addcustom){
+      var t0 = data.taps[i];
+      t0.custom = Array.isArray(t0.custom) ? t0.custom : [];
+      t0.custom.push({ k:"", v:"" });
+      renderTaps(); touched(); return;
+    }
+    if(btn.dataset.delcustom){
+      var crow2 = e.target.closest("[data-c]");
+      if(crow2 && Array.isArray(data.taps[i].custom)){
+        data.taps[i].custom.splice(Number(crow2.dataset.c), 1);
+        renderTaps(); touched();
+      }
+      return;
+    }
     if(btn.dataset.srm){
       var srmN = Number(btn.dataset.srm);
       data.taps[i].srm = srmN;

@@ -85,7 +85,18 @@
       "status": "pouring",
       "prices": {
         "s3": 14.0
-      }
+      },
+      "image": "https://jesse372.github.io/beer-tap-list/apple-touch-icon.png",
+      "custom": [
+        {
+          "k": "Hops",
+          "v": "Galaxy, Vic Secret"
+        },
+        {
+          "k": "Brewed",
+          "v": "12 June"
+        }
+      ]
     },
     {
       "num": 5,
@@ -268,5 +279,53 @@
       }
     }
   },
-  "showQR": true
+  "showQR": true,
+  "extras": {
+    "on": true,
+    "showOnTV": true,
+    "groups": [
+      {
+        "id": "g1",
+        "name": "Kitchen",
+        "items": [
+          {
+            "id": "i1",
+            "name": "Loaded Fries",
+            "desc": "Bacon, cheese, chipotle mayo",
+            "price": 14
+          },
+          {
+            "id": "i2",
+            "name": "Chicken Parmi",
+            "desc": "Chips and slaw",
+            "price": 26
+          },
+          {
+            "id": "i3",
+            "name": "Beer-Battered Flathead",
+            "desc": "Tartare, lemon",
+            "price": 28
+          }
+        ]
+      },
+      {
+        "id": "g2",
+        "name": "Merch",
+        "items": [
+          {
+            "id": "i4",
+            "name": "Brewery Tee",
+            "desc": "S–XXL",
+            "price": 45
+          },
+          {
+            "id": "i5",
+            "name": "Growler (2L)",
+            "desc": "Fill it at any tap",
+            "price": 25
+          }
+        ]
+      }
+    ]
+  }
 }
