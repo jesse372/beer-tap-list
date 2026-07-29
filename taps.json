@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-07-29T12:51:30.270Z",
+  "updated": "2026-07-29T12:53:10.175Z",
   "taps": [
     {
       "num": 1,
@@ -263,7 +263,7 @@
     "happy": {
       "on": true,
       "from": "20:00",
-      "to": "21:00",
+      "to": "20:55",
       "label": "Happy Hour",
       "days": [],
       "prices": {
