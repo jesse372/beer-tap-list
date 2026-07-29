@@ -911,8 +911,8 @@
      and promote.sh flip this one line; nothing else about the file changes.
      build.txt is deliberately NOT prefixed, so each deployment self-updates against
      its own stamp rather than fighting the other one. */
-  var DATA_BASE = "";
-  var STAGING   = false;
+  var DATA_BASE = "../";
+  var STAGING   = true;
 
   var DEMOS = { business: "business-taps.json" };
   function dataFile(){
@@ -1008,7 +1008,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260729-115651";
+  var BUILD = "20260729-115726";
 
   (function(){
     function check(){

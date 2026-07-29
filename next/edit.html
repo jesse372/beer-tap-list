@@ -461,7 +461,7 @@
 
   /* Staging under /next/ sets this to "../" so it edits the LIVE list. Publish paths
      stay bare on purpose — the Worker only accepts taps.json and bgphoto.json. */
-  var DATA_BASE = "";
+  var DATA_BASE = "../";
   var DRAFT_KEY = "tapdraft.v1", CFG_KEY = "tapcfg.v1", PW_KEY = "tappw.v1";
 
   function getPw(){ try { return localStorage.getItem(PW_KEY) || ""; } catch(e){ return ""; } }

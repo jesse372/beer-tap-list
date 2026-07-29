@@ -150,3 +150,39 @@ jesse372.github.io/beer-tap-list/ontap.apk
 ```
 
 Full instructions in [`firetv-app/README.md`](firetv-app/README.md).
+
+---
+
+## Trying a change before it goes live
+
+The site runs twice from the same repo:
+
+| | URL | Reads |
+|---|---|---|
+| **Live** | `jesse372.github.io/beer-tap-list/` | its own `taps.json` |
+| **Staging** | `jesse372.github.io/beer-tap-list/next/` | the **live** `taps.json` |
+
+Staging is a full copy of the board and editor, so a new feature can be looked at
+on a real screen — with the real beers on it — while the live board carries on
+unchanged. It carries a red *Staging* badge and keeps its own `build.txt`, so the
+two never fight over which version a screen should be running.
+
+```bash
+./stage.sh      # push the current pages to /next/
+# ...look at /next/ on a laptop, phone, or the Fire TV...
+./promote.sh    # copy staging over the live board, and stamp a new build
+git add -A && git commit -m "..." && git push
+```
+
+Only two lines differ between the two copies — the data path and the staging flag —
+and `promote.sh` reverses both. There is no separate branch or second repo to keep
+in step.
+
+> Publishing from `next/edit.html` writes the **real** `taps.json`, because both
+> copies share one beer list. Use **Preview** rather than **Publish** when trying
+> the editor out.
+
+### Preview, in the editor
+
+**Preview** next to Publish opens the board showing the draft you have not published
+yet, and follows the editor as you type. Nothing is written until you hit Publish.
