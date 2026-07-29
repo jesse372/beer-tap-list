@@ -462,6 +462,9 @@
   /* Staging under /next/ sets this to "../" so it edits the LIVE list. Publish paths
      stay bare on purpose — the Worker only accepts taps.json and bgphoto.json. */
   var DATA_BASE = "../";
+  /* True only in the /next/ copy. Staging shares one beer list and one gag signal
+     with the live board, so the two buttons that reach out are guarded there. */
+  var STAGING   = true;
   var DRAFT_KEY = "tapdraft.v1", CFG_KEY = "tapcfg.v1", PW_KEY = "tappw.v1";
 
   function getPw(){ try { return localStorage.getItem(PW_KEY) || ""; } catch(e){ return ""; } }
@@ -1345,6 +1348,14 @@
   }
 
   $("publish").addEventListener("click", function(){
+    /* There is only one beer list, so publishing from staging changes the real
+       board. Ask plainly rather than letting it happen by accident. */
+    if(STAGING && !window.confirm(
+        "This is the STAGING site, but there is only one beer list — publishing " +
+        "will change the real board on the TVs.\n\nPublish for real?")){
+      setStatus("Not published — staging.");
+      return;
+    }
     if(WORKER_URL){
       var b = this;
       b.disabled = true;
@@ -1413,6 +1424,12 @@
     var btn = $("laugh"), msg = $("laughmsg");
     if(!btn) return;
     btn.addEventListener("click", function(){
+      /* One gag signal serves every screen, so firing it from staging would set the
+         real TVs off. There is no reason to want that, so it is simply blocked. */
+      if(STAGING){
+        msg.textContent = "Disabled on staging — this would fire on the real TVs.";
+        return;
+      }
       if(!WORKER_URL){ msg.textContent = "Not connected."; return; }
       btn.disabled = true;
       msg.textContent = "Go and look at the telly…";

@@ -32,10 +32,13 @@ for name in ("index.html", "edit.html"):
     assert n == 1, f"{name}: DATA_BASE not found — did the constant get renamed?"
     s = s2
 
+    # Both pages carry the flag: the board uses it for the badge, the editor uses it
+    # to guard the two buttons that reach the real board.
+    s2, n = re.subn(r'var STAGING   = false;', 'var STAGING   = true;', s, count=1)
+    assert n == 1, f"{name}: STAGING flag not found"
+    s = s2
+
     if name == "index.html":
-        s2, n = re.subn(r'var STAGING   = false;', 'var STAGING   = true;', s, count=1)
-        assert n == 1, "index.html: STAGING flag not found"
-        s = s2
         # Its own stamp, so staging self-updates against staging and never against live.
         s2, n = re.subn(r'var BUILD = "[^"]*";', 'var BUILD = "%s";' % stamp, s, count=1)
         assert n == 1, "index.html: BUILD not found"

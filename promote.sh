@@ -21,10 +21,9 @@ for name in ("index.html", "edit.html"):
     assert n == 1, f"{name}: staging DATA_BASE not found — was next/ built by stage.sh?"
     s = s2
 
-    if name == "index.html":
-        s2, n = re.subn(r'var STAGING   = true;', 'var STAGING   = false;', s, count=1)
-        assert n == 1, "index.html: staging flag not found"
-        s = s2
+    s2, n = re.subn(r'var STAGING   = true;', 'var STAGING   = false;', s, count=1)
+    assert n == 1, f"{name}: staging flag not found"
+    s = s2
 
     open(name, "w").write(s)
 
