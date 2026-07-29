@@ -426,6 +426,16 @@
   #stillgag .sbtn.alt{background:transparent;color:#d2d2d2;border-color:#8c8c8c}
   #stillgag .scount{color:#7a7a7a;font-size:1.8vh;margin-top:3.2vh;height:2.4vh}
 
+  /* Unmistakably not the live board. Sits inside .screen so it rotates with it. */
+  #previewbadge{
+    position:absolute;left:calc(2.6 * var(--u));top:calc(2.6 * var(--u));z-index:60;display:none;
+    background:#b4462e;color:#fff;
+    font-family:var(--cond);font-weight:600;
+    font-size:calc(1.8 * var(--u));letter-spacing:.14em;text-transform:uppercase;
+    padding:calc(.75 * var(--u)) calc(1.5 * var(--u));border-radius:calc(.6 * var(--u));
+    box-shadow:0 calc(.5 * var(--u)) calc(1.6 * var(--u)) rgba(0,0,0,.55);
+  }
+
   #fshint{
     position:absolute;right:calc(2.6 * var(--u));bottom:calc(2.6 * var(--u));z-index:50;
     background:rgba(227,173,66,.95);color:#1a1408;
@@ -462,6 +472,7 @@
   </footer>
 
   <div id="fshint">Press OK for full screen</div>
+  <div id="previewbadge" aria-hidden="true">Preview &mdash; not published</div>
 </div>
 
 <!-- 2x2 silent loop. Playing video is what actually stops Fire TV sleeping;
@@ -900,8 +911,24 @@
     var m = /[?&]demo=([a-z]+)/i.exec(location.search || "");
     return (m && DEMOS[m[1].toLowerCase()]) || "taps.json";
   }
-  /* A demo must not poison the cache the real board falls back to. */
-  var CACHE_KEY = "tapcache.v1" + (dataFile() === "taps.json" ? "" : ".demo");
+
+  /* ?preview=1 renders the editor's UNPUBLISHED draft instead of the live file, so a
+     change can be seen on the real board before anyone else sees it. The editor and
+     the board are the same origin, so its draft is simply readable from here. */
+  var PREVIEW   = /[?&]preview=1/.test(location.search || "");
+  var DRAFT_KEY = "tapdraft.v1";
+  function draftData(){
+    try {
+      var raw = localStorage.getItem(DRAFT_KEY);
+      if(!raw) return null;
+      var d = JSON.parse(raw);
+      return (d && d.data) ? d.data : null;
+    } catch(e){ return null; }
+  }
+
+  /* Neither a demo nor a preview may poison the cache the real board falls back to. */
+  var CACHE_KEY = "tapcache.v1" +
+    (PREVIEW ? ".preview" : (dataFile() === "taps.json" ? "" : ".demo"));
 
   function load(){
     var url = dataFile() + "?t=" + Date.now();
@@ -926,6 +953,13 @@
       data = FALLBACK; render();
     }
 
+    /* A draft beats the network entirely. If there is no draft the published list is
+       fetched as usual, so the preview still shows the board rather than nothing. */
+    if(PREVIEW){
+      var draft = draftData();
+      if(draft){ apply(draft); return; }
+    }
+
     try {
       var xhr = new XMLHttpRequest();
       xhr.open("GET", url, true);
@@ -943,12 +977,24 @@
   load();
   setInterval(load, 60000);
 
+  /* In preview, follow the editor live. The storage event fires in OTHER tabs, which
+     is exactly the case here — edit in one tab, watch it change in this one. The slow
+     poll is a safety net for browsers that hold the event back. */
+  if(PREVIEW){
+    var pb = el("previewbadge");
+    if(pb) pb.style.display = "block";
+    window.addEventListener("storage", function(e){
+      if(!e || e.key === DRAFT_KEY) load();
+    }, false);
+    setInterval(load, 2000);
+  }
+
   /* ---------- pick up new versions of this page by itself ----------
      BUILD is baked into whatever page is actually running. build.txt on the
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260728-223617";
+  var BUILD = "20260729-114928";
 
   (function(){
     function check(){

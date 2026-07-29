@@ -445,6 +445,7 @@
   <div class="wrap">
     <div class="status" id="status">Ready.</div>
     <button class="btn-ghost" id="revert">Undo changes</button>
+    <button class="btn-ghost" id="preview">Preview</button>
     <button class="btn-primary" id="publish">Publish to the TV</button>
   </div>
 </div>
@@ -1208,6 +1209,15 @@
     var cards = document.querySelectorAll(".card");
     var last = cards[cards.length - 1];
     if(last){ last.scrollIntoView({behavior:"smooth", block:"center"}); last.querySelector('[data-f="name"]').focus(); }
+  });
+
+  /* Preview: write the draft first so the board has the very latest edit even if
+     nothing has been typed yet, then open it in a tab of its own. Reusing the same
+     named window means repeated clicks refresh that tab instead of piling up. */
+  $("preview").addEventListener("click", function(){
+    saveDraft();
+    var w = window.open("index.html?preview=1", "ontappreview");
+    if(w && w.focus) w.focus();
   });
 
   $("revert").addEventListener("click", function(){
