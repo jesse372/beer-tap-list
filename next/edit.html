@@ -218,6 +218,13 @@
     <button class="btn-sm btn-ghost" id="draft-discard">Throw them away</button>
   </div>
 
+  <div id="staleban" style="display:none" class="banner">
+    <div class="t"><strong>The tap list was changed somewhere else</strong>
+      <span id="staletime"></span>. Publishing now would undo it.</div>
+    <button class="btn-sm" id="stale-reload">Load the new one</button>
+    <button class="btn-sm btn-ghost" id="stale-ignore">Keep mine</button>
+  </div>
+
   <div id="loginbox" style="display:none" class="banner">
     <div class="t">
       <strong>Sign in to publish.</strong>
@@ -1365,11 +1372,22 @@
   });
 
   /* ---------------- publish ---------------- */
+  var lastWrittenVersion = null;
   function serialize(){
     var out = JSON.parse(JSON.stringify(data));
     delete out.bgPhoto;                 /* lives in bgphoto.json - see publish() */
     out.updated = new Date().toISOString();
+    lastWrittenVersion = out.updated;   /* so this tab can adopt its own publish */
     return JSON.stringify(out, null, 2) + "\n";
+  }
+
+  /* After publishing, this tab IS the current version — otherwise it would warn
+     about its own change the next time Publish was pressed. */
+  function adoptPublished(){
+    if(lastWrittenVersion) loadedVersion = lastWrittenVersion;
+    overrideStale = false;
+    var b = document.getElementById("staleban");
+    if(b) b.style.display = "none";
   }
   function b64(str){
     var bytes = new TextEncoder().encode(str), bin = "";
@@ -1454,6 +1472,7 @@
         if(status === 200 && j && j.ok){
           published = JSON.parse(JSON.stringify(data));
           clearDraft();
+          adoptPublished();
           setStatus("✓ Published! The TV will show it within about a minute.", "ok");
           return;
         }
@@ -1467,6 +1486,29 @@
       });
   }
 
+  /* The last line of defence. A tab can sit open for hours; by the time Publish is
+     pressed the list may have moved on twice. Check at the moment it matters, not
+     only on the timer, and make overwriting a decision rather than an accident. */
+  function guardStale(next){
+    if(overrideStale || !loadedVersion) { next(); return; }
+    setStatus("Checking for newer changes…");
+    remoteVersion(function(v){
+      if(!v || v === loadedVersion){ next(); return; }
+      showStale(v);
+      var when = new Date(v).toLocaleTimeString();
+      if(window.confirm(
+          "Someone published a different tap list at " + when + ", after this page " +
+          "was opened.\n\nPublishing now will replace theirs with what is on this " +
+          "screen.\n\nOK to overwrite, or Cancel to load theirs instead.")){
+        overrideStale = true;
+        next();
+      } else {
+        setStatus("Not published — loading the newer list…");
+        setTimeout(function(){ location.reload(); }, 600);
+      }
+    });
+  }
+
   $("publish").addEventListener("click", function(){
     /* There is only one beer list, so publishing from staging changes the real
        board. Ask plainly rather than letting it happen by accident. */
@@ -1476,8 +1518,13 @@
       setStatus("Not published — staging.");
       return;
     }
+    var btn = this;
+    guardStale(function(){ doPublish(btn); });
+  });
+
+  function doPublish(self){
     if(WORKER_URL){
-      var b = this;
+      var b = self;
       b.disabled = true;
       setStatus("Publishing…");
       publishViaWorker(b);
@@ -1511,6 +1558,7 @@
       if(err){ setStatus(err.message, "err"); return; }
       published = JSON.parse(JSON.stringify(data));
       clearDraft();
+      adoptPublished();
       setStatus("✓ Published! The TV will show it within about a minute.", "ok");
     }
 
@@ -1532,7 +1580,7 @@
     } else {
       writeTaps();
     }
-  });
+  }
 
   window.addEventListener("beforeunload", function(e){
     if(JSON.stringify(data) !== JSON.stringify(published)){ e.preventDefault(); e.returnValue = ""; }
@@ -1603,8 +1651,43 @@
     return json;
   }
 
+  /* The version of the list this tab started from. taps.json carries an "updated"
+     stamp written on every publish, which makes a cheap and exact version marker. */
+  var loadedVersion = null;
+  var overrideStale = false;
+
+  function remoteVersion(cb){
+    var x = new XMLHttpRequest();
+    x.open("GET", DATA_BASE + "taps.json?t=" + Date.now(), true);
+    x.timeout = 10000;
+    x.onload = function(){
+      if(x.status < 200 || x.status >= 300){ cb(null); return; }
+      try { cb((JSON.parse(x.responseText) || {}).updated || null); }
+      catch(e){ cb(null); }
+    };
+    x.onerror = x.ontimeout = function(){ cb(null); };
+    x.send();
+  }
+
+  /* Someone else published while this tab was open. Say so rather than letting a
+     stale copy quietly overwrite their work — which is exactly what kept happening. */
+  function showStale(when){
+    if(overrideStale) return;
+    $("staleban").style.display = "flex";
+    $("staletime").textContent = when ? "at " + new Date(when).toLocaleTimeString() : "";
+  }
+  function watchForChanges(){
+    setInterval(function(){
+      if(overrideStale) return;
+      remoteVersion(function(v){
+        if(v && loadedVersion && v !== loadedVersion) showStale(v);
+      });
+    }, 60000);
+  }
+
   function boot(json){
     published = normalize(json);
+    loadedVersion = json && json.updated ? json.updated : null;
     data = JSON.parse(JSON.stringify(published));
 
     var d = getDraft();
@@ -1620,6 +1703,14 @@
         clearDraft(); $("draftbanner").style.display = "none";
       };
     }
+
+    $("stale-reload").onclick = function(){ location.reload(); };
+    $("stale-ignore").onclick = function(){
+      overrideStale = true;
+      $("staleban").style.display = "none";
+      setStatus("Keeping your version — publishing will replace theirs.");
+    };
+    watchForChanges();
 
     loadCfg();
     ["gh-owner","gh-repo","gh-token","gh-branch"].forEach(function(id){
