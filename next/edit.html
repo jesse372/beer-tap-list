@@ -491,6 +491,7 @@
     <div class="status" id="status">Ready.</div>
     <button class="btn-ghost" id="revert">Undo changes</button>
     <button class="btn-ghost" id="preview">Preview</button>
+    <button class="btn-ghost" id="printmenu">Print menu</button>
     <button class="btn-primary" id="publish">Publish to the TV</button>
   </div>
 </div>
@@ -1350,6 +1351,13 @@
   $("preview").addEventListener("click", function(){
     saveDraft();
     var w = window.open("index.html?preview=1", "ontappreview");
+    if(w && w.focus) w.focus();
+  });
+
+  $("printmenu").addEventListener("click", function(){
+    /* Prints what is published, not the draft — a menu going on a wall should match
+       what the taps are actually pouring. */
+    var w = window.open("print.html", "ontapprint");
     if(w && w.focus) w.focus();
   });
 

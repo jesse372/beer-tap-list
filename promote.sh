@@ -15,7 +15,7 @@ python3 - <<'PY'
 import re
 
 import os
-PAGES = [p for p in ("index.html", "edit.html", "menu.html", "hall.html") if os.path.exists("next/" + p)]
+PAGES = [p for p in ("index.html", "edit.html", "menu.html", "hall.html", "print.html") if os.path.exists("next/" + p)]
 
 for name in PAGES:
     s = open("next/" + name).read()
