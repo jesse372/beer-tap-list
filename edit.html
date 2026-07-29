@@ -373,6 +373,15 @@
       <div class="checkline">
         <input type="checkbox" id="hideKicked"><label for="hideKicked">Hide empty kegs from the TV completely</label>
       </div>
+      <div class="checkline">
+        <input type="checkbox" id="showQR"><label for="showQR">Show a QR code on the TV &mdash; guests scan it for the menu on their phone</label>
+      </div>
+      <div class="field" id="qrcaprow" style="display:none">
+        <label for="qrCaption">Wording under the QR code</label>
+        <input type="text" id="qrCaption" placeholder="Scan for the menu">
+        <div class="hint">Works with or without business mode. Prices only appear on the
+          phone menu if you have them switched on.</div>
+      </div>
       <div class="checkline" id="pricingline">
         <input type="checkbox" id="pricingOn"><label for="pricingOn">Business mode &mdash; show prices on the TV</label>
       </div>
@@ -383,6 +392,31 @@
           <button class="btn-sm btn-ghost" type="button" id="addsize">+ Add a size</button>
           <div class="hint">Call them whatever you like &mdash; Middy, Pot, Half, Sleeve. The
             millilitres are yours to set too. Each beer&rsquo;s prices are set on its own card below.</div>
+        </div>
+
+        <div class="checkline" style="margin-top:16px">
+          <input type="checkbox" id="happyOn"><label for="happyOn">Happy hour</label>
+        </div>
+        <div id="happyrow" style="display:none">
+          <div class="row">
+            <div class="field"><label for="happyFrom">From</label>
+              <input type="time" id="happyFrom"></div>
+            <div class="field"><label for="happyTo">Until</label>
+              <input type="time" id="happyTo"></div>
+            <div class="field"><label for="happyLabel">Wording on the TV</label>
+              <input type="text" id="happyLabel" placeholder="Happy Hour"></div>
+          </div>
+          <div class="field">
+            <label>Days</label>
+            <div id="happydays" class="quick"></div>
+            <div class="hint">None selected means every day.</div>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Happy hour prices</label>
+            <div id="happyprices" class="pricegrid"></div>
+            <div class="hint">Leave one blank and that pour keeps its normal price. A beer
+              that isn&rsquo;t sold in a size stays unpriced in it, discount or not.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -914,6 +948,38 @@
     return data.pricing;
   }
   function sizeList(){ return pricingObj().sizes; }
+  var DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  function happyObj(){
+    var p = pricingObj();
+    if(!p.happy || typeof p.happy !== "object"){
+      p.happy = { on:false, from:"16:00", to:"18:00", label:"Happy Hour", days:[], prices:{} };
+    }
+    if(!p.happy.prices || typeof p.happy.prices !== "object") p.happy.prices = {};
+    if(!Array.isArray(p.happy.days)) p.happy.days = [];
+    return p.happy;
+  }
+
+  function renderHappy(){
+    var h = happyObj();
+    $("happyOn").checked = !!h.on;
+    $("happyrow").style.display = h.on ? "" : "none";
+    $("happyFrom").value  = h.from  || "16:00";
+    $("happyTo").value    = h.to    || "18:00";
+    $("happyLabel").value = h.label || "";
+    $("happydays").innerHTML = DAY_NAMES.map(function(d, i){
+      var on = h.days.indexOf(i) !== -1;
+      return '<button type="button" class="btn-sm ' + (on ? "btn-primary" : "btn-ghost") +
+             '" data-day="' + i + '">' + d + '</button>';
+    }).join("");
+    $("happyprices").innerHTML = sizeList().map(function(sz){
+      var v = (h.prices[sz.id] != null) ? h.prices[sz.id] : "";
+      return '<div class="pricecell">' +
+        '<span class="plab">' + esc(sz.name || (sz.ml ? sz.ml + "ml" : "Size")) + '</span>' +
+        '<input type="number" min="0" step="0.10" inputmode="decimal" placeholder="\u2014" ' +
+          'value="' + esc(v) + '" data-happy="' + esc(sz.id) + '">' +
+      '</div>';
+    }).join("");
+  }
   function pricingOn(){ return !!pricingObj().on; }
 
   function renderSizes(){
@@ -945,6 +1011,10 @@
     $("rotate").value        = String(Number(data.rotate) || 0);
     $("bg").value            = data.bg || "charcoal";
     /* Business mode is offered to everyone — it is simply off until switched on. */
+    renderHappy();
+    $("showQR").checked      = !!data.showQR;
+    $("qrcaprow").style.display = data.showQR ? "" : "none";
+    $("qrCaption").value     = data.qrCaption || "";
     $("pricingOn").checked   = pricingOn();
     $("pricingrow").style.display = pricingOn() ? "" : "none";
     renderSizes();
@@ -1083,6 +1153,15 @@
   $("hideKicked").addEventListener("change", function(){ data.hideKicked = this.checked; touched(); });
 
   /* Business mode */
+  $("showQR").addEventListener("change", function(){
+    data.showQR = this.checked;
+    $("qrcaprow").style.display = this.checked ? "" : "none";
+    touched();
+  });
+  $("qrCaption").addEventListener("input", function(){
+    data.qrCaption = this.value; touched();
+  });
+
   $("pricingOn").addEventListener("change", function(){
     pricingObj().on = this.checked;
     $("pricingrow").style.display = this.checked ? "" : "none";
@@ -1094,6 +1173,7 @@
     var s = sizeList()[Number(row.dataset.si)]; if(!s) return;
     s[k] = k === "ml" ? (Number(e.target.value) || "") : e.target.value;
     renderTaps();   /* the per-beer price labels follow the size names */
+    renderHappy();
     touched();
   });
   $("sizes").addEventListener("click", function(e){
@@ -1107,6 +1187,32 @@
     }
     renderSizes(); renderTaps(); touched();
   });
+  $("happyOn").addEventListener("change", function(){
+    happyObj().on = this.checked;
+    $("happyrow").style.display = this.checked ? "" : "none";
+    touched();
+  });
+  ["happyFrom","happyTo","happyLabel"].forEach(function(id){
+    $(id).addEventListener("input", function(){
+      var h = happyObj();
+      h[id === "happyFrom" ? "from" : id === "happyTo" ? "to" : "label"] = this.value;
+      touched();
+    });
+  });
+  $("happydays").addEventListener("click", function(e){
+    var b = e.target.closest("[data-day]"); if(!b) return;
+    var h = happyObj(), d = Number(b.dataset.day), i = h.days.indexOf(d);
+    if(i === -1) h.days.push(d); else h.days.splice(i, 1);
+    h.days.sort(function(a, b2){ return a - b2; });
+    renderHappy(); touched();
+  });
+  $("happyprices").addEventListener("input", function(e){
+    var id = e.target.dataset.happy; if(!id) return;
+    var h = happyObj(), raw = String(e.target.value).trim();
+    if(raw === "") delete h.prices[id]; else h.prices[id] = Number(raw);
+    touched();
+  });
+
   $("addsize").addEventListener("click", function(){
     sizeList().push({ id:"s" + Date.now().toString(36), name:"", ml:"" });
     renderSizes(); renderTaps(); touched();
