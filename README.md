@@ -186,3 +186,20 @@ in step.
 
 **Preview** next to Publish opens the board showing the draft you have not published
 yet, and follows the editor as you type. Nothing is written until you hit Publish.
+
+---
+
+## Keg level sensors
+
+The board takes a live keg level from any setup — load cells, flow meters, a Plaato,
+Home Assistant, a bare ESP32 — with no supported brand and nothing to buy. Send a
+percentage, or litres, or a weight, and the Worker does the arithmetic.
+
+See **[SENSORS.md](SENSORS.md)**. Until a sensor reports, the slider in the editor works
+exactly as it always has, and the board falls back to it if a sensor goes quiet.
+
+## Hall of Fame
+
+`python3 hall.py` rebuilds **hall.html** from the tap list's own git history — every beer
+ever poured, how long each keg lasted, how often it came back. The same beer under
+different spellings, or a later batch, collapses into one entry with several runs.

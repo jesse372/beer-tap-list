@@ -691,7 +691,7 @@
   }
 
   function tapHTML(t){
-    var level  = Math.max(0, Math.min(100, Number(t.level) || 0));
+    var level  = Math.max(0, Math.min(100, levelFor(t)));
     var status = t.status || "pouring";
     var kicked = status === "kicked" || (status === "pouring" && level <= 0);
     var coming = status === "coming";
@@ -808,7 +808,7 @@
 
     if(data.hideKicked){
       taps = taps.filter(function(t){
-        return !(t.status === "kicked" || (t.status !== "coming" && (Number(t.level) || 0) <= 0));
+        return !(t.status === "kicked" || (t.status !== "coming" && levelFor(t) <= 0));
       });
     }
 
@@ -874,7 +874,7 @@
       : "";
 
     var pouring = taps.filter(function(t){
-      return t.status !== "coming" && !(t.status === "kicked" || (Number(t.level) || 0) <= 0);
+      return t.status !== "coming" && !(t.status === "kicked" || levelFor(t) <= 0);
     }).length;
     el("foot-left").textContent = pouring + (pouring === 1 ? " beer pouring" : " beers pouring");
 
@@ -1014,6 +1014,43 @@
     x.send();
   }
 
+  /* ---------- keg level sensors ----------
+     Anything that can make an HTTP request can report a level; the Worker turns
+     litres or kilograms into a percentage. The board simply prefers a fresh reading
+     over the slider, and falls back to the slider the moment one goes quiet — so a
+     flat battery leaves the board working exactly as it did before. */
+  var WORKER_BASE   = "https://ontap-publish.madlad-taps.workers.dev";
+  var SENSOR        = {};
+  var SENSOR_MAX_AGE = 6 * 60 * 60 * 1000;   /* a reading older than this is ignored */
+
+  function levelFor(t){
+    var s = SENSOR[String(t.num)];
+    if(s && isFinite(s.pct) && (Date.now() - s.at) < SENSOR_MAX_AGE) return s.pct;
+    return Number(t.level) || 0;
+  }
+
+  (function(){
+    var last = "";
+    function poll(){
+      var x = new XMLHttpRequest();
+      x.open("GET", WORKER_BASE + "/levels?t=" + Date.now(), true);
+      x.timeout = 8000;
+      x.onload = function(){
+        if(x.status < 200 || x.status >= 300) return;
+        var j; try { j = JSON.parse(x.responseText); } catch(e){ return; }
+        if(!j || !j.taps) return;
+        var stamp = JSON.stringify(j.taps);
+        if(stamp === last) return;
+        last = stamp; SENSOR = j.taps;
+        if(data) render();               /* a level moved — redraw the glasses */
+      };
+      x.onerror = x.ontimeout = function(){};
+      x.send();
+    }
+    poll();
+    setInterval(poll, 60000);
+  })();
+
   /* ---------- load + refresh ----------
      ?demo=business reads a separate file, so the business version can be looked at
      on a real screen without touching the board this site actually runs. Only that
@@ -1132,7 +1169,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260729-124134";
+  var BUILD = "20260729-124522";
 
   (function(){
     function check(){

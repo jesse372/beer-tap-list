@@ -16,6 +16,103 @@
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
+const LB_TO_KG = 0.45359237;
+
+/**
+ * Work a percentage out of whatever a device is able to measure.
+ *
+ * Deliberately forgiving about names, because every ecosystem spells these
+ * differently and the alternative is a support conversation per brand. Returns
+ * null when there is not enough to go on — a wrong level is worse than none.
+ */
+function toPercent(r) {
+  const num = (...keys) => {
+    for (const k of keys) {
+      if (r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") {
+        const n = Number(r[k]);
+        if (Number.isFinite(n)) return n;
+      }
+    }
+    return null;
+  };
+
+  const pct = num("percent", "pct", "level", "remaining_percent");
+  if (pct !== null) return pct;
+
+  // Volume left, against the keg's size.
+  const litres = num("litres", "liters", "l", "remaining_l");
+  const capL = num("capacity_l", "capacity", "keg_l", "size_l");
+  if (litres !== null && capL) return (litres / capL) * 100;
+
+  const ml = num("ml", "millilitres", "milliliters", "remaining_ml");
+  const capMl = num("capacity_ml", "keg_ml", "size_ml");
+  if (ml !== null && capMl) return (ml / capMl) * 100;
+
+  // Weight, against the empty and full weights of that keg. This is what a load
+  // cell under a keg actually knows.
+  let kg = num("kg", "weight_kg", "weight");
+  let empty = num("empty_kg", "tare_kg", "tare");
+  let full = num("full_kg", "gross_kg");
+  const lb = num("lb", "lbs", "pounds", "weight_lb");
+  if (kg === null && lb !== null) {
+    kg = lb * LB_TO_KG;
+    const eLb = num("empty_lb", "tare_lb"), fLb = num("full_lb");
+    if (empty === null && eLb !== null) empty = eLb * LB_TO_KG;
+    if (full === null && fLb !== null) full = fLb * LB_TO_KG;
+  }
+  if (kg !== null && empty !== null && full !== null && full > empty) {
+    return ((kg - empty) / (full - empty)) * 100;
+  }
+
+  return null;
+}
+
+/** Store readings against tap numbers. Shared by the GET and POST forms. */
+async function storeLevels(env, cors, readings, token) {
+  // Fails closed: with no DEVICE_TOKEN set, nothing can write levels at all.
+  if (!env.DEVICE_TOKEN) {
+    return json({ ok: false, error: "Levels are not enabled — set the DEVICE_TOKEN secret" }, 503, cors);
+  }
+  if (!safeEqual(token, env.DEVICE_TOKEN)) {
+    await sleep(1000);
+    return json({ ok: false, error: "Bad token" }, 401, cors);
+  }
+  if (!Array.isArray(readings) || !readings.length) {
+    return json({ ok: false, error: "No readings" }, 400, cors);
+  }
+
+  const raw = (await env.SIGNAL.get("levels")) || "{}";
+  let taps = {};
+  try { taps = JSON.parse(raw); } catch (e) {}
+
+  const now = Date.now();
+  const stored = [];
+  for (const r of readings) {
+    if (!r || typeof r !== "object") continue;
+    const tapRaw = r.tap ?? r.num ?? r.tap_number ?? r.id;
+    const tap = Number(tapRaw);
+    if (!Number.isInteger(tap) || tap < 1 || tap > 99) continue;
+
+    let pct = toPercent(r);
+    if (pct === null) continue;
+    // A keg cannot be more than full or less than empty, whatever the scale drifts to.
+    pct = Math.max(0, Math.min(100, Math.round(pct * 10) / 10));
+
+    taps[String(tap)] = {
+      pct,
+      at: now,
+      src: String(r.src || r.source || r.device || "sensor").slice(0, 32),
+    };
+    stored.push({ tap, pct });
+  }
+
+  if (!stored.length) {
+    return json({ ok: false, error: "Nothing usable — see SENSORS.md for the fields" }, 400, cors);
+  }
+  await env.SIGNAL.put("levels", JSON.stringify(taps));
+  return json({ ok: true, stored }, 200, cors);
+}
+
 function corsHeaders(env, request) {
   const allowed = env.ALLOWED_ORIGIN || "*";
   const origin = request.headers.get("Origin") || "";
@@ -125,6 +222,25 @@ export default {
       });
     }
 
+    // ---- keg levels -------------------------------------------------------
+    // Anyone's sensors are welcome: load cells, flow meters, a Plaato, Home
+    // Assistant, a bare ESP32. The contract is a percentage — and where a device
+    // can only report what it actually measures (litres, kilograms), the sum is
+    // done here so the firmware stays dumb. See SENSORS.md.
+    if (route === "/levels" && request.method === "GET") {
+      const raw = (await env.SIGNAL.get("levels")) || "{}";
+      let taps = {};
+      try { taps = JSON.parse(raw); } catch (e) {}
+      return json({ taps, now: Date.now() }, 200, { ...cors, "Cache-Control": "no-store" });
+    }
+
+    // GET is allowed for reporting too: plenty of small firmwares can manage a URL
+    // with a query string and nothing more.
+    if (route === "/level" && request.method === "GET") {
+      return storeLevels(env, cors, [Object.fromEntries(url.searchParams)],
+                         url.searchParams.get("token"));
+    }
+
     if (request.method !== "POST") {
       return json({ ok: false, error: "POST only" }, 405, cors);
     }
@@ -146,6 +262,14 @@ export default {
     }
 
     if (route === "/check") return json({ ok: true }, 200, cors);
+
+    // POST form: one reading, or a batch. Its own token, so a sensor on the shed
+    // wall can never publish a beer list even if someone pulls the device apart.
+    if (route === "/level") {
+      const readings = Array.isArray(body.readings) ? body.readings
+                     : Array.isArray(body) ? body : [body];
+      return storeLevels(env, cors, readings, body.token);
+    }
 
     // Fired from the laptop; the TV picks it up on its next poll.
     if (route === "/laugh") {
