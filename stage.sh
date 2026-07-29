@@ -14,7 +14,7 @@ mkdir -p next
 
 # Assets are copied rather than referenced with ../, so the staging pages need no
 # rewriting beyond the data path. They change rarely and cost ~150KB once.
-for a in icons.js favicon.svg apple-touch-icon.png keepawake.mp4 keepawake.webm hall.json; do
+for a in icons.js taplib.js favicon.svg apple-touch-icon.png keepawake.mp4 keepawake.webm hall.json; do
   [ -e "$a" ] && cp "$a" "next/$a"
 done
 rm -rf next/fonts && cp -R fonts next/fonts

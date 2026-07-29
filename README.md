@@ -195,11 +195,34 @@ The board takes a live keg level from any setup — load cells, flow meters, a P
 Home Assistant, a bare ESP32 — with no supported brand and nothing to buy. Send a
 percentage, or litres, or a weight, and the Worker does the arithmetic.
 
-See **[SENSORS.md](SENSORS.md)**. Until a sensor reports, the slider in the editor works
-exactly as it always has, and the board falls back to it if a sensor goes quiet.
+See **[SENSORS.md](SENSORS.md)**. Keg levels are **off until something is connected** — the
+board draws full glasses and doesn't claim to know what's left, because the manual slider
+was never kept up to date. Connect a sensor and the real numbers appear; if it goes quiet
+for six hours the board falls back to the slider.
 
 ## Hall of Fame
 
 `python3 hall.py` rebuilds **hall.html** from the tap list's own git history — every beer
 ever poured, how long each keg lasted, how often it came back. The same beer under
 different spellings, or a later batch, collapses into one entry with several runs.
+
+## Food, merch and extra details
+
+Sections like *Kitchen* or *Merch* with plain prices — these aren't poured, so they have no
+pour sizes. They appear on the phone and printed menus, and optionally on the TV as screens
+of their own. Each beer can also carry a picture and any number of label/value details
+(Hops, Malt, Brewed on); those show on the menus rather than the board, which is already the
+most crowded surface here.
+
+## Printed menus
+
+**Print menu** beside Publish opens `print.html` — black on white, a beer never split across
+two sheets, and a *Compact* option that fits ten beers on one page. The logo is rendered
+solid by default, since these logos are drawn cream for a dark board and print as almost
+nothing otherwise.
+
+## One copy of the rules
+
+`taplib.js` holds the shared logic — money, pour sizes, happy hour, the ready-date countdown.
+The board, phone menu and printed menu all read it. They used to carry three copies, which is
+how an old preview page drifted out of step for a day without anyone noticing.

@@ -142,55 +142,28 @@
   </div>
 </div>
 
+<script src="taplib.js"></script>
 <script>
 (function(){
   "use strict";
   var DATA_BASE = "../";
   var el = function(id){ return document.getElementById(id); };
-  function esc(s){
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
-      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
-    });
-  }
-  function has(v){ return String(v == null ? "" : v).trim() !== ""; }
-  function nonZero(v){
-    if(!has(v)) return false;
-    var n = parseFloat(String(v).replace(/[^0-9.\-]/g, ""));
-    return isNaN(n) ? true : n !== 0;
-  }
   var DEMOS = { business: "business-taps.json" };
   function dataFile(){
     var m = /[?&]demo=([a-z]+)/i.exec(location.search || "");
     return (m && DEMOS[m[1].toLowerCase()]) || "taps.json";
   }
 
-  var DEFAULT_SIZES = [
-    { id:"s1", name:"Middy", ml:285 }, { id:"s2", name:"Schooner", ml:425 },
-    { id:"s3", name:"Pint", ml:570 }
-  ];
+  /* One copy of these lives in taplib.js — see the note there. */
+  var T = window.TapLib;
+  function esc(s){ return T.esc(s); }
+  function has(v){ return T.has(v); }
+  function nonZero(v){ return T.nonZero(v); }
+  function money(c, v){ return T.money(c, v); }
+  function hhmmToMin(v){ return T.hhmmToMin(v); }
+  function prettyTime(v){ return T.prettyTime(v); }
+  function pricing(){ return T.pricing(data); }
   var data = null;
-  function pricing(){
-    var p = (data && data.pricing) || {};
-    return { on:!!p.on, currency:p.currency || "$",
-             sizes:(p.sizes && p.sizes.length) ? p.sizes : DEFAULT_SIZES,
-             happy:p.happy || null };
-  }
-  function money(cur, v){
-    var n = Number(v);
-    return isFinite(n) ? cur + (n % 1 === 0 ? String(n) : n.toFixed(2)) : "";
-  }
-  function hhmmToMin(v){
-    var m = /^(\d{1,2}):(\d{2})$/.exec(String(v || "").trim());
-    if(!m) return null;
-    var h = Number(m[1]), mi = Number(m[2]);
-    return (h > 23 || mi > 59) ? null : h * 60 + mi;
-  }
-  function prettyTime(v){
-    var mins = hhmmToMin(v);
-    if(mins === null) return "";
-    var h = Math.floor(mins/60), m = mins%60;
-    return ((h%12)||12) + (m ? ":" + (m<10?"0"+m:m) : "") + (h>=12?"pm":"am");
-  }
 
   function priceRows(t){
     var pr = pricing();
@@ -285,7 +258,7 @@
     el("qr").innerHTML = '<img alt="" src="menu-qr.svg" ' +
       'onerror="this.parentNode.style.display=\'none\'">' +
       '<span>Scan for the live list</span>';
-    applyQR();
+    applyOpts();
   }
   function applyOpts(){
     el("sheet").className = "sheet" +
@@ -293,7 +266,6 @@
       (el("darklogo").checked ? " darklogo" : "") +
       (el("compact").checked ? " compact" : "");
   }
-  var applyQR = applyOpts;
   el("wantqr").addEventListener("change", applyOpts);
   el("darklogo").addEventListener("change", applyOpts);
   el("compact").addEventListener("change", applyOpts);
