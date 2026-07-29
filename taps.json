@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-07-29T06:02:56.712Z",
+  "updated": "2026-07-29T06:06:42.965Z",
   "taps": [
     {
       "num": 1,
@@ -24,7 +24,9 @@
       "level": 50,
       "status": "pouring",
       "prices": {
-        "s1": 0
+        "s1": 4,
+        "s2": 8,
+        "s3": 12
       }
     },
     {
@@ -40,7 +42,12 @@
       "guest": false,
       "icon": "",
       "level": 50,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 4,
+        "s2": 8,
+        "s3": 12
+      }
     },
     {
       "num": 3,
@@ -55,7 +62,12 @@
       "guest": false,
       "icon": "",
       "level": 50,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 4,
+        "s2": 8,
+        "s3": 12
+      }
     },
     {
       "num": 4,
@@ -70,7 +82,12 @@
       "guest": false,
       "icon": "",
       "level": 100,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 4,
+        "s2": 8,
+        "s3": 12
+      }
     },
     {
       "num": 5,
@@ -85,7 +102,12 @@
       "guest": false,
       "icon": "mug",
       "level": 100,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 4,
+        "s2": 8,
+        "s3": 12
+      }
     },
     {
       "num": 6,
@@ -100,7 +122,12 @@
       "guest": false,
       "icon": "",
       "level": 50,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 4,
+        "s2": 8,
+        "s3": 12
+      }
     },
     {
       "num": 7,
@@ -115,7 +142,12 @@
       "guest": false,
       "icon": "",
       "level": 50,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 4,
+        "s2": 8,
+        "s3": 12
+      }
     },
     {
       "num": 8,
@@ -130,7 +162,12 @@
       "guest": false,
       "icon": "",
       "level": 90,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 4,
+        "s2": 8,
+        "s3": 12
+      }
     },
     {
       "num": 9,
@@ -145,7 +182,12 @@
       "guest": false,
       "icon": "",
       "level": 100,
-      "status": "coming"
+      "status": "coming",
+      "prices": {
+        "s1": 4,
+        "s2": 8,
+        "s3": 12
+      }
     },
     {
       "num": 10,
@@ -160,7 +202,12 @@
       "guest": false,
       "icon": "pint",
       "level": 100,
-      "status": "coming"
+      "status": "coming",
+      "prices": {
+        "s1": 4,
+        "s2": 8,
+        "s3": 12
+      }
     }
   ],
   "rotate": 0,
@@ -194,7 +241,7 @@
   "dimTo": 7,
   "logoBanner": true,
   "pricing": {
-    "on": false,
+    "on": true,
     "currency": "$",
     "sizes": [
       {
