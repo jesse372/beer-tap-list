@@ -37,8 +37,10 @@ for name in PAGES:
 
     # Both pages carry the flag: the board uses it for the badge, the editor uses it
     # to guard the two buttons that reach the real board.
+    # menu.html and hall.html have no STAGING flag; only the app pages do.
     s2, n = re.subn(r'var STAGING   = false;', 'var STAGING   = true;', s, count=1)
-    assert n == 1, f"{name}: STAGING flag not found"
+    assert n == 1 or name not in ("index.html", "edit.html"), \
+        f"{name}: staging flag not found"
     s = s2
 
     if name == "index.html":
@@ -52,5 +54,9 @@ for name in PAGES:
 open("next/build.txt", "w").write(stamp + "\n")
 print("staged", stamp)
 PY
+
+# The staging QR must point at the staging menu, not the live one.
+[ -x /tmp/qrenv/bin/python ] && /tmp/qrenv/bin/python make-qr.py --staging || \
+  echo "note: QR not regenerated (no generator available)" >&2
 
 echo "staging ready:  next/index.html  next/edit.html"

@@ -454,6 +454,22 @@
     box-shadow:0 calc(.5 * var(--u)) calc(1.6 * var(--u)) rgba(0,0,0,.55);
   }
 
+  /* QR to the phone menu. Bottom-left, clear of the full-screen hint on the right. */
+  #qrbox{
+    position:absolute;left:calc(2.6 * var(--u));bottom:calc(2.6 * var(--u));z-index:55;
+    display:none;text-align:center;
+  }
+  #qrbox.on{display:block}
+  #qrimg{
+    display:block;width:calc(13 * var(--u));height:calc(13 * var(--u));
+    background:#fff;padding:calc(.7 * var(--u));border-radius:calc(.6 * var(--u));
+  }
+  #qrcap{
+    font-family:var(--cond);font-weight:600;color:var(--muted);
+    font-size:calc(1.5 * var(--u));letter-spacing:.16em;text-transform:uppercase;
+    margin-top:calc(.6 * var(--u));
+  }
+
   #fshint{
     position:absolute;right:calc(2.6 * var(--u));bottom:calc(2.6 * var(--u));z-index:50;
     background:rgba(227,173,66,.95);color:#1a1408;
@@ -492,6 +508,10 @@
 
   <div id="fshint">Press OK for full screen</div>
   <div id="previewbadge" aria-hidden="true">Preview &mdash; not published</div>
+  <div id="qrbox" aria-hidden="true">
+    <img id="qrimg" alt="">
+    <div id="qrcap">Scan for the menu</div>
+  </div>
 </div>
 
 <!-- 2x2 silent loop. Playing video is what actually stops Fire TV sleeping;
@@ -858,6 +878,21 @@
     }).length;
     el("foot-left").textContent = pouring + (pouring === 1 ? " beer pouring" : " beers pouring");
 
+    var qb = el("qrbox");
+    if(qb){
+      /* Independent of business mode — a menu is worth scanning with or without
+         prices on it. Hidden if the image is missing rather than showing a gap. */
+      var wantQR = !!data.showQR;
+      if(wantQR){
+        var qi = el("qrimg");
+        if(qi && !qi.getAttribute("src")) qi.setAttribute("src", "menu-qr.svg");
+        qi.onerror = function(){ qb.className = ""; };
+      }
+      qb.className = wantQR ? "on" : "";
+      var cap = el("qrcap");
+      if(cap) cap.textContent = data.qrCaption || "Scan for the menu";
+    }
+
     var hb = el("happybar");
     if(hb){
       var pr2 = pricing(), on2 = pr2.on && happyActive();
@@ -1097,7 +1132,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260729-121355";
+  var BUILD = "20260729-121918";
 
   (function(){
     function check(){

@@ -24,14 +24,19 @@ for name in PAGES:
     assert n == 1, f"{name}: staging DATA_BASE not found — was next/ built by stage.sh?"
     s = s2
 
+    # menu.html and hall.html have no STAGING flag; only the app pages do.
     s2, n = re.subn(r'var STAGING   = true;', 'var STAGING   = false;', s, count=1)
-    assert n == 1, f"{name}: staging flag not found"
+    assert n == 1 or name not in ("index.html", "edit.html"), \
+        f"{name}: staging flag not found"
     s = s2
 
     open(name, "w").write(s)
 
 print("promoted staging -> live")
 PY
+
+[ -x /tmp/qrenv/bin/python ] && /tmp/qrenv/bin/python make-qr.py || \
+  echo "note: QR not regenerated (no generator available)" >&2
 
 # Fresh stamp for the live pages, so the TVs pick the change up on their own.
 ./bump.sh
