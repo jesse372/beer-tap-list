@@ -24,7 +24,10 @@ import re, datetime
 
 stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
-for name in ("index.html", "edit.html"):
+# Every page the site serves. New pages get staged automatically by listing here.
+PAGES = [p for p in ("index.html", "edit.html", "menu.html", "hall.html") if __import__("os").path.exists(p)]
+
+for name in PAGES:
     s = open(name).read()
 
     # The one line that makes this copy read the live data at the site root.

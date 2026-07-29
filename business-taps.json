@@ -255,6 +255,17 @@
         "name": "Pint",
         "ml": 570
       }
-    ]
+    ],
+    "happy": {
+      "on": true,
+      "from": "15:00",
+      "to": "20:00",
+      "label": "Happy Hour",
+      "days": [],
+      "prices": {
+        "s1": 4.5,
+        "s3": 9.0
+      }
+    }
   }
 }

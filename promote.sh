@@ -14,7 +14,10 @@ cd "$(dirname "$0")"
 python3 - <<'PY'
 import re
 
-for name in ("index.html", "edit.html"):
+import os
+PAGES = [p for p in ("index.html", "edit.html", "menu.html", "hall.html") if os.path.exists("next/" + p)]
+
+for name in PAGES:
     s = open("next/" + name).read()
 
     s2, n = re.subn(r'var DATA_BASE = "\.\./";', 'var DATA_BASE = "";', s, count=1)

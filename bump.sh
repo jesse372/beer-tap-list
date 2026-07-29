@@ -8,8 +8,11 @@ python3 - "$B" <<PY
 import sys, re
 b = sys.argv[1]
 s = open("index.html").read()
+# Check the constant EXISTS. Comparing before/after wrongly fails when the stamp is
+# already this second's value, which left index.html and build.txt disagreeing — and
+# a page whose build never matches build.txt reloads itself forever.
+assert re.search(r'var BUILD = "[^"]*";', s), "BUILD constant not found in index.html"
 s2 = re.sub(r'var BUILD = "[^"]*";', 'var BUILD = "%s";' % b, s, count=1)
-assert s2 != s, "BUILD constant not found in index.html"
 open("index.html","w").write(s2)
 open("build.txt","w").write(b + "\n")
 PY
