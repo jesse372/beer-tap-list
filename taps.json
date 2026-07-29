@@ -5,9 +5,9 @@
   "logoOnly": true,
   "showClock": true,
   "perPage": "auto",
-  "rotateSeconds": 15,
+  "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-07-28T06:01:07.700Z",
+  "updated": "2026-07-29T06:02:56.712Z",
   "taps": [
     {
       "num": 1,
@@ -22,7 +22,10 @@
       "guest": true,
       "icon": "",
       "level": 50,
-      "status": "pouring"
+      "status": "pouring",
+      "prices": {
+        "s1": 0
+      }
     },
     {
       "num": 2,
@@ -138,10 +141,11 @@
       "notes": "",
       "color": "#560903",
       "srm": 32,
+      "ready": "2026-08-07",
+      "guest": false,
       "icon": "",
       "level": 100,
-      "status": "coming",
-      "ready": "2026-08-07"
+      "status": "coming"
     },
     {
       "num": 10,
@@ -152,10 +156,11 @@
       "notes": "",
       "color": "#FFBF42",
       "srm": 4,
+      "ready": "2026-08-07",
+      "guest": false,
       "icon": "pint",
       "level": 100,
-      "status": "coming",
-      "ready": "2026-08-07"
+      "status": "coming"
     }
   ],
   "rotate": 0,
@@ -187,5 +192,26 @@
   "dimAtNight": false,
   "dimFrom": 22,
   "dimTo": 7,
-  "logoBanner": true
+  "logoBanner": true,
+  "pricing": {
+    "on": false,
+    "currency": "$",
+    "sizes": [
+      {
+        "id": "s1",
+        "name": "Middy",
+        "ml": 285
+      },
+      {
+        "id": "s2",
+        "name": "Schooner",
+        "ml": 425
+      },
+      {
+        "id": "s3",
+        "name": "Pint",
+        "ml": 570
+      }
+    ]
+  }
 }
