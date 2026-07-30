@@ -57,7 +57,14 @@ function json(body, status, extra) {
 function cors(env, request) {
   const allowed = (env.ALLOWED_ORIGINS || "*").split(",").map((s) => s.trim());
   const origin = request.headers.get("Origin") || "";
-  const ok = allowed.includes("*") ? "*" : (allowed.includes(origin) ? origin : allowed[0] || "");
+  // Localhost is always allowed, so the site can be developed against a local Worker
+  // without loosening the deployed configuration. CORS is not the security boundary
+  // here in any case — every private route requires a bearer token, and a token in
+  // one origin's local storage is not readable from another.
+  const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  const ok = local ? origin
+           : allowed.includes("*") ? "*"
+           : (allowed.includes(origin) ? origin : allowed[0] || "");
   return {
     "Access-Control-Allow-Origin": ok,
     "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",

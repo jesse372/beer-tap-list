@@ -520,6 +520,8 @@
     <button class="btn-ghost" id="revert">Undo changes</button>
     <button class="btn-ghost" id="preview">Preview</button>
     <button class="btn-ghost" id="printmenu">Print menu</button>
+    <span id="whoami" style="display:none;font-size:14px;color:var(--muted)"></span>
+    <button class="btn-ghost" id="signout" style="display:none">Sign out</button>
     <button class="btn-primary" id="publish">Publish to the TV</button>
   </div>
 </div>
@@ -1539,6 +1541,18 @@
     if(w && w.focus) w.focus();
   });
 
+  (function(){
+    var s = apiSession();
+    if(!s) return;
+    var w = $("whoami");
+    w.textContent = (s.brewery && s.brewery.name ? s.brewery.name + " · " : "") + s.email;
+    w.style.display = "";
+    $("signout").style.display = "";
+    $("signout").addEventListener("click", function(){
+      if(window.confirm("Sign out of this device?")) signOut();
+    });
+  })();
+
   $("printmenu").addEventListener("click", function(){
     /* Prints what is published, not the draft — a menu going on a wall should match
        what the taps are actually pouring. */
@@ -1683,6 +1697,9 @@
      pressed the list may have moved on twice. Check at the moment it matters, not
      only on the timer, and make overwriting a decision rather than an accident. */
   function guardStale(next){
+    /* On the API the server refuses a stale write outright, which is stronger than
+       asking first — so no need to check twice. */
+    if(usingApi()){ next(); return; }
     if(overrideStale || !loadedVersion) { next(); return; }
     setStatus("Checking for newer changes…");
     remoteVersion(function(v){
@@ -1716,6 +1733,39 @@
   });
 
   function doPublish(self){
+    /* A brewery's board lives in the database. This must come before the GitHub path,
+       or a signed-in venue would publish into somebody else's repo. */
+    if(usingApi()){
+      var btn = self;
+      btn.disabled = true;
+      setStatus("Publishing…");
+      var payload = JSON.parse(serialize());          /* same normalising as the file path */
+      apiFetch("/v1/board", { method:"PUT", body: JSON.stringify({ data: payload, rev: apiRev }) })
+        .then(function(r){
+          btn.disabled = false;
+          if(r.status === 401){ signOut(); return; }
+          if(r.status === 409){
+            /* Someone else saved first. Reuse the banner rather than inventing a
+               second way of saying the same thing. */
+            apiRev = r.body.rev;
+            showStale(null);
+            setStatus("Someone else saved first — load theirs, or press Publish again to replace it.", "err");
+            overrideStale = false;
+            return;
+          }
+          if(!r.ok){ setStatus(r.body.error || "Couldn't publish.", "err"); return; }
+          apiRev = r.body.rev;
+          published = JSON.parse(JSON.stringify(data));
+          clearDraft();
+          adoptPublished();
+          setStatus("Published — the screens will pick it up within a minute.");
+        })
+        .catch(function(){
+          btn.disabled = false;
+          setStatus("Couldn't reach the service — check your connection.", "err");
+        });
+      return;
+    }
     if(WORKER_URL){
       var b = self;
       b.disabled = true;
