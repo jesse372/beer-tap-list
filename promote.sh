@@ -20,8 +20,12 @@ PAGES = [p for p in ("index.html", "edit.html", "menu.html", "hall.html", "print
 for name in PAGES:
     s = open("next/" + name).read()
 
-    s2, n = re.subn(r'var DATA_BASE = "\.\./";', 'var DATA_BASE = "";', s, count=1)
-    assert n == 1, f"{name}: staging DATA_BASE not found — was next/ built by stage.sh?"
+    # Pages that read the beer list must carry the constant; a sign-in page has
+    # no data to read, so it legitimately has none.
+    DATA_PAGES = ("index.html", "edit.html", "menu.html", "print.html", "hall.html")
+    s2, n = re.subn(r'var DATA_BASE = "\\.\\./";', 'var DATA_BASE = "";', s, count=1)
+    assert n == 1 or name not in DATA_PAGES, \
+        f"{name}: DATA_BASE not found — did the constant get renamed?"
     s = s2
 
     # menu.html and hall.html have no STAGING flag; only the app pages do.

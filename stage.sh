@@ -31,8 +31,12 @@ for name in PAGES:
     s = open(name).read()
 
     # The one line that makes this copy read the live data at the site root.
+    # Pages that read the beer list must carry the constant; a sign-in page has
+    # no data to read, so it legitimately has none.
+    DATA_PAGES = ("index.html", "edit.html", "menu.html", "print.html", "hall.html")
     s2, n = re.subn(r'var DATA_BASE = "";', 'var DATA_BASE = "../";', s, count=1)
-    assert n == 1, f"{name}: DATA_BASE not found — did the constant get renamed?"
+    assert n == 1 or name not in DATA_PAGES, \
+        f"{name}: DATA_BASE not found — did the constant get renamed?"
     s = s2
 
     # Both pages carry the flag: the board uses it for the badge, the editor uses it
