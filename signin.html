@@ -107,6 +107,15 @@
   var el = function(id){ return document.getElementById(id); };
   var TOKEN_KEY = "ontap.session.v1";
   var mode = "in";
+  /* An invitation link lands here. Whether they already have an account or not, the
+     token is redeemed straight after signing in, so the link works either way. */
+  var invite = (/[?&]invite=([^&]+)/.exec(location.search || "") || [])[1];
+  if(invite) invite = decodeURIComponent(invite);
+
+  if(invite){
+    el("sub").textContent = "You've been invited to help run a tap list. " +
+      "Sign in, or create an account with the email it was sent to.";
+  }
 
   if(!ONTAP.accountsEnabled()){
     el("off").style.display = "block";
@@ -117,7 +126,7 @@
   /* Already signed in? Don't make them do it again. */
   try {
     var saved = JSON.parse(localStorage.getItem(TOKEN_KEY) || "null");
-    if(saved && saved.token && saved.expires > Date.now()){
+    if(saved && saved.token && saved.expires > Date.now() && !invite){
       location.replace("edit.html");
       return;
     }
@@ -186,8 +195,27 @@
         } catch(e){
           throw new Error("This browser won't let the site remember you (private mode?).");
         }
-        say("Done — opening the editor…", "ok");
-        location.replace("edit.html");
+        if(!invite){
+          say("Done — opening the editor…", "ok");
+          location.replace("edit.html");
+          return;
+        }
+        say("Accepting the invitation…");
+        return fetch(ONTAP.api() + "/v1/invites/accept", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + j.token },
+          body: JSON.stringify({ token: invite })
+        }).then(function(r){
+          return r.json().catch(function(){ return {}; }).then(function(a){
+            if(!r.ok) throw new Error(a.error || "That invitation could not be used.");
+            /* Open the venue they were invited to, not whichever came first. */
+            try {
+              if(a.brewery && a.brewery.id) localStorage.setItem("ontap.venue.v1", a.brewery.id);
+            } catch(e){}
+            say("You're in — opening the editor…", "ok");
+            location.replace("edit.html");
+          });
+        });
       })
       .catch(function(err){
         el("go").disabled = false;

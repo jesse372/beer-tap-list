@@ -8,6 +8,16 @@ var SERVER_ITERATIONS = 5e4;
 var MAX_BOARD_BYTES = 3e6;
 var LOCKOUT_FAILS = 8;
 var LOCKOUT_MS = 15 * 60 * 1e3;
+var INVITE_DAYS = 14;
+var PLANS = {
+  free: { locations: 1, staff: 0 },
+  trial: { locations: 1, staff: 2 },
+  pro: { locations: 5, staff: 10 }
+};
+function limits(plan) {
+  return PLANS[plan] || PLANS.free;
+}
+__name(limits, "limits");
 function json(body, status, extra) {
   return new Response(JSON.stringify(body), {
     status: status || 200,
@@ -85,14 +95,26 @@ async function sessionUser(env, request) {
   return { id: row.user_id, email: row.email, tokenHash: th };
 }
 __name(sessionUser, "sessionUser");
-async function breweryFor(env, userId) {
-  return env.DB.prepare(
+async function breweriesFor(env, userId) {
+  const r = await env.DB.prepare(
     `SELECT b.id, b.slug, b.name, b.plan, m.role
        FROM members m JOIN breweries b ON b.id = m.brewery_id
-      WHERE m.user_id = ? ORDER BY m.created LIMIT 1`
-  ).bind(userId).first();
+      WHERE m.user_id = ? ORDER BY m.created`
+  ).bind(userId).all();
+  return r && r.results || [];
 }
-__name(breweryFor, "breweryFor");
+__name(breweriesFor, "breweriesFor");
+async function pickBrewery(env, userId, want) {
+  const list = await breweriesFor(env, userId);
+  if (!list.length) return null;
+  if (!want) return list[0];
+  return list.find((b) => b.id === want || b.slug === want) || null;
+}
+__name(pickBrewery, "pickBrewery");
+function isOwner(b) {
+  return b && b.role === "owner";
+}
+__name(isOwner, "isOwner");
 var src_default = {
   async fetch(request, env) {
     const co = cors(env, request);
@@ -171,8 +193,8 @@ var src_default = {
         env.DB.prepare(`UPDATE users SET last_login = ? WHERE id = ?`).bind(now(), u.id)
       ]);
       const { token, expires } = await startSession(env, u.id);
-      const br = await breweryFor(env, u.id);
-      return json({ ok: true, token, expires, brewery: br || null }, 200, co);
+      const list = await breweriesFor(env, u.id);
+      return json({ ok: true, token, expires, brewery: list[0] || null, breweries: list }, 200, co);
     }
     const me = await sessionUser(env, request);
     if (path === "/v1/logout" && request.method === "POST") {
@@ -181,12 +203,17 @@ var src_default = {
     }
     if (!me) return json({ error: "Not signed in" }, 401, co);
     if (path === "/v1/me" && request.method === "GET") {
-      const br = await breweryFor(env, me.id);
-      return json({ ok: true, email: me.email, brewery: br || null }, 200, co);
+      const list = await breweriesFor(env, me.id);
+      return json({
+        ok: true,
+        email: me.email,
+        brewery: list[0] || null,
+        breweries: list
+      }, 200, co);
     }
     if (path === "/v1/board") {
-      const br = await breweryFor(env, me.id);
-      if (!br) return json({ error: "No brewery on this account" }, 404, co);
+      const br = await pickBrewery(env, me.id, url.searchParams.get("b") || body.brewery);
+      if (!br) return json({ error: "No such brewery on this account" }, 404, co);
       if (request.method === "GET") {
         const row = await env.DB.prepare(
           `SELECT data, updated, rev FROM boards WHERE brewery_id = ?`
@@ -218,6 +245,133 @@ var src_default = {
         ).bind(br.id, text, stamp, rev).run();
         return json({ ok: true, rev, updated: stamp, slug: br.slug }, 200, co);
       }
+    }
+    if (path === "/v1/locations" && request.method === "POST") {
+      const name = String(body.name || "").trim();
+      if (!name || name.length > 120) return json({ error: "Name the location" }, 400, co);
+      const mine = await breweriesFor(env, me.id);
+      const owned = mine.filter(isOwner);
+      const best = owned.reduce(
+        (a, b) => limits(b.plan).locations > limits(a.plan).locations ? b : a,
+        owned[0] || { plan: "free" }
+      );
+      const allowed = limits(best.plan).locations;
+      if (owned.length >= allowed) {
+        return json({
+          error: `Your plan covers ${allowed} location${allowed === 1 ? "" : "s"}.`,
+          code: "plan_limit",
+          limit: allowed
+        }, 402, co);
+      }
+      const bid = id(), slug = newSlug(), t = now();
+      await env.DB.batch([
+        env.DB.prepare(`INSERT INTO breweries (id,slug,name,plan,created) VALUES (?,?,?,?,?)`).bind(bid, slug, name, best.plan || "trial", t),
+        env.DB.prepare(`INSERT INTO members (user_id,brewery_id,role,created) VALUES (?,?,?,?)`).bind(me.id, bid, "owner", t),
+        env.DB.prepare(`INSERT INTO boards (brewery_id,data,updated,rev) VALUES (?,?,?,1)`).bind(bid, JSON.stringify(starterBoard(name)), new Date(t).toISOString())
+      ]);
+      return json({ ok: true, brewery: { id: bid, slug, name, plan: best.plan, role: "owner" } }, 200, co);
+    }
+    if (path === "/v1/team" && request.method === "GET") {
+      const br = await pickBrewery(env, me.id, url.searchParams.get("b"));
+      if (!br) return json({ error: "No such brewery" }, 404, co);
+      const members = await env.DB.prepare(
+        `SELECT u.id, u.email, m.role, m.created
+           FROM members m JOIN users u ON u.id = m.user_id
+          WHERE m.brewery_id = ? ORDER BY m.created`
+      ).bind(br.id).all();
+      const pending = await env.DB.prepare(
+        `SELECT email, role, created, expires FROM invites
+          WHERE brewery_id = ? AND accepted IS NULL AND expires > ?`
+      ).bind(br.id, now()).all();
+      return json({
+        ok: true,
+        brewery: br,
+        members: members && members.results || [],
+        invites: pending && pending.results || []
+      }, 200, co);
+    }
+    if (path === "/v1/invites" && request.method === "POST") {
+      const br = await pickBrewery(env, me.id, body.brewery);
+      if (!br) return json({ error: "No such brewery" }, 404, co);
+      if (!isOwner(br)) return json({ error: "Only an owner can invite people" }, 403, co);
+      const email = String(body.email || "").trim().toLowerCase();
+      if (!validEmail(email)) return json({ error: "That email doesn't look right" }, 400, co);
+      const role = body.role === "owner" ? "owner" : "staff";
+      const seats = limits(br.plan).staff;
+      const used = await env.DB.prepare(
+        `SELECT (SELECT COUNT(*) FROM members WHERE brewery_id = ?) - 1
+              + (SELECT COUNT(*) FROM invites WHERE brewery_id = ? AND accepted IS NULL AND expires > ?)
+           AS n`
+      ).bind(br.id, br.id, now()).first();
+      if (Number(used.n) >= seats) {
+        return json({
+          error: `Your plan covers ${seats} extra ${seats === 1 ? "person" : "people"}.`,
+          code: "plan_limit",
+          limit: seats
+        }, 402, co);
+      }
+      const token = randomHex(24);
+      await env.DB.prepare(
+        `INSERT INTO invites (token_hash,brewery_id,email,role,invited_by,created,expires)
+         VALUES (?,?,?,?,?,?,?)`
+      ).bind(
+        await sha256Hex(token),
+        br.id,
+        email,
+        role,
+        me.id,
+        now(),
+        now() + INVITE_DAYS * 86400 * 1e3
+      ).run();
+      return json({
+        ok: true,
+        email,
+        role,
+        token,
+        expiresDays: INVITE_DAYS
+      }, 200, co);
+    }
+    if (path === "/v1/invites/accept" && request.method === "POST") {
+      const token = String(body.token || "").trim();
+      if (!token) return json({ error: "No invitation" }, 400, co);
+      const th = await sha256Hex(token);
+      const inv = await env.DB.prepare(
+        `SELECT brewery_id, email, role, expires, accepted FROM invites WHERE token_hash = ?`
+      ).bind(th).first();
+      if (!inv) return json({ error: "That invitation isn't valid" }, 404, co);
+      if (inv.accepted) return json({ error: "That invitation has already been used" }, 409, co);
+      if (Number(inv.expires) < now()) return json({ error: "That invitation has expired" }, 410, co);
+      if (String(inv.email) !== String(me.email).toLowerCase()) {
+        return json({ error: "That invitation was sent to a different email address" }, 403, co);
+      }
+      await env.DB.batch([
+        env.DB.prepare(
+          `INSERT INTO members (user_id,brewery_id,role,created) VALUES (?,?,?,?)
+           ON CONFLICT(user_id,brewery_id) DO UPDATE SET role = excluded.role`
+        ).bind(me.id, inv.brewery_id, inv.role, now()),
+        env.DB.prepare(`UPDATE invites SET accepted = ? WHERE token_hash = ?`).bind(now(), th)
+      ]);
+      const br = await pickBrewery(env, me.id, inv.brewery_id);
+      return json({ ok: true, brewery: br }, 200, co);
+    }
+    if (path === "/v1/members/remove" && request.method === "POST") {
+      const br = await pickBrewery(env, me.id, body.brewery);
+      if (!br) return json({ error: "No such brewery" }, 404, co);
+      if (!isOwner(br)) return json({ error: "Only an owner can remove people" }, 403, co);
+      const who = String(body.userId || "");
+      if (who === me.id) return json({ error: "You can't remove yourself" }, 400, co);
+      const owners = await env.DB.prepare(
+        `SELECT COUNT(*) AS n FROM members WHERE brewery_id = ? AND role = 'owner'`
+      ).bind(br.id).first();
+      const target = await env.DB.prepare(
+        `SELECT role FROM members WHERE brewery_id = ? AND user_id = ?`
+      ).bind(br.id, who).first();
+      if (!target) return json({ error: "They're not on this brewery" }, 404, co);
+      if (target.role === "owner" && Number(owners.n) <= 1) {
+        return json({ error: "That's the last owner \u2014 make someone else an owner first" }, 400, co);
+      }
+      await env.DB.prepare(`DELETE FROM members WHERE brewery_id = ? AND user_id = ?`).bind(br.id, who).run();
+      return json({ ok: true }, 200, co);
     }
     return json({ error: "Unknown route" }, 404, co);
   }
@@ -300,7 +454,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-GW8xJn/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-Nw81B4/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -332,7 +486,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-GW8xJn/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-Nw81B4/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

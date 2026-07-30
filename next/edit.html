@@ -495,6 +495,30 @@
 </div>
 
 <div class="wrap">
+  <details id="teamsec" style="display:none">
+    <summary>&#128101; Your team &amp; venues</summary>
+    <div class="pad">
+      <div class="field">
+        <label>Venues on this account</label>
+        <div id="venuelist"></div>
+        <div class="itemrow" style="margin-top:10px">
+          <input class="iname" type="text" id="newvenue" placeholder="Add another venue&hellip;">
+          <button class="btn-sm btn-ghost" type="button" id="addvenue">Add</button>
+        </div>
+      </div>
+      <div class="field" id="teamwrap">
+        <label>People who can edit <span id="teamfor" class="muted"></span></label>
+        <div id="teamlist"></div>
+        <div class="itemrow" style="margin-top:10px">
+          <input class="iname" type="email" id="inviteemail" placeholder="their@email.com">
+          <button class="btn-sm btn-ghost" type="button" id="doinvite">Invite</button>
+        </div>
+        <div class="hint">Owners can invite people and add venues. Staff can edit the tap
+          list but not the team.</div>
+      </div>
+    </div>
+  </details>
+
   <details id="extras">
     <summary>🍟 Food &amp; merch <span class="muted" id="extrascount"></span></summary>
     <div class="pad">
@@ -520,6 +544,7 @@
     <button class="btn-ghost" id="revert">Undo changes</button>
     <button class="btn-ghost" id="preview">Preview</button>
     <button class="btn-ghost" id="printmenu">Print menu</button>
+    <select id="venue" style="display:none;max-width:190px"></select>
     <span id="whoami" style="display:none;font-size:14px;color:var(--muted)"></span>
     <button class="btn-ghost" id="signout" style="display:none">Sign out</button>
     <button class="btn-primary" id="publish">Publish to the TV</button>
@@ -1553,6 +1578,126 @@
     });
   })();
 
+  /* ---------- venues and team (API accounts only) ---------- */
+  var VENUE_KEY = "ontap.venue.v1";
+  var myVenues = [], myVenue = null;
+
+  function chosenVenue(){
+    try { return localStorage.getItem(VENUE_KEY) || ""; } catch(e){ return ""; }
+  }
+  function rememberVenue(v){
+    try { localStorage.setItem(VENUE_KEY, v || ""); } catch(e){}
+  }
+
+  function renderVenues(){
+    var sel = $("venue");
+    if(myVenues.length > 1){
+      sel.innerHTML = myVenues.map(function(b){
+        return '<option value="' + esc(b.id) + '"' +
+          (myVenue && b.id === myVenue.id ? " selected" : "") + '>' + esc(b.name) + '</option>';
+      }).join("");
+      sel.style.display = "";
+    } else {
+      sel.style.display = "none";
+    }
+    $("venuelist").innerHTML = myVenues.map(function(b){
+      return '<div class="itemrow"><span class="iname">' + esc(b.name) +
+        ' <span class="muted">' + esc(b.role) + " · " + esc(b.plan) + '</span></span>' +
+        '<span class="muted" style="font-size:13px">/b/' + esc(b.slug) + '.json</span></div>';
+    }).join("");
+  }
+
+  function loadTeam(){
+    if(!myVenue) return;
+    var owner = myVenue.role === "owner";
+    $("teamfor").textContent = "— " + myVenue.name;
+    $("inviteemail").disabled = !owner;
+    $("doinvite").disabled = !owner;
+    $("newvenue").disabled = !owner;
+    $("addvenue").disabled = !owner;
+    apiFetch("/v1/team?b=" + encodeURIComponent(myVenue.id), { method:"GET" }).then(function(r){
+      if(!r.ok) return;
+      var rows = (r.body.members || []).map(function(m){
+        return '<div class="itemrow"><span class="iname">' + esc(m.email) +
+          ' <span class="muted">' + esc(m.role) + '</span></span>' +
+          (owner && m.role !== "owner"
+            ? '<button class="btn-sm btn-ghost" type="button" data-remove="' + esc(m.id) + '">Remove</button>'
+            : '') + '</div>';
+      });
+      (r.body.invites || []).forEach(function(i){
+        rows.push('<div class="itemrow"><span class="iname">' + esc(i.email) +
+          ' <span class="muted">invited, not yet accepted</span></span></div>');
+      });
+      $("teamlist").innerHTML = rows.join("") || '<div class="hint">Just you, for now.</div>';
+    });
+  }
+
+  function afterSignedInLoad(){
+    apiFetch("/v1/me", { method:"GET" }).then(function(m){
+      if(!m.ok) return;
+      myVenues = m.body.breweries || [];
+      var want = chosenVenue();
+      myVenue = myVenues.filter(function(b){ return b.id === want; })[0] || myVenues[0] || null;
+      if(myVenue) rememberVenue(myVenue.id);
+      $("teamsec").style.display = "";
+      renderVenues();
+      loadTeam();
+    });
+  }
+
+  if(usingApi()){
+    $("venue").addEventListener("change", function(){
+      /* Switching venue reloads, rather than swapping the model underneath an open
+         form — a half-swapped editor is how the wrong beer list gets published. */
+      rememberVenue(this.value);
+      location.reload();
+    });
+    $("addvenue").addEventListener("click", function(){
+      var name = $("newvenue").value.trim();
+      if(!name) return;
+      this.disabled = true;
+      apiFetch("/v1/locations", { method:"POST", body: JSON.stringify({ name: name }) })
+        .then(function(r){
+          $("addvenue").disabled = false;
+          if(!r.ok){ setStatus(r.body.error || "Couldn't add that venue.", "err"); return; }
+          $("newvenue").value = "";
+          rememberVenue(r.body.brewery.id);
+          setStatus("Venue added — opening it…");
+          setTimeout(function(){ location.reload(); }, 500);
+        });
+    });
+    $("doinvite").addEventListener("click", function(){
+      var email = $("inviteemail").value.trim();
+      if(!email || !myVenue) return;
+      this.disabled = true;
+      apiFetch("/v1/invites", { method:"POST",
+        body: JSON.stringify({ brewery: myVenue.id, email: email, role: "staff" }) })
+        .then(function(r){
+          $("doinvite").disabled = false;
+          if(!r.ok){ setStatus(r.body.error || "Couldn't send that invitation.", "err"); return; }
+          $("inviteemail").value = "";
+          /* No email service yet, so hand the owner the link to pass on. Swapping in a
+             sender later changes this message and nothing else. */
+          var link = location.origin + location.pathname.replace(/[^/]*$/, "") +
+                     "signin.html?invite=" + encodeURIComponent(r.body.token);
+          window.prompt("Send this sign-in link to " + r.body.email +
+                        " — it expires in " + r.body.expiresDays + " days.", link);
+          loadTeam();
+        });
+    });
+    $("teamlist").addEventListener("click", function(ev){
+      var b = ev.target.closest("[data-remove]");
+      if(!b || !myVenue) return;
+      if(!window.confirm("Remove this person from " + myVenue.name + "?")) return;
+      apiFetch("/v1/members/remove", { method:"POST",
+        body: JSON.stringify({ brewery: myVenue.id, userId: b.dataset.remove }) })
+        .then(function(r){
+          if(!r.ok){ setStatus(r.body.error || "Couldn't remove them.", "err"); return; }
+          loadTeam();
+        });
+    });
+  }
+
   $("printmenu").addEventListener("click", function(){
     /* Prints what is published, not the draft — a menu going on a wall should match
        what the taps are actually pouring. */
@@ -1740,7 +1885,8 @@
       btn.disabled = true;
       setStatus("Publishing…");
       var payload = JSON.parse(serialize());          /* same normalising as the file path */
-      apiFetch("/v1/board", { method:"PUT", body: JSON.stringify({ data: payload, rev: apiRev }) })
+      apiFetch("/v1/board", { method:"PUT",
+        body: JSON.stringify({ data: payload, rev: apiRev, brewery: myVenue ? myVenue.id : undefined }) })
         .then(function(r){
           btn.disabled = false;
           if(r.status === 401){ signOut(); return; }
@@ -1994,12 +2140,14 @@
   var xhr = new XMLHttpRequest();
   if(usingApi()){
     /* A brewery's list lives in the database, not in a repo. */
-    apiFetch("/v1/board", { method:"GET" }).then(function(r){
+    var want = chosenVenue();
+    apiFetch("/v1/board" + (want ? "?b=" + encodeURIComponent(want) : ""), { method:"GET" }).then(function(r){
       if(r.status === 401){ signOut(); return; }
       if(!r.ok){ setStatus(r.body.error || "Couldn't load your tap list.", "err"); return; }
       apiRev = r.body.rev;
       boot(r.body.data);
       setStatus("Ready.");
+      afterSignedInLoad();
     }).catch(function(){
       setStatus("Couldn't reach the service — check your connection.", "err");
     });

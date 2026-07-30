@@ -59,3 +59,18 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   fails    INTEGER NOT NULL DEFAULT 0,
   last     INTEGER NOT NULL
 );
+
+-- Staff invitations. Only a hash of the token is stored, same reasoning as sessions:
+-- a leaked database should not hand anybody a way in.
+CREATE TABLE IF NOT EXISTS invites (
+  token_hash TEXT PRIMARY KEY,
+  brewery_id TEXT NOT NULL,
+  email      TEXT NOT NULL,          -- who it was sent to, lowercased
+  role       TEXT NOT NULL DEFAULT 'staff',
+  invited_by TEXT NOT NULL,
+  created    INTEGER NOT NULL,
+  expires    INTEGER NOT NULL,
+  accepted   INTEGER                 -- when it was used; NULL while pending
+);
+CREATE INDEX IF NOT EXISTS invites_by_brewery ON invites (brewery_id);
+CREATE INDEX IF NOT EXISTS invites_by_email ON invites (email);
