@@ -892,17 +892,16 @@
         if(overflowing()){ s -= STEP; apply(s); }
       }
 
-      /* Anything still too tall is shrunk on its own, rather than dragging the
-         whole board down with it. One beer with a very long name used to cost
-         every other card a quarter of its size. If the size is systematically
-         wrong then every card shrinks anyway, which is the old behaviour. */
-      for(i = 0; i < cards.length; i++){
-        var c = cards[i], cs = s, g2 = 0;
-        while(g2++ < 40 && cs > FLOOR && c.scrollHeight - c.clientHeight > 1){
-          cs -= STEP;
-          c.style.setProperty("--s", cs.toFixed(3));
-        }
-      }
+      /* One scale for the whole board, never per card.
+         Shrinking only the cards that need it kept the type as large as possible, but
+         it meant two beers on the same screen could end up different sizes — a beer
+         with one price staying big while its neighbours with three shrank. Consistency
+         reads better than squeezing out the last few pixels, so the board now settles
+         on a single size and every card wears it.
+
+         The cost is that one very long name can pull the whole screen down a step.
+         That is the trade, taken deliberately. */
+      while(guard++ < 40 && s > FLOOR && overflowing()){ s -= STEP; apply(s); }
     }
     /* Web fonts change every measurement, so wait for them where the browser
        supports it, and measure again on the next frame regardless. */
@@ -1142,7 +1141,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260730-075624";
+  var BUILD = "20260730-133922";
 
   (function(){
     function check(){

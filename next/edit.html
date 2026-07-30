@@ -524,6 +524,7 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="icons.js"></script>
 <script>
 (function(){
@@ -536,6 +537,39 @@
   /* Staging under /next/ sets this to "../" so it edits the LIVE list. Publish paths
      stay bare on purpose — the Worker only accepts taps.json and bgphoto.json. */
   var DATA_BASE = "../";
+
+  /* ---------- which backend are we editing? ----------
+     Two, deliberately. A brewery with an account edits its own board through the api
+     Worker. Everyone else — including the shed board this started as — keeps
+     publishing a single taps.json to GitHub exactly as before, for free. One editor,
+     so a feature never has to be written twice. */
+  var TOKEN_KEY = "ontap.session.v1";
+  function apiSession(){
+    if(!window.ONTAP || !ONTAP.accountsEnabled()) return null;
+    try {
+      var s = JSON.parse(localStorage.getItem(TOKEN_KEY) || "null");
+      return (s && s.token && s.expires > Date.now()) ? s : null;
+    } catch(e){ return null; }
+  }
+  function usingApi(){ return !!apiSession(); }
+  var apiRev = null;          /* the revision this tab loaded, for the 409 check */
+
+  function apiFetch(path, opts){
+    var s = apiSession();
+    opts = opts || {};
+    opts.headers = opts.headers || {};
+    opts.headers["Authorization"] = "Bearer " + s.token;
+    if(opts.body) opts.headers["Content-Type"] = "application/json";
+    return fetch(ONTAP.api() + path, opts).then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(j){
+        return { status: r.status, ok: r.ok, body: j };
+      });
+    });
+  }
+  function signOut(){
+    try { localStorage.removeItem(TOKEN_KEY); } catch(e){}
+    location.replace("signin.html");
+  }
   /* True only in the /next/ copy. Staging shares one beer list and one gag signal
      with the live board, so the two buttons that reach out are guarded there. */
   var STAGING   = true;
@@ -1908,6 +1942,19 @@
   }
 
   var xhr = new XMLHttpRequest();
+  if(usingApi()){
+    /* A brewery's list lives in the database, not in a repo. */
+    apiFetch("/v1/board", { method:"GET" }).then(function(r){
+      if(r.status === 401){ signOut(); return; }
+      if(!r.ok){ setStatus(r.body.error || "Couldn't load your tap list.", "err"); return; }
+      apiRev = r.body.rev;
+      boot(r.body.data);
+      setStatus("Ready.");
+    }).catch(function(){
+      setStatus("Couldn't reach the service — check your connection.", "err");
+    });
+    return;
+  }
   xhr.open("GET", DATA_BASE + "taps.json?t=" + Date.now(), true);
   xhr.onload = function(){
     var json = null;
