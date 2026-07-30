@@ -56,9 +56,33 @@ until there are real customers.
 | `GET /v1/board` | → `{ data, rev, updated }` |
 | `PUT /v1/board` | `{ data, rev }` — 409 if `rev` is stale |
 
+## Plans and billing
+
+Allowances live in one table at the top of the Worker (`PLANS`) and are enforced server
+side. Exceeding one returns **402** with a `plan_limit` code the editor acts on.
+
+A Stripe webhook at `/v1/stripe/webhook` flips a brewery between `pro` and `free`. Its
+signature check is the only thing protecting it, so it is verified properly: HMAC over
+`timestamp.body`, compared in constant time, and anything older than five minutes is
+refused so a captured request cannot be replayed. **With `STRIPE_WEBHOOK_SECRET` unset it
+refuses everything**, which is the safe default.
+
+It must read the raw body before anything parses it — a request body can only be read
+once, and having the JSON parse run first made the endpoint unreachable while still
+appearing, from outside, to reject things correctly.
+
+## Password reset
+
+`/v1/reset/request` always answers the same way whether or not the address has an
+account, so it cannot be used to discover who your customers are. The link is **never
+returned in the response** — only emailed, or logged where no provider is configured.
+Tokens are single use, expire in 45 minutes, stored as a hash, and using one signs the
+account out everywhere else.
+
+Email sits behind one function. Set `RESEND_KEY` and `MAIL_FROM` and it sends; with
+neither it logs and reports that it could not.
+
 ## Still to do
 
-- Password reset (needs an email service; a free tier covers a long way)
-- Stripe subscriptions, and a plan gate on signup
-- Staff invitations — the `members` table already allows them, no migration needed
-- A sign-in page and pointing the editor at this instead of GitHub
+- A checkout link (needs a Stripe price id and key) — the webhook end is done
+- Deploy: `wrangler d1 create`, `wrangler deploy`, and the secrets above

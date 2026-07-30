@@ -9,6 +9,7 @@ var MAX_BOARD_BYTES = 3e6;
 var LOCKOUT_FAILS = 8;
 var LOCKOUT_MS = 15 * 60 * 1e3;
 var INVITE_DAYS = 14;
+var RESET_MINUTES = 45;
 var PLANS = {
   free: { locations: 1, staff: 0 },
   trial: { locations: 1, staff: 2 },
@@ -77,6 +78,44 @@ function validEmail(e) {
   return typeof e === "string" && /^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(e.trim()) && e.length <= 200;
 }
 __name(validEmail, "validEmail");
+async function sendEmail(env, to, subject, text) {
+  if (env.RESEND_KEY) {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + env.RESEND_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: env.MAIL_FROM || "On Tap <noreply@example.com>",
+        to: [to],
+        subject,
+        text
+      })
+    });
+    return r.ok;
+  }
+  console.log("[email not sent \u2014 no provider configured]", { to, subject, text });
+  return false;
+}
+__name(sendEmail, "sendEmail");
+async function stripeSigned(env, rawBody, header) {
+  if (!env.STRIPE_WEBHOOK_SECRET || !header) return false;
+  const parts = {};
+  String(header).split(",").forEach((kv) => {
+    const i = kv.indexOf("=");
+    if (i > 0) parts[kv.slice(0, i).trim()] = kv.slice(i + 1).trim();
+  });
+  if (!parts.t || !parts.v1) return false;
+  if (Math.abs(Date.now() / 1e3 - Number(parts.t)) > 300) return false;
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(env.STRIPE_WEBHOOK_SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const mac = await crypto.subtle.sign("HMAC", key, enc.encode(parts.t + "." + rawBody));
+  return safeEqual(hex(mac), parts.v1);
+}
+__name(stripeSigned, "stripeSigned");
 async function sessionUser(env, request) {
   const auth = request.headers.get("Authorization") || "";
   const m = /^Bearer\s+(\S+)$/i.exec(auth);
@@ -141,6 +180,36 @@ var src_default = {
         }
       });
     }
+    if (path === "/v1/stripe/webhook" && request.method === "POST") {
+      const raw = await request.text();
+      if (!await stripeSigned(env, raw, request.headers.get("Stripe-Signature"))) {
+        return json({ error: "Bad signature" }, 400, co);
+      }
+      let ev = {};
+      try {
+        ev = JSON.parse(raw);
+      } catch (e) {
+        return json({ error: "Bad JSON" }, 400, co);
+      }
+      const o = ev.data && ev.data.object || {};
+      const bid = o.metadata && o.metadata.brewery_id || null;
+      const status = o.status || null;
+      const until = o.current_period_end ? Number(o.current_period_end) * 1e3 : null;
+      if (ev.type === "checkout.session.completed" && bid) {
+        await env.DB.prepare(
+          `UPDATE breweries SET plan='pro', sub_status='active',
+                  stripe_customer=?, stripe_subscription=? WHERE id=?`
+        ).bind(o.customer || null, o.subscription || null, bid).run();
+      } else if (/^customer\.subscription\./.test(ev.type || "")) {
+        const where = bid ? "id = ?" : "stripe_subscription = ?";
+        const key = bid || o.id;
+        const lapsed = ev.type === "customer.subscription.deleted" || status === "canceled" || status === "unpaid";
+        await env.DB.prepare(
+          `UPDATE breweries SET plan = ?, sub_status = ?, sub_until = ? WHERE ` + where
+        ).bind(lapsed ? "free" : "pro", lapsed ? "canceled" : status || "active", until, key).run();
+      }
+      return json({ ok: true, handled: ev.type || null }, 200, co);
+    }
     let body = {};
     if (request.method === "POST" || request.method === "PUT") {
       try {
@@ -195,6 +264,46 @@ var src_default = {
       const { token, expires } = await startSession(env, u.id);
       const list = await breweriesFor(env, u.id);
       return json({ ok: true, token, expires, brewery: list[0] || null, breweries: list }, 200, co);
+    }
+    if (path === "/v1/reset/request" && request.method === "POST") {
+      const email = String(body.email || "").trim().toLowerCase();
+      const u = validEmail(email) ? await env.DB.prepare(`SELECT id FROM users WHERE email = ?`).bind(email).first() : null;
+      if (u) {
+        const token = randomHex(24);
+        await env.DB.prepare(
+          `INSERT INTO resets (token_hash,user_id,created,expires) VALUES (?,?,?,?)`
+        ).bind(await sha256Hex(token), u.id, now(), now() + RESET_MINUTES * 60 * 1e3).run();
+        const link = (env.SITE_BASE || "") + "/reset.html?token=" + token;
+        await sendEmail(
+          env,
+          email,
+          "Reset your On Tap password",
+          "Someone asked to reset the password for this address.\n\n" + link + "\n\nThe link works once and expires in " + RESET_MINUTES + " minutes. If it wasn't you, ignore this \u2014 nothing has changed."
+        );
+      }
+      return json({ ok: true, sent: true }, 200, co);
+    }
+    if (path === "/v1/reset/confirm" && request.method === "POST") {
+      const token = String(body.token || "").trim();
+      const authKey = String(body.authKey || "");
+      if (!/^[0-9a-f]{64}$/.test(authKey)) return json({ error: "Bad authKey" }, 400, co);
+      const th = await sha256Hex(token);
+      const row = await env.DB.prepare(
+        `SELECT user_id, expires, used FROM resets WHERE token_hash = ?`
+      ).bind(th).first();
+      if (!row || row.used || Number(row.expires) < now()) {
+        return json({ error: "That reset link has expired or been used" }, 410, co);
+      }
+      const salt = randomHex(16);
+      const hash = await derive(authKey, salt);
+      await env.DB.batch([
+        env.DB.prepare(`UPDATE users SET pw_salt = ?, pw_hash = ? WHERE id = ?`).bind(salt, hash, row.user_id),
+        env.DB.prepare(`UPDATE resets SET used = ? WHERE token_hash = ?`).bind(now(), th),
+        // Changing a password should end other sessions — that is usually the point.
+        env.DB.prepare(`DELETE FROM sessions WHERE user_id = ?`).bind(row.user_id),
+        env.DB.prepare(`DELETE FROM login_attempts WHERE key = (SELECT email FROM users WHERE id = ?)`).bind(row.user_id)
+      ]);
+      return json({ ok: true }, 200, co);
     }
     const me = await sessionUser(env, request);
     if (path === "/v1/logout" && request.method === "POST") {
@@ -454,7 +563,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-Nw81B4/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-ClUZtE/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -486,7 +595,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-Nw81B4/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-ClUZtE/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

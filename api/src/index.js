@@ -45,6 +45,7 @@ const MAX_BOARD_BYTES = 3_000_000;
 const LOCKOUT_FAILS = 8;
 const LOCKOUT_MS = 15 * 60 * 1000;
 const INVITE_DAYS = 14;
+const RESET_MINUTES = 45;
 
 /* What a plan allows. Kept here rather than scattered through the routes, so adding a
    tier later is one entry and not an audit. Enforced server side — a limit that only
@@ -128,6 +129,50 @@ function validEmail(e) {
   return typeof e === "string" && /^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(e.trim()) && e.length <= 200;
 }
 
+
+/* ---------------------------------------------------------------- email
+
+   Behind a single function on purpose. There is no email account yet, and the whole
+   product is meant to cost nothing until it earns something — so with no provider
+   configured this logs the message and reports that it could not send.
+
+   What it deliberately does NOT do is return the link to the caller. That would make
+   "reset my password" a way for anyone to obtain a reset link for any address. */
+async function sendEmail(env, to, subject, text) {
+  if (env.RESEND_KEY) {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + env.RESEND_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: env.MAIL_FROM || "On Tap <noreply@example.com>",
+                             to: [to], subject, text }),
+    });
+    return r.ok;
+  }
+  // Visible in `wrangler dev` and `wrangler tail`, nowhere else.
+  console.log("[email not sent — no provider configured]", { to, subject, text });
+  return false;
+}
+
+/* Stripe signs its webhooks: t=<timestamp>,v1=<hmac of "t.body">. Verifying it is the
+   only thing standing between this endpoint and anyone who can POST, so it is done
+   properly — and compared in constant time. */
+async function stripeSigned(env, rawBody, header) {
+  if (!env.STRIPE_WEBHOOK_SECRET || !header) return false;
+  const parts = {};
+  String(header).split(",").forEach((kv) => {
+    const i = kv.indexOf("=");
+    if (i > 0) parts[kv.slice(0, i).trim()] = kv.slice(i + 1).trim();
+  });
+  if (!parts.t || !parts.v1) return false;
+  // Reject anything older than five minutes, so a captured request cannot be replayed.
+  if (Math.abs(Date.now() / 1000 - Number(parts.t)) > 300) return false;
+
+  const key = await crypto.subtle.importKey("raw", enc.encode(env.STRIPE_WEBHOOK_SECRET),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = await crypto.subtle.sign("HMAC", key, enc.encode(parts.t + "." + rawBody));
+  return safeEqual(hex(mac), parts.v1);
+}
+
 /* ------------------------------------------------------------------ auth */
 
 async function sessionUser(env, request) {
@@ -199,6 +244,46 @@ export default {
           "Last-Modified": new Date(row.updated).toUTCString(),
         },
       });
+    }
+
+    // Stripe's signature covers the exact bytes it sent, so this must read the raw body
+    // itself — and therefore must come before anything parses it. Reading a request
+    // body twice is not possible, and putting this after the JSON parse made the whole
+    // endpoint unreachable while looking, from the outside, like it was rejecting
+    // things correctly.
+    // ---- stripe webhook ------------------------------------------------------
+    // Unauthenticated by necessity; the signature is what makes it safe.
+    if (path === "/v1/stripe/webhook" && request.method === "POST") {
+      const raw = await request.text();
+      if (!(await stripeSigned(env, raw, request.headers.get("Stripe-Signature")))) {
+        return json({ error: "Bad signature" }, 400, co);
+      }
+      let ev = {};
+      try { ev = JSON.parse(raw); } catch (e) { return json({ error: "Bad JSON" }, 400, co); }
+
+      const o = (ev.data && ev.data.object) || {};
+      // The brewery is carried in metadata at checkout, so a subscription can always be
+      // traced back to what it pays for.
+      const bid = (o.metadata && o.metadata.brewery_id) || null;
+      const status = o.status || null;
+      const until = o.current_period_end ? Number(o.current_period_end) * 1000 : null;
+
+      if (ev.type === "checkout.session.completed" && bid) {
+        await env.DB.prepare(
+          `UPDATE breweries SET plan='pro', sub_status='active',
+                  stripe_customer=?, stripe_subscription=? WHERE id=?`)
+          .bind(o.customer || null, o.subscription || null, bid).run();
+      } else if (/^customer\.subscription\./.test(ev.type || "")) {
+        // Find it by subscription id when metadata is absent, which it is on updates.
+        const where = bid ? "id = ?" : "stripe_subscription = ?";
+        const key = bid || o.id;
+        const lapsed = ev.type === "customer.subscription.deleted" ||
+                       status === "canceled" || status === "unpaid";
+        await env.DB.prepare(
+          `UPDATE breweries SET plan = ?, sub_status = ?, sub_until = ? WHERE ` + where)
+          .bind(lapsed ? "free" : "pro", lapsed ? "canceled" : (status || "active"), until, key).run();
+      }
+      return json({ ok: true, handled: ev.type || null }, 200, co);
     }
 
     let body = {};
@@ -278,6 +363,55 @@ export default {
       const { token, expires } = await startSession(env, u.id);
       const list = await breweriesFor(env, u.id);
       return json({ ok: true, token, expires, brewery: list[0] || null, breweries: list }, 200, co);
+    }
+
+    // ---- password reset ------------------------------------------------------
+    if (path === "/v1/reset/request" && request.method === "POST") {
+      const email = String(body.email || "").trim().toLowerCase();
+      const u = validEmail(email)
+        ? await env.DB.prepare(`SELECT id FROM users WHERE email = ?`).bind(email).first()
+        : null;
+
+      if (u) {
+        const token = randomHex(24);
+        await env.DB.prepare(
+          `INSERT INTO resets (token_hash,user_id,created,expires) VALUES (?,?,?,?)`)
+          .bind(await sha256Hex(token), u.id, now(), now() + RESET_MINUTES * 60 * 1000).run();
+        const link = (env.SITE_BASE || "") + "/reset.html?token=" + token;
+        await sendEmail(env, email, "Reset your On Tap password",
+          "Someone asked to reset the password for this address.\n\n" + link +
+          "\n\nThe link works once and expires in " + RESET_MINUTES + " minutes. " +
+          "If it wasn't you, ignore this — nothing has changed.");
+      }
+      // Always the same answer, whether or not that address has an account. Otherwise
+      // this becomes a way to find out who your customers are.
+      return json({ ok: true, sent: true }, 200, co);
+    }
+
+    if (path === "/v1/reset/confirm" && request.method === "POST") {
+      const token = String(body.token || "").trim();
+      const authKey = String(body.authKey || "");
+      if (!/^[0-9a-f]{64}$/.test(authKey)) return json({ error: "Bad authKey" }, 400, co);
+
+      const th = await sha256Hex(token);
+      const row = await env.DB.prepare(
+        `SELECT user_id, expires, used FROM resets WHERE token_hash = ?`).bind(th).first();
+      if (!row || row.used || Number(row.expires) < now()) {
+        return json({ error: "That reset link has expired or been used" }, 410, co);
+      }
+
+      const salt = randomHex(16);
+      const hash = await derive(authKey, salt);
+      await env.DB.batch([
+        env.DB.prepare(`UPDATE users SET pw_salt = ?, pw_hash = ? WHERE id = ?`)
+          .bind(salt, hash, row.user_id),
+        env.DB.prepare(`UPDATE resets SET used = ? WHERE token_hash = ?`).bind(now(), th),
+        // Changing a password should end other sessions — that is usually the point.
+        env.DB.prepare(`DELETE FROM sessions WHERE user_id = ?`).bind(row.user_id),
+        env.DB.prepare(`DELETE FROM login_attempts WHERE key = (SELECT email FROM users WHERE id = ?)`)
+          .bind(row.user_id),
+      ]);
+      return json({ ok: true }, 200, co);
     }
 
     // ---- everything below needs a session ----------------------------------

@@ -25,7 +25,7 @@ import re, datetime
 stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # Every page the site serves. New pages get staged automatically by listing here.
-PAGES = [p for p in ("index.html", "edit.html", "menu.html", "hall.html", "print.html", "signin.html") if __import__("os").path.exists(p)]
+PAGES = [p for p in ("index.html", "edit.html", "menu.html", "hall.html", "print.html", "signin.html", "reset.html") if __import__("os").path.exists(p)]
 
 for name in PAGES:
     s = open(name).read()

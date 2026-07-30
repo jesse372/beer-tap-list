@@ -74,3 +74,20 @@ CREATE TABLE IF NOT EXISTS invites (
 );
 CREATE INDEX IF NOT EXISTS invites_by_brewery ON invites (brewery_id);
 CREATE INDEX IF NOT EXISTS invites_by_email ON invites (email);
+
+-- Password resets. Single use, short lived, and only a hash is stored.
+CREATE TABLE IF NOT EXISTS resets (
+  token_hash TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL,
+  created    INTEGER NOT NULL,
+  expires    INTEGER NOT NULL,
+  used       INTEGER
+);
+CREATE INDEX IF NOT EXISTS resets_by_user ON resets (user_id);
+
+-- Billing lives beside the brewery it pays for, so a lapsed subscription is a plan
+-- change and not a special case elsewhere.
+ALTER TABLE breweries ADD COLUMN stripe_customer TEXT;
+ALTER TABLE breweries ADD COLUMN stripe_subscription TEXT;
+ALTER TABLE breweries ADD COLUMN sub_status TEXT;      -- active | past_due | canceled | trialing
+ALTER TABLE breweries ADD COLUMN sub_until INTEGER;    -- paid up to, so grace is possible
