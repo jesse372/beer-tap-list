@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-07-31T06:54:15.072Z",
+  "updated": "2026-07-31T06:55:13.558Z",
   "taps": [
     {
       "num": 1,
@@ -170,7 +170,8 @@
       "srm": 32,
       "icon": "pint",
       "level": 100,
-      "status": "coming"
+      "status": "coming",
+      "ready": "2026-07-31"
     }
   ],
   "rotate": 0,
