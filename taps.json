@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-08-04T09:12:52.935Z",
+  "updated": "2026-08-05T08:43:18.657Z",
   "taps": [
     {
       "num": 1,
@@ -172,7 +172,32 @@
       "guest": false,
       "icon": "pint",
       "level": 100,
-      "status": "coming"
+      "status": "coming",
+      "custom": [
+        {
+          "k": "",
+          "v": ""
+        }
+      ]
+    },
+    {
+      "num": 12,
+      "name": "RØKKAR Stomper",
+      "style": "American spa",
+      "abv": "6.6",
+      "ibu": "32",
+      "notes": "",
+      "color": "#FFBF42",
+      "srm": 4,
+      "icon": "pint",
+      "level": 100,
+      "status": "coming",
+      "custom": [
+        {
+          "k": "added 5ml of Prysma Galaxy into keg",
+          "v": ""
+        }
+      ]
     }
   ],
   "rotate": 0,
