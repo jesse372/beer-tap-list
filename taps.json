@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-08-06T02:43:28.206Z",
+  "updated": "2026-08-06T02:46:18.177Z",
   "taps": [
     {
       "num": 1,
@@ -142,7 +142,13 @@
       "guest": false,
       "icon": "pint",
       "level": 100,
-      "status": "coming"
+      "status": "coming",
+      "custom": [
+        {
+          "k": "",
+          "v": ""
+        }
+      ]
     },
     {
       "num": 10,
@@ -153,7 +159,7 @@
       "notes": "",
       "color": "#FFBF42",
       "srm": 4,
-      "ready": "2026-08-07",
+      "ready": "2026-08-16",
       "guest": false,
       "icon": "mug",
       "level": 100,
@@ -183,7 +189,7 @@
       "notes": "",
       "color": "#FFBF42",
       "srm": 4,
-      "ready": "",
+      "ready": "2026-09-12",
       "guest": false,
       "icon": "pint",
       "level": 100,
