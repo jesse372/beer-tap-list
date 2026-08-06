@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-08-05T12:56:30.765Z",
+  "updated": "2026-08-06T02:42:18.867Z",
   "taps": [
     {
       "num": 1,
@@ -157,7 +157,8 @@
       "guest": false,
       "icon": "mug",
       "level": 100,
-      "status": "coming"
+      "status": "coming",
+      "image": "IMG_5535.jpeg"
     },
     {
       "num": 11,
