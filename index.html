@@ -734,6 +734,11 @@
     tickClock();
 
     var taps = (data.taps || []).slice();
+    /* The tap number decides the running order, not the order they happen to sit in
+       the file. Otherwise renumbering a beer in the editor moves nothing out here. */
+    taps.sort(function(a, b){
+      return (Number(a.num) || 9999) - (Number(b.num) || 9999);
+    });
 
     /* A half-added beer with no name has nothing to show — and with pagination it
        would otherwise rotate in as a blank "Untitled" card. Skip it. */

@@ -734,6 +734,11 @@
     tickClock();
 
     var taps = (data.taps || []).slice();
+    /* The tap number decides the running order, not the order they happen to sit in
+       the file. Otherwise renumbering a beer in the editor moves nothing out here. */
+    taps.sort(function(a, b){
+      return (Number(a.num) || 9999) - (Number(b.num) || 9999);
+    });
 
     /* A half-added beer with no name has nothing to show — and with pagination it
        would otherwise rotate in as a blank "Untitled" card. Skip it. */
@@ -1141,7 +1146,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260730-184605";
+  var BUILD = "20260813-110729";
 
   (function(){
     function check(){

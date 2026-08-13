@@ -807,6 +807,36 @@
   }
 
   /* ---------------- render ---------------- */
+  /* The tap number IS the running order — on the board and in this list. Before, the
+     array position decided the order and the number was just a label, so setting tap 9
+     to 2 renumbered it and left it sitting ninth. */
+  function sortTaps(){
+    data.taps.sort(function(a, b){
+      var x = Number(a.num), y = Number(b.num);
+      if(!isFinite(x)) x = 9999;
+      if(!isFinite(y)) y = 9999;
+      return x - y;
+    });
+  }
+
+  /* Give a tap a number, and put whatever held that number where this one was. A swap
+     rather than a renumber: it keeps the set of numbers valid without quietly
+     rewriting taps the person did not touch. */
+  function setTapNumber(index, wanted){
+    var t = data.taps[index];
+    if(!t) return;
+    var n = Math.max(1, Math.min(99, Math.floor(Number(wanted) || 0)));
+    var was = Number(t.num);
+    if(!isFinite(was)) was = n;
+    if(n === was){ sortTaps(); return; }
+
+    for(var j = 0; j < data.taps.length; j++){
+      if(j !== index && Number(data.taps[j].num) === n){ data.taps[j].num = was; break; }
+    }
+    t.num = n;
+    sortTaps();
+  }
+
   function blankTap(n){
     return { num:n, name:"", style:"", abv:"", ibu:"", notes:"",
              color:window.SRM[6], srm:6, icon:"pint", level:100, status:"pouring" };
@@ -1461,7 +1491,11 @@
       data.taps[i].level = Number(e.target.value);
       card.querySelector(".levelval").textContent = e.target.value + "%";
     } else if(f === "num"){
-      data.taps[i].num = Number(e.target.value) || (i + 1);
+      /* Left alone entirely while typing. The field holds what is being typed, and the
+         model keeps the OLD number until the change event — which is what makes a swap
+         possible. Writing it here destroyed the very value the swap needs, and produced
+         two taps numbered 2. Reordering per keystroke would also move the card out from
+         under the cursor, and "12" would reorder the moment the 1 landed. */
     } else {
       data.taps[i][f] = e.target.value;
     }
@@ -1473,6 +1507,22 @@
       var gcard = e.target.closest(".card"); if(!gcard) return;
       data.taps[Number(gcard.dataset.i)].guest = !!e.target.checked;
       touched(); return;
+    }
+    if(e.target.dataset.f === "num"){
+      var ncard = e.target.closest(".card"); if(!ncard) return;
+      var ni = Number(ncard.dataset.i);
+      var moved = data.taps[ni];
+      setTapNumber(ni, e.target.value);
+      renderTaps(); touched();
+      /* Follow the card to where it went, so it is obvious something moved. */
+      var at = data.taps.indexOf(moved);
+      var card = document.querySelector('.card[data-i="' + at + '"]');
+      if(card){
+        card.scrollIntoView({ behavior:"smooth", block:"center" });
+        var f = card.querySelector('[data-f="num"]');
+        if(f) f.focus();
+      }
+      return;
     }
     if(e.target.dataset.f !== "status") return;
     var card = e.target.closest(".card"); if(!card) return;
@@ -1538,11 +1588,15 @@
       if(!confirm('Remove "' + (gone.name || "this beer") + '" from the list?' + kept)) return;
       if(gone.name) saveToLibrary(gone, true);      /* never lose a recipe */
       data.taps.splice(i, 1); renderTaps(); touched();
-    } else if(act === "up" && i > 0){
-      var a = data.taps[i]; data.taps[i] = data.taps[i-1]; data.taps[i-1] = a;
-      renderTaps(); touched();
-    } else if(act === "down" && i < data.taps.length - 1){
-      var b = data.taps[i]; data.taps[i] = data.taps[i+1]; data.taps[i+1] = b;
+    } else if((act === "up" && i > 0) || (act === "down" && i < data.taps.length - 1)){
+      /* Swap numbers with the neighbour rather than array slots, so the arrows and the
+         number field cannot disagree about the running order. */
+      var other = data.taps[act === "up" ? i - 1 : i + 1];
+      var mine  = data.taps[i];
+      var keep  = mine.num;
+      mine.num = other.num;
+      other.num = keep;
+      sortTaps();
       renderTaps(); touched();
     }
   });
@@ -2076,6 +2130,11 @@
 
   function boot(json){
     published = normalize(json);
+    if(published && Array.isArray(published.taps)){
+      published.taps.sort(function(a, b){
+        return (Number(a.num) || 9999) - (Number(b.num) || 9999);
+      });
+    }
     loadedVersion = json && json.updated ? json.updated : null;
     data = JSON.parse(JSON.stringify(published));
 

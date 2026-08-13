@@ -235,6 +235,11 @@
     } else hb.className = "";
 
     var taps = (data.taps || []).filter(function(t){ return String(t.name || "").trim() !== ""; });
+    /* The tap number decides the running order, not the order they happen to sit in
+       the file. Otherwise renumbering a beer in the editor moves nothing out here. */
+    taps.sort(function(a, b){
+      return (Number(a.num) || 9999) - (Number(b.num) || 9999);
+    });
     if(data.hideKicked){
       taps = taps.filter(function(t){
         return !(t.status === "kicked" || (t.status !== "coming" && (Number(t.level) || 0) <= 0));
