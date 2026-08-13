@@ -819,19 +819,33 @@
     });
   }
 
-  /* Give a tap a number, and put whatever held that number where this one was. A swap
-     rather than a renumber: it keeps the set of numbers valid without quietly
-     rewriting taps the person did not touch. */
+  /* Move a tap to a number, shifting everything between out of the way — the way a
+     list reorders, not a swap. Sending 9 to 2 makes the old 2 become 3, 3 become 4,
+     and so on up to the gap the beer left behind. Swapping was simpler but wrong:
+     it left the other eight beers in an order nobody asked for. */
   function setTapNumber(index, wanted){
     var t = data.taps[index];
     if(!t) return;
-    var n = Math.max(1, Math.min(99, Math.floor(Number(wanted) || 0)));
+
     var was = Number(t.num);
-    if(!isFinite(was)) was = n;
+    if(!isFinite(was)) was = index + 1;
+
+    /* A number is a position on a wall, so it cannot exceed the taps there are — but a
+       venue numbering its second bar 11 to 20 keeps that, hence the max rather than
+       just the count. */
+    var top = data.taps.length;
+    for(var k = 0; k < data.taps.length; k++){
+      top = Math.max(top, Number(data.taps[k].num) || 0);
+    }
+    var n = Math.max(1, Math.min(top, Math.floor(Number(wanted) || 0)));
     if(n === was){ sortTaps(); return; }
 
     for(var j = 0; j < data.taps.length; j++){
-      if(j !== index && Number(data.taps[j].num) === n){ data.taps[j].num = was; break; }
+      if(j === index) continue;
+      var v = Number(data.taps[j].num);
+      if(!isFinite(v)) continue;
+      if(n < was && v >= n && v < was)      data.taps[j].num = v + 1;  /* moved up: push down */
+      else if(n > was && v > was && v <= n) data.taps[j].num = v - 1;  /* moved down: pull up */
     }
     t.num = n;
     sortTaps();
