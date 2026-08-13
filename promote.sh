@@ -23,7 +23,7 @@ for name in PAGES:
     # Pages that read the beer list must carry the constant; a sign-in page has
     # no data to read, so it legitimately has none.
     DATA_PAGES = ("index.html", "edit.html", "menu.html", "print.html", "hall.html")
-    s2, n = re.subn(r'var DATA_BASE = "\\.\\./";', 'var DATA_BASE = "";', s, count=1)
+    s2, n = re.subn(r'var DATA_BASE = "\.\./";', 'var DATA_BASE = "";', s, count=1)
     assert n == 1 or name not in DATA_PAGES, \
         f"{name}: DATA_BASE not found — did the constant get renamed?"
     s = s2
