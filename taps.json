@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 5,
   "hideKicked": false,
-  "updated": "2026-08-06T02:52:31.190Z",
+  "updated": "2026-08-13T02:23:22.713Z",
   "taps": [
     {
       "num": 1,
@@ -21,21 +21,6 @@
       "ready": "",
       "guest": false,
       "icon": "bottle",
-      "level": 50,
-      "status": "pouring"
-    },
-    {
-      "num": 2,
-      "name": "Bush Chook",
-      "style": "Light Lager",
-      "abv": "4.4",
-      "ibu": "18",
-      "notes": "Light, crisp and easy. ",
-      "color": "#FFD878",
-      "srm": 2,
-      "ready": "",
-      "guest": false,
-      "icon": "pint",
       "level": 50,
       "status": "pouring"
     },
@@ -160,7 +145,7 @@
       "status": "coming"
     },
     {
-      "num": 11,
+      "num": 2,
       "name": "Red Horizon",
       "style": "Red IPA",
       "abv": "5.5",
@@ -195,6 +180,16 @@
   "logoSize": "l",
   "bgV": "1785065831352",
   "library": [
+    {
+      "name": "Bush Chook",
+      "style": "Light Lager",
+      "abv": "4.4",
+      "ibu": "18",
+      "notes": "Light, crisp and easy. ",
+      "color": "#FFD878",
+      "srm": 2,
+      "icon": "pint"
+    },
     {
       "name": "Coconut Porter",
       "style": "English Porter",
