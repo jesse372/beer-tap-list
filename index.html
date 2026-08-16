@@ -277,6 +277,21 @@
     background:none;border:none;border-radius:0;overflow:visible;max-height:100%;
     width:calc((6.4 * var(--u)) * var(--s));height:calc((13.5 * var(--u)) * var(--s));
   }
+  /* Artwork in place of the glass. A can or a label is squarer than a glass, so the
+     box widens to suit; it keeps the same height so nothing else on the card moves. */
+  .glass.hasart{
+    /* A can is roughly half as wide as it is tall. Wider than this and a tall label
+       floats in dead space; narrower and a square one shrinks below the glass it
+       replaced. object-fit never crops, so nothing is lost either way. */
+    width:calc((7.6 * var(--u)) * var(--s));
+    background:none;border-color:transparent;
+  }
+  .glass.hasart svg{visibility:hidden}
+  .art{
+    position:absolute;left:0;top:0;right:0;bottom:0;
+    width:100%;height:100%;object-fit:contain;
+  }
+
   .glass{
     flex:0 0 auto;
     width:calc((4.8 * var(--u)) * var(--s));height:calc((13 * var(--u)) * var(--s));max-height:100%;
@@ -657,6 +672,11 @@
        Kicked stays empty, because that one really is finished. */
     var shown = kicked ? 0 : (coming ? 100 : level);
 
+    /* Artwork is opt-in for the whole board, and only where a beer actually has some —
+       so a venue that has photographed half its range does not get half a board of
+       gaps. The rest keep their glass. */
+    var art = !!(data.artwork && has(t.image));
+
     /* The price row is a sibling of the text column, not a child of it, so it can
        wrap onto its own full-width line under the whole card. Inside .body it was
        trapped in the narrow text column and three pours spilled over two lines. */
@@ -666,8 +686,13 @@
       '<div class="tap' + (kicked ? " out" : "") + (priceRow ? " priced" : "") +
            '" style="--beer:' + esc(color) + '">' +
         '<div class="numbadge">' + esc(t.num != null ? t.num : "") + '</div>' +
-        '<div class="glass shaped">' +
+        '<div class="glass shaped' + (art ? " hasart" : "") + '">' +
           (window.glassSVG ? window.glassSVG(window.glassFor ? window.glassFor(t) : t.icon, shown, color, (t.num != null ? t.num : "x")) : "") +
+          /* The artwork sits over the glass rather than replacing it, so a link that
+             404s or a wifi drop removes itself and the glass is simply there again.
+             A card with a hole in it is worse than a card with a glass on it. */
+          (art ? '<img class="art" alt="" src="' + esc(t.image) +
+                 '" onerror="this.parentNode.className=this.parentNode.className.replace(\' hasart\',\'\');this.remove();">' : '') +
         '</div>' +
         '<div class="body">' +
           '<div class="namerow">' +
@@ -1146,7 +1171,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260813-111328";
+  var BUILD = "20260816-141647";
 
   (function(){
     function check(){

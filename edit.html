@@ -389,6 +389,11 @@
         <input type="checkbox" id="hideKicked"><label for="hideKicked">Hide empty kegs from the TV completely</label>
       </div>
       <div class="checkline">
+        <input type="checkbox" id="artwork"><label for="artwork">Show each beer&rsquo;s artwork on the TV instead of a glass</label>
+      </div>
+      <div class="hint" id="artworkhint" style="margin:-8px 0 14px">Beers without a picture keep
+        their glass. Add pictures further down, on each beer.</div>
+      <div class="checkline">
         <input type="checkbox" id="sensorsOn"><label for="sensorsOn">I have keg level sensors connected</label>
       </div>
       <div id="sensorrow" style="display:none">
@@ -1187,6 +1192,7 @@
     $("perPage").value       = (data.perPage === "auto" || !data.perPage) ? "auto" : String(data.perPage);
     $("rotateSeconds").value = data.rotateSeconds || 20;
     $("showClock").checked   = data.showClock !== false;
+    $("artwork").checked     = !!data.artwork;
     $("hideKicked").checked  = !!data.hideKicked;
     $("logoOnly").checked    = !!data.logoOnly;
     $("logoSize").value      = data.logoSize || "m";
@@ -1348,6 +1354,7 @@
     touched();
   });
   $("showClock").addEventListener("change", function(){ data.showClock = this.checked; touched(); });
+  $("artwork").addEventListener("change", function(){ data.artwork = this.checked; touched(); });
   $("logoOnly").addEventListener("change", function(){ data.logoOnly = this.checked; touched(); });
   $("dimAtNight").addEventListener("change", function(){
     data.dimAtNight = this.checked;
