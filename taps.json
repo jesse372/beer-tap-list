@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 5,
   "hideKicked": false,
-  "updated": "2026-08-13T02:27:49.445Z",
+  "updated": "2026-08-16T04:50:09.361Z",
   "taps": [
     {
       "num": 1,
@@ -33,6 +33,7 @@
       "notes": "",
       "color": "#560903",
       "srm": 32,
+      "ready": "",
       "guest": false,
       "icon": "pint",
       "level": 100,
@@ -159,7 +160,21 @@
       "status": "coming"
     },
     {
-      "num": 12,
+      "num": 11,
+      "name": "Das Bier ist schön kalt",
+      "style": "German Pilsner",
+      "abv": "5.3",
+      "ibu": "22",
+      "notes": "German Bake malt and noble German hops",
+      "color": "#FFCA5A",
+      "srm": 3,
+      "icon": "mug",
+      "level": 100,
+      "status": "coming",
+      "ready": "2026-09-20"
+    },
+    {
+      "num": 13,
       "name": "RØKKAR Stomper",
       "style": "American IPA",
       "abv": "6.6",
