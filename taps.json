@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-08-20T10:46:15.926Z",
+  "updated": "2026-08-20T10:47:34.540Z",
   "taps": [
     {
       "num": 1,
@@ -273,5 +273,5 @@
   "sensors": {
     "on": false
   },
-  "artwork": true
+  "artwork": false
 }
