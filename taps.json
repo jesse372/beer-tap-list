@@ -5,9 +5,9 @@
   "logoOnly": true,
   "showClock": true,
   "perPage": "auto",
-  "rotateSeconds": 5,
+  "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-08-16T04:50:28.370Z",
+  "updated": "2026-08-20T10:46:15.926Z",
   "taps": [
     {
       "num": 1,
@@ -168,10 +168,11 @@
       "notes": "German Bake malt and noble German hops",
       "color": "#FFCA5A",
       "srm": 3,
+      "ready": "2026-09-20",
+      "guest": false,
       "icon": "mug",
       "level": 100,
-      "status": "coming",
-      "ready": "2026-09-20"
+      "status": "coming"
     },
     {
       "num": 12,
@@ -271,5 +272,6 @@
   },
   "sensors": {
     "on": false
-  }
+  },
+  "artwork": true
 }
