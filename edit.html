@@ -1810,6 +1810,48 @@
 
   /* After publishing, this tab IS the current version — otherwise it would warn
      about its own change the next time Publish was pressed. */
+  /* Publishing writes to a repo; a separate GitHub Pages deploy then puts it on the
+     web, and that deploy can fail — it did, with a 500 from GitHub's own API. When it
+     fails and nobody publishes again, the board keeps showing yesterday's beers and
+     says nothing. So after publishing, watch the live file until it actually changes.
+
+     The API path needs none of this: it writes the row the board reads. */
+  function verifyPublished(){
+    if(usingApi()) return;
+    var want = lastWrittenVersion;
+    if(!want) return;
+    var tries = 0;
+
+    (function poll(){
+      tries++;
+      var x = new XMLHttpRequest();
+      x.open("GET", DATA_BASE + "taps.json?nocache=" + Date.now(), true);
+      x.timeout = 8000;
+      x.onload = function(){
+        var got = null;
+        try { got = (JSON.parse(x.responseText) || {}).updated; } catch(e){}
+        if(got === want){
+          setStatus("Published — it's live, and the screens update within a minute.");
+          return;
+        }
+        again();
+      };
+      x.onerror = x.ontimeout = again;
+      x.send();
+
+      function again(){
+        if(tries >= 12){      /* ~90 seconds */
+          setStatus("Saved, but the website hasn't picked it up yet. That is usually " +
+                    "GitHub being slow or having a wobble — wait a minute and press " +
+                    "Publish again. Your changes are not lost.", "err");
+          return;
+        }
+        setStatus("Published — waiting for the website to catch up…");
+        setTimeout(poll, 8000);
+      }
+    })();
+  }
+
   function adoptPublished(){
     if(lastWrittenVersion) loadedVersion = lastWrittenVersion;
     overrideStale = false;
@@ -1901,6 +1943,7 @@
           clearDraft();
           adoptPublished();
           setStatus("✓ Published! The TV will show it within about a minute.", "ok");
+          verifyPublished();
           return;
         }
         if(status === 401){
@@ -1979,6 +2022,7 @@
           published = JSON.parse(JSON.stringify(data));
           clearDraft();
           adoptPublished();
+      verifyPublished();
           setStatus("Published — the screens will pick it up within a minute.");
         })
         .catch(function(){
@@ -2024,6 +2068,7 @@
       clearDraft();
       adoptPublished();
       setStatus("✓ Published! The TV will show it within about a minute.", "ok");
+      verifyPublished();
     }
 
     function writeTaps(){
