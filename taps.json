@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-08-20T10:50:03.405Z",
+  "updated": "2026-08-20T10:52:00.034Z",
   "taps": [
     {
       "num": 1,
@@ -20,7 +20,7 @@
       "srm": null,
       "ready": "",
       "guest": false,
-      "icon": "bottle",
+      "icon": "",
       "level": 50,
       "status": "pouring"
     },
@@ -35,7 +35,7 @@
       "srm": 32,
       "ready": "",
       "guest": false,
-      "icon": "pint",
+      "icon": "",
       "level": 100,
       "status": "pouring"
     },
@@ -50,7 +50,7 @@
       "srm": 30,
       "ready": "",
       "guest": false,
-      "icon": "pint",
+      "icon": "",
       "level": 50,
       "status": "pouring"
     },
@@ -65,7 +65,7 @@
       "srm": 7,
       "ready": "",
       "guest": false,
-      "icon": "hop",
+      "icon": "",
       "level": 100,
       "status": "pouring"
     },
@@ -80,7 +80,7 @@
       "srm": 2,
       "ready": "",
       "guest": false,
-      "icon": "wheat",
+      "icon": "",
       "level": 100,
       "status": "pouring"
     },
@@ -95,7 +95,7 @@
       "srm": 2,
       "ready": "",
       "guest": false,
-      "icon": "mug",
+      "icon": "",
       "level": 50,
       "status": "pouring"
     },
@@ -110,7 +110,7 @@
       "srm": null,
       "ready": "",
       "guest": false,
-      "icon": "can",
+      "icon": "",
       "level": 50,
       "status": "pouring"
     },
@@ -125,7 +125,7 @@
       "srm": 3,
       "ready": "",
       "guest": false,
-      "icon": "growler",
+      "icon": "",
       "level": 90,
       "status": "pouring"
     },
@@ -140,7 +140,7 @@
       "srm": 32,
       "ready": "2026-08-22",
       "guest": false,
-      "icon": "pint",
+      "icon": "",
       "level": 100,
       "status": "coming"
     },
@@ -155,7 +155,7 @@
       "srm": 4,
       "ready": "2026-09-12",
       "guest": false,
-      "icon": "mug",
+      "icon": "",
       "level": 100,
       "status": "coming"
     },
@@ -170,7 +170,7 @@
       "srm": 3,
       "ready": "2026-09-20",
       "guest": false,
-      "icon": "mug",
+      "icon": "",
       "level": 100,
       "status": "coming"
     },
@@ -185,7 +185,7 @@
       "srm": 4,
       "ready": "2026-08-22",
       "guest": false,
-      "icon": "pint",
+      "icon": "",
       "level": 100,
       "status": "coming"
     }
