@@ -473,6 +473,23 @@
   #stillgag .sbtn.alt{background:transparent;color:#d2d2d2;border-color:#8c8c8c}
   #stillgag .scount{color:#7a7a7a;font-size:1.8vh;margin-top:3.2vh;height:2.4vh}
 
+  /* Crayon on the whole TV. Paper underneath so the colours read from the far
+     side of the room; explicit edges again for the Fire OS webview. */
+  #scribgag{
+    position:fixed;left:0;top:0;right:0;bottom:0;z-index:9750;display:none;
+    background:#fffdf3;opacity:0;transition:opacity .3s linear;
+  }
+  #scribgag.on{display:block;opacity:1}
+  #scribgag svg{display:block;width:100%;height:100%}
+  /* Every stroke is pathLength="100", so one keyframe draws any length of line. */
+  #scribgag path{
+    fill:none;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:100;stroke-dashoffset:100;
+    animation-name:crayon;animation-duration:.5s;
+    animation-timing-function:ease-out;animation-fill-mode:forwards;
+  }
+  @keyframes crayon{to{stroke-dashoffset:0}}
+
   /* Unmistakably not the live board. Sits inside .screen so it rotates with it. */
   #previewbadge{
     position:absolute;left:calc(2.6 * var(--u));top:calc(2.6 * var(--u));z-index:60;display:none;
@@ -545,6 +562,7 @@
     <div class="scount" id="stillcount"></div>
   </div>
 </div>
+<div id="scribgag" aria-hidden="true"></div>
 <div id="dimveil"></div>
 
 <video id="awake" muted loop playsinline webkit-playsinline preload="auto"
@@ -1171,7 +1189,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260820-194724";
+  var BUILD = "20260901-181345";
 
   (function(){
     function check(){
@@ -1312,7 +1330,183 @@
       done(6600);
     }
 
-    var GAGS = [gagDoodles, gagHistory, gagStill];
+    /* 4 - somebody's four-year-old got hold of the telly.
+       Everything is generated, so no two firings scribble the same way. The
+       name goes on last, in one crayon, with the R backwards. */
+    function gagScribble(){
+      var box = el("scribgag");
+      if(!box){ done(400); return; }
+
+      var W = 160, H = 90;                 /* 16:9, sliced to cover any screen */
+      var CRAYON = ["#e4322b","#f2701c","#f5c518","#3f9e4d","#2f7fd1",
+                    "#7b4fc0","#e2589b","#8b5a2b","#1b1b1b"];
+      var parts = [];
+
+      function r(a, b){ return a + Math.random() * (b - a); }
+      function ri(a, b){ return Math.floor(r(a, b + 1)); }
+      function n(v){ return Math.round(v * 10) / 10; }
+      function crayon(){ return CRAYON[ri(0, CRAYON.length - 1)]; }
+
+      function stroke(d, col, w, delay, op){
+        parts.push('<path pathLength="100" d="' + d + '" stroke="' + col +
+                   '" stroke-width="' + n(w) + '" opacity="' + n(op) +
+                   '" style="animation-delay:' + n(delay) + 's"/>');
+      }
+
+      /* The tight loop-de-loop. An arc that ends short of its own diameter
+         has to loop back on itself to get there, which is exactly the shape. */
+      function loops(){
+        var x = r(-6, 118), y = r(8, 82), k = ri(5, 13),
+            rx = r(2.2, 5), ry = r(3, 7), step = rx * r(1.3, 1.9),
+            d = "M" + n(x) + " " + n(y), i;
+        for(i = 0; i < k; i++){
+          d += "a" + n(rx) + " " + n(ry) + " 0 1 1 " +
+               n(step) + " " + n(r(-1.6, 1.6));
+        }
+        return d;
+      }
+
+      /* Sharp back-and-forth, the kind done with the whole arm. */
+      function zig(){
+        var x = r(-6, 132), y = r(4, 78), k = ri(4, 11),
+            d = "M" + n(x) + " " + n(y), up = 1, i;
+        for(i = 0; i < k; i++){
+          up = -up;
+          d += "l" + n(r(4, 13)) + " " + n(up * r(8, 26));
+        }
+        return d;
+      }
+
+      /* Colouring in: rows that never quite line up and always overshoot. */
+      function hatch(){
+        var x = r(2, 118), y = r(8, 58), w = r(14, 40), rows = ri(4, 10),
+            gap = r(2, 4.5), d = "M" + n(x) + " " + n(y), dir = 1, i;
+        for(i = 0; i < rows; i++){
+          d += "l" + n(dir * (w + r(-5, 5))) + " " + n(r(-2, 2));
+          d += "l" + n(r(-3, 3)) + " " + n(gap);
+          dir = -dir;
+        }
+        return d;
+      }
+
+      /* A long wander across the screen with no plan at all. */
+      function wander(){
+        var x = r(0, W), y = r(0, H), d = "M" + n(x) + " " + n(y),
+            k = ri(3, 7), i, x1, y1, x2, y2;
+        for(i = 0; i < k; i++){
+          x1 = x + r(-30, 30); y1 = y + r(-25, 25);
+          x = Math.max(-6, Math.min(W + 6, x + r(-42, 42)));
+          y = Math.max(-6, Math.min(H + 6, y + r(-32, 32)));
+          x2 = x + r(-30, 30); y2 = y + r(-25, 25);
+          d += "C" + n(x1) + " " + n(y1) + " " + n(x2) + " " + n(y2) +
+               " " + n(x) + " " + n(y);
+        }
+        return d;
+      }
+
+      /* There is always a sun in the corner. */
+      function sun(){
+        var cx = Math.random() < .5 ? r(9, 17) : r(143, 151), cy = r(7, 13),
+            rad = r(5, 7.5), out = [], i, a, far;
+        out.push("M" + n(cx - rad) + " " + n(cy) +
+                 "c" + n(r(-1, 1)) + " " + n(-rad * 1.45) + " " +
+                 n(rad * 2 + r(-1, 1)) + " " + n(-rad * 1.45) + " " +
+                 n(rad * 2) + " " + n(r(-1, 1)) +
+                 "c" + n(r(-1, 1)) + " " + n(rad * 1.45) + " " +
+                 n(-rad * 2 + r(-1, 1)) + " " + n(rad * 1.45) + " " +
+                 n(-rad * 2) + " " + n(r(-1, 1)));
+        for(i = 0; i < 8; i++){
+          a = i * Math.PI / 4 + r(-.18, .18);
+          far = rad + r(4, 6.5);
+          out.push("M" + n(cx + Math.cos(a) * (rad + 1.4)) + " " +
+                        n(cy + Math.sin(a) * (rad + 1.4)) +
+                   "L" + n(cx + Math.cos(a) * far) + " " +
+                        n(cy + Math.sin(a) * far));
+        }
+        return out;
+      }
+
+      /* Letters drawn stroke by stroke the way a kid builds them, in a
+         100 x 120 box each. Two goes at A so the pair don't match. */
+      var GLYPH = {
+        A1: ["M10 116 C20 82 30 48 44 12",
+             "M44 14 C56 50 66 84 78 118",
+             "M24 80 C40 74 54 78 68 76"],
+        A2: ["M14 118 C24 84 34 46 46 14",
+             "M46 16 C56 52 68 82 82 116",
+             "M26 86 C42 82 58 84 72 80"],
+        R:  ["M16 14 C14 48 17 82 15 114",
+             "M16 16 C52 10 74 22 70 40 C67 56 40 60 16 58",
+             "M30 58 C44 78 58 96 74 116"],
+        I:  ["M46 16 C50 50 44 84 48 112",
+             "M28 16 C42 12 60 15 70 13",
+             "M26 114 C42 110 60 116 72 112"]
+      };
+
+      /* Starts big and confident, then shrinks and sags as the room runs out.
+         The R is mirrored, because of course it is. */
+      var NAME = [
+        {g:"A1", x:24,  y:24, s:.315, rot:-7,  flip:false},
+        {g:"R",  x:60,  y:20, s:.335, rot:5,   flip:true},
+        {g:"I",  x:96,  y:29, s:.265, rot:-4,  flip:false},
+        {g:"A2", x:114, y:33, s:.245, rot:11,  flip:false}
+      ];
+
+      /* ---- lay it all down ---- */
+      var t = 0, i, j, list, col, w;
+
+      var SCRAWL = [loops, zig, hatch, wander];
+      for(i = 0; i < 22; i++){
+        stroke(SCRAWL[ri(0, SCRAWL.length - 1)](),
+               crayon(), r(1.1, 2.6), t, r(.75, .95));
+        t += r(.07, .16);
+      }
+
+      list = sun(); col = "#f5c518";
+      for(i = 0; i < list.length; i++){
+        stroke(list[i], col, r(1.4, 2.2), t, .9);
+        t += .05;
+      }
+      var backdrop = parts.join("");        /* everything under the name */
+
+      /* One crayon for the name — a kid picks a favourite and commits. Dark
+         end of the box only: yellow on paper cannot be read across a pub. */
+      t = Math.max(t + .4, 3.1);
+      col = ["#e4322b","#3f9e4d","#2f7fd1","#7b4fc0","#8b5a2b","#1b1b1b"][ri(0, 5)];
+      var letters = "";
+      for(i = 0; i < NAME.length; i++){
+        var L = NAME[i], tr;
+        if(L.flip){
+          /* Mirror about the glyph's own box so it stays put, only backwards. */
+          tr = "translate(" + L.x + "," + L.y + ") rotate(" + L.rot + ") scale(" +
+               (-L.s) + "," + L.s + ") translate(-100,0)";
+        } else {
+          tr = "translate(" + L.x + "," + L.y + ") rotate(" + L.rot + ") scale(" + L.s + ")";
+        }
+        w = 3 / L.s;                       /* even weight once it is scaled down */
+        parts = [];                        /* stroke() writes here; drain per letter */
+        list = GLYPH[L.g];
+        for(j = 0; j < list.length; j++){
+          stroke(list[j], col, w * r(.86, 1.14), t, .95);
+          /* Nothing a kid draws meets up neatly, so shove each stroke off its
+             mark on the way past. */
+          parts.push('<g transform="translate(' + n(r(-4, 4)) + ',' + n(r(-4, 4)) +
+                     ') rotate(' + n(r(-3, 3)) + ' 50 60)">' + parts.pop() + '</g>');
+          t += r(.2, .3);
+        }
+        letters += '<g transform="' + tr + '">' + parts.join("") + "</g>";
+      }
+
+      box.innerHTML =
+        '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice">' +
+        backdrop + letters + "</svg>";
+
+      box.className = "on";
+      setTimeout(function(){ box.className = ""; box.innerHTML = ""; }, 10800);
+      done(11400);
+    }
+
+    var GAGS = [gagDoodles, gagHistory, gagStill, gagScribble];
 
     function runGag(n){
       if(running || !data) return;
