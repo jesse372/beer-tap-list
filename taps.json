@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-09-06T00:22:03.451Z",
+  "updated": "2026-09-11T02:31:16.194Z",
   "taps": [
     {
       "num": 1,
@@ -41,21 +41,21 @@
     },
     {
       "num": 3,
-      "name": "Coconut Porter",
-      "style": "English Porter",
-      "abv": "4.3",
-      "ibu": "52",
-      "notes": "Chris's Beer",
-      "color": "#5E0B00",
-      "srm": 30,
-      "ready": "",
+      "name": "Hello Darkness My Old Friend",
+      "style": "Black IPA",
+      "abv": "6.3",
+      "ibu": "60",
+      "notes": "",
+      "color": "#560903",
+      "srm": 32,
+      "ready": "2026-08-22",
       "guest": false,
       "icon": "",
-      "level": 50,
-      "status": "pouring"
+      "level": 100,
+      "status": "coming"
     },
     {
-      "num": 4,
+      "num": 5,
       "name": "Prysma in the Galaxy",
       "style": "New England IPA",
       "abv": "6.2",
@@ -70,7 +70,7 @@
       "status": "pouring"
     },
     {
-      "num": 5,
+      "num": 6,
       "name": "Munich Helles HC",
       "style": "International Lager",
       "abv": "5",
@@ -85,7 +85,7 @@
       "status": "pouring"
     },
     {
-      "num": 6,
+      "num": 7,
       "name": "Krush Pacific Ale",
       "style": "Pacific Ale",
       "abv": "4.6",
@@ -100,7 +100,7 @@
       "status": "pouring"
     },
     {
-      "num": 7,
+      "num": 8,
       "name": "Blueberry Mango Sour",
       "style": "Catalina Sour",
       "abv": "5",
@@ -115,7 +115,7 @@
       "status": "pouring"
     },
     {
-      "num": 8,
+      "num": 9,
       "name": "Coopers Lager",
       "style": "Pale Lager",
       "abv": "4.5",
@@ -128,21 +128,6 @@
       "icon": "",
       "level": 90,
       "status": "pouring"
-    },
-    {
-      "num": 9,
-      "name": "Hello Darkness My Old Friend",
-      "style": "Black IPA",
-      "abv": "6.3",
-      "ibu": "60",
-      "notes": "",
-      "color": "#560903",
-      "srm": 32,
-      "ready": "2026-08-22",
-      "guest": false,
-      "icon": "",
-      "level": 100,
-      "status": "coming"
     },
     {
       "num": 10,
