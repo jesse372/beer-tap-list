@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-09-11T02:31:46.421Z",
+  "updated": "2026-09-15T03:11:10.577Z",
   "taps": [
     {
       "num": 1,
@@ -48,13 +48,14 @@
       "notes": "",
       "color": "#560903",
       "srm": 32,
+      "ready": "",
       "guest": false,
       "icon": "",
       "level": 100,
       "status": "pouring"
     },
     {
-      "num": 5,
+      "num": 4,
       "name": "Prysma in the Galaxy",
       "style": "New England IPA",
       "abv": "6.2",
@@ -69,7 +70,7 @@
       "status": "pouring"
     },
     {
-      "num": 6,
+      "num": 5,
       "name": "Munich Helles HC",
       "style": "International Lager",
       "abv": "5",
@@ -84,7 +85,7 @@
       "status": "pouring"
     },
     {
-      "num": 7,
+      "num": 6,
       "name": "Krush Pacific Ale",
       "style": "Pacific Ale",
       "abv": "4.6",
@@ -99,7 +100,7 @@
       "status": "pouring"
     },
     {
-      "num": 8,
+      "num": 7,
       "name": "Blueberry Mango Sour",
       "style": "Catalina Sour",
       "abv": "5",
@@ -114,7 +115,7 @@
       "status": "pouring"
     },
     {
-      "num": 9,
+      "num": 8,
       "name": "Coopers Lager",
       "style": "Pale Lager",
       "abv": "4.5",
