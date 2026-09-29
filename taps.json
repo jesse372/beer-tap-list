@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 15,
   "hideKicked": false,
-  "updated": "2026-09-18T22:56:03.727Z",
+  "updated": "2026-09-29T02:07:24.924Z",
   "taps": [
     {
       "num": 1,
@@ -123,6 +123,7 @@
       "notes": "German Bake malt and noble German hops",
       "color": "#FFCA5A",
       "srm": 3,
+      "ready": "",
       "guest": false,
       "icon": "",
       "level": 100,
@@ -155,6 +156,19 @@
       "ready": "2026-08-22",
       "guest": false,
       "icon": "",
+      "level": 100,
+      "status": "coming"
+    },
+    {
+      "num": 11,
+      "name": "9 Hop Hazy",
+      "style": "Hazy IPA",
+      "abv": "6.7",
+      "ibu": "43",
+      "notes": "Fruity with a bit of galaxy prism in the keg",
+      "color": "#FBB123",
+      "srm": 5,
+      "icon": "pint",
       "level": 100,
       "status": "coming"
     }
