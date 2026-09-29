@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 15,
   "hideKicked": false,
-  "updated": "2026-09-29T02:07:24.924Z",
+  "updated": "2026-09-29T10:40:25.542Z",
   "taps": [
     {
       "num": 1,
@@ -168,7 +168,22 @@
       "notes": "Fruity with a bit of galaxy prism in the keg",
       "color": "#FBB123",
       "srm": 5,
+      "ready": "",
+      "guest": false,
       "icon": "pint",
+      "level": 100,
+      "status": "coming"
+    },
+    {
+      "num": 12,
+      "name": "Juggins NZ Draught",
+      "style": "Kentucky Common",
+      "abv": "3.5",
+      "ibu": "17",
+      "notes": "",
+      "color": "#DE7C00",
+      "srm": 10,
+      "icon": "",
       "level": 100,
       "status": "coming"
     }
