@@ -1227,7 +1227,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20261003-233052";
+  var BUILD = "20261003-233455";
 
   (function(){
     function check(){
@@ -1621,6 +1621,48 @@
       img.src = SIGNAL_URL + "img?t=" + encodeURIComponent(t);
     }
 
+    /* 7 - every word on the board scrambles its letters, then snaps back.
+       Fired with {"fx":"jumble","secs":2}. Same letters, same length, so
+       nothing on the board moves; only the spelling goes. */
+    function gagJumble(secs){
+      secs = Math.max(1, Math.min(30, Number(secs) || 2));
+      var nodes = [], orig = [], last = [], n, w, tick;
+      w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode: function(t){
+          var p = t.parentNode && t.parentNode.nodeName;
+          if(p === "SCRIPT" || p === "STYLE" || p === "NOSCRIPT") return NodeFilter.FILTER_REJECT;
+          return /[A-Za-z0-9]{2}/.test(t.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        }
+      }, false);
+      while((n = w.nextNode())){ nodes.push(n); orig.push(n.nodeValue); }
+
+      function shuffleWord(word){
+        var a = word.split(""), i, j, k, tries = 0;
+        if(a.length < 2) return word;
+        do {
+          for(i = a.length - 1; i > 0; i--){ j = Math.floor(Math.random() * (i + 1)); k = a[i]; a[i] = a[j]; a[j] = k; }
+        } while(a.join("") === word && ++tries < 4);
+        return a.join("");
+      }
+      function scramble(){
+        for(var i = 0; i < nodes.length; i++){
+          var v = orig[i].replace(/[A-Za-z0-9]+/g, shuffleWord);
+          nodes[i].nodeValue = v; last[i] = v;
+        }
+      }
+      scramble();
+      tick = setInterval(scramble, 140);
+      setTimeout(function(){
+        clearInterval(tick);
+        /* Put back only what is still ours: if the board redrew a node in the
+           meantime, its new text is already right. */
+        for(var i = 0; i < nodes.length; i++){
+          if(nodes[i].nodeValue === last[i]) nodes[i].nodeValue = orig[i];
+        }
+      }, secs * 1000);
+      done(secs * 1000 + 300);
+    }
+
     var GAGS = [gagDoodles, gagHistory, gagStill, gagScribble];
 
     function runGag(n, j){
@@ -1628,7 +1670,9 @@
       running = true;
       var idx = ((Number(n) || 0) % GAGS.length + GAGS.length) % GAGS.length;
       try {
-        if(j && j.img){
+        if(j && j.fx === "jumble"){
+          gagJumble(j.secs);
+        } else if(j && j.img){
           gagPhoto(j.t, j.secs, typeof j.text === "string" ? j.text.trim().slice(0, 40) : "");
         } else if(j && typeof j.text === "string" && j.text.trim()){
           gagWrite(j.text.trim().slice(0, 40), j.secs);

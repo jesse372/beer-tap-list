@@ -210,7 +210,8 @@ function readLaugh(raw) {
       const out = { t: Number(j.t) || 0, n: Number(j.n) || 0 };
       if (typeof j.text === "string" && j.text) out.text = j.text;
       if (j.img) out.img = 1;
-      if (out.text || out.img) out.secs = Number(j.secs) || 30;
+      if (typeof j.fx === "string" && j.fx) out.fx = j.fx;
+      if (out.text || out.img || out.fx) out.secs = Number(j.secs) || 30;
       return out;
     } catch (e) {}
   }
@@ -323,9 +324,14 @@ export default {
       const sig = { t: Date.now(), n };
       if (typeof body.text === "string" && body.text.trim()) sig.text = body.text.trim().slice(0, 40);
       if (body.img === true) sig.img = 1;      // show the staged picture
+      // A screen effect by name, e.g. {"fx":"jumble","secs":2}. Short ones allowed.
+      if (typeof body.fx === "string" && /^[a-z]{1,20}$/.test(body.fx)) sig.fx = body.fx;
       if (sig.text || sig.img) {
         const secs = Number(body.secs);
         sig.secs = Number.isFinite(secs) ? Math.max(5, Math.min(120, Math.round(secs))) : 30;
+      } else if (sig.fx) {
+        const secs = Number(body.secs);
+        sig.secs = Number.isFinite(secs) ? Math.max(1, Math.min(30, secs)) : 2;
       }
       await env.SIGNAL.put("laugh", JSON.stringify(sig));
       return json({ ok: true, ...sig }, 200, cors);
