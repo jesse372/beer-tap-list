@@ -490,6 +490,29 @@
   }
   @keyframes crayon{to{stroke-dashoffset:0}}
 
+  /* Somebody writes a word across the telly in ink. The word comes with the
+     signal, so it is whatever was typed on the laptop. */
+  #writegag{
+    position:fixed;left:0;top:0;right:0;bottom:0;z-index:9760;display:none;
+    background:#fffdf3;opacity:0;transition:opacity .5s linear;
+    -webkit-box-align:center;-webkit-box-pack:center;align-items:center;justify-content:center;
+  }
+  #writegag.on{display:flex;opacity:1}
+  #writegag .wtilt{-webkit-transform:rotate(-5deg);transform:rotate(-5deg);position:relative}
+  /* The clip grows left to right, so the word appears as the pen moves. */
+  #writegag .wclip{overflow:hidden;width:0;white-space:nowrap}
+  /* Padding keeps the script's swashes inside the clip. */
+  #writegag .wword{padding:.08em .3em .12em .2em;
+    font-family:"Dancing Script","Brush Script MT","Segoe Script",cursive;font-weight:700;
+    color:#1d2f6f;line-height:1.35;white-space:nowrap;display:inline-block;
+  }
+  #writegag svg{position:absolute;left:4%;width:92%;bottom:-2vh;height:8vh;overflow:visible}
+  #writegag path{
+    fill:none;stroke:#1d2f6f;stroke-linecap:round;stroke-width:1.4;
+    stroke-dasharray:100;stroke-dashoffset:100;opacity:0;
+  }
+  #writegag path.go{transition:stroke-dashoffset .9s ease-out;stroke-dashoffset:0;opacity:1}
+
   /* Unmistakably not the live board. Sits inside .screen so it rotates with it. */
   #previewbadge{
     position:absolute;left:calc(2.6 * var(--u));top:calc(2.6 * var(--u));z-index:60;display:none;
@@ -563,6 +586,7 @@
   </div>
 </div>
 <div id="scribgag" aria-hidden="true"></div>
+<div id="writegag" aria-hidden="true"></div>
 <div id="dimveil"></div>
 
 <video id="awake" muted loop playsinline webkit-playsinline preload="auto"
@@ -1189,7 +1213,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20260901-181247";
+  var BUILD = "20261003-232436";
 
   (function(){
     function check(){
@@ -1506,13 +1530,74 @@
       done(11400);
     }
 
+    /* 5 - a word handwritten across the telly. Not in the rotation: it only
+       runs when the signal carries text (POST /laugh {"text":"...","secs":30}).
+       The script font is fetched now, so it is already cached when it fires. */
+    (function(){
+      var l = document.createElement("link");
+      l.rel = "stylesheet";
+      l.href = "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap";
+      document.head.appendChild(l);
+    })();
+
+    function gagWrite(text, secs){
+      var box = el("writegag");
+      if(!box){ done(400); return; }
+      secs = Math.max(5, Math.min(120, Number(secs) || 30));
+
+      function go(){
+        box.innerHTML =
+          '<div class="wtilt"><div class="wclip"><span class="wword"></span></div>' +
+          '<svg viewBox="0 0 100 10" preserveAspectRatio="none">' +
+          '<path pathLength="100" d="M2 6 C25 1 60 10 98 3"/></svg></div>';
+        var tilt = box.querySelector(".wtilt"), clip = box.querySelector(".wclip"),
+            word = box.querySelector(".wword"), line = box.querySelector("path");
+        word.textContent = text;
+        box.className = "on";
+
+        /* As big as the screen allows, then shrink to fit a long name. */
+        var fs = window.innerHeight * .34, max = window.innerWidth * .86, w;
+        word.style.fontSize = fs + "px";
+        w = word.offsetWidth;
+        if(w > max){ word.style.fontSize = (fs * max / w) + "px"; w = word.offsetWidth; }
+        tilt.style.width = w + "px";      /* fixed, so the word grows from the left */
+
+        /* Pen speed: about four letters a second. */
+        var pen = Math.max(1.6, Math.min(6, text.length * .4));
+        setTimeout(function(){
+          void clip.offsetWidth;
+          clip.style.transition = "width " + pen + "s linear";
+          clip.style.width = w + "px";
+        }, 600);
+        setTimeout(function(){ line.setAttribute("class", "go"); }, (pen + .8) * 1000);
+      }
+
+      var started = false;
+      function once(){ if(!started){ started = true; go(); } }
+      try {
+        if(document.fonts && document.fonts.load){
+          document.fonts.load('700 40px "Dancing Script"', text).then(once, once);
+          setTimeout(once, 3000);
+        } else once();
+      } catch(e){ once(); }
+
+      setTimeout(function(){ box.className = ""; box.innerHTML = ""; }, secs * 1000);
+      done(secs * 1000 + 600);
+    }
+
     var GAGS = [gagDoodles, gagHistory, gagStill, gagScribble];
 
-    function runGag(n){
+    function runGag(n, j){
       if(running || !data) return;
       running = true;
       var idx = ((Number(n) || 0) % GAGS.length + GAGS.length) % GAGS.length;
-      try { GAGS[idx](); } catch(e){ running = false; }
+      try {
+        if(j && typeof j.text === "string" && j.text.trim()){
+          gagWrite(j.text.trim().slice(0, 40), j.secs);
+        } else {
+          GAGS[idx]();
+        }
+      } catch(e){ running = false; }
     }
 
     function poll(){
@@ -1526,7 +1611,7 @@
         try { j = JSON.parse(x.responseText); } catch(e){ return; }
         if(!j) return;
         if(lastSeen === null){ lastSeen = j.t; return; }   /* first read just syncs */
-        if(j.t && j.t !== lastSeen){ lastSeen = j.t; runGag(j.n); }
+        if(j.t && j.t !== lastSeen){ lastSeen = j.t; runGag(j.n, j); }
       };
       x.onerror = x.ontimeout = function(){};
       x.send();

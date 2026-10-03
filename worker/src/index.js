@@ -202,6 +202,20 @@ async function putFile(env, path, content, message) {
   return { ok: false, status: put.status, error: msg };
 }
 
+// The laugh signal is JSON {t, n, text?, secs?}; older writes were "t:n".
+function readLaugh(raw) {
+  if (raw.charAt(0) === "{") {
+    try {
+      const j = JSON.parse(raw);
+      const out = { t: Number(j.t) || 0, n: Number(j.n) || 0 };
+      if (typeof j.text === "string" && j.text) { out.text = j.text; out.secs = Number(j.secs) || 30; }
+      return out;
+    } catch (e) {}
+  }
+  const [t, n] = raw.split(":");
+  return { t: Number(t) || 0, n: Number(n || 0) || 0 };
+}
+
 export default {
   async fetch(request, env) {
     const cors = corsHeaders(env, request);
@@ -214,9 +228,8 @@ export default {
 
     // The TV polls this a few times a minute; it only ever reads a timestamp.
     if (route === "/laugh" && request.method === "GET") {
-      const raw = (await env.SIGNAL.get("laugh")) || "0:0";
-      const [t, n] = raw.split(":");
-      return json({ t: Number(t), n: Number(n || 0) }, 200, {
+      const sig = readLaugh((await env.SIGNAL.get("laugh")) || "0:0");
+      return json(sig, 200, {
         ...cors,
         "Cache-Control": "no-store",
       });
@@ -278,11 +291,18 @@ export default {
       if (Number.isInteger(body.n) && body.n >= 0 && body.n < 1000) {
         n = body.n;                       // fire a specific gag
       } else {
-        const prev = (await env.SIGNAL.get("laugh")) || "0:0";
-        n = (Number(prev.split(":")[1] || 0) + 1) % 1000;
+        const prev = readLaugh((await env.SIGNAL.get("laugh")) || "0:0");
+        n = (prev.n + 1) % 1000;
       }
-      await env.SIGNAL.put("laugh", Date.now() + ":" + n);
-      return json({ ok: true, n: n }, 200, cors);
+      // Optional: a word for the TV to handwrite across the screen.
+      const sig = { t: Date.now(), n };
+      if (typeof body.text === "string" && body.text.trim()) {
+        sig.text = body.text.trim().slice(0, 40);
+        const secs = Number(body.secs);
+        sig.secs = Number.isFinite(secs) ? Math.max(5, Math.min(120, Math.round(secs))) : 30;
+      }
+      await env.SIGNAL.put("laugh", JSON.stringify(sig));
+      return json({ ok: true, ...sig }, 200, cors);
     }
 
     if (route === "/publish") {
