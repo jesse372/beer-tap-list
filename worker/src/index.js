@@ -208,7 +208,9 @@ function readLaugh(raw) {
     try {
       const j = JSON.parse(raw);
       const out = { t: Number(j.t) || 0, n: Number(j.n) || 0 };
-      if (typeof j.text === "string" && j.text) { out.text = j.text; out.secs = Number(j.secs) || 30; }
+      if (typeof j.text === "string" && j.text) out.text = j.text;
+      if (j.img) out.img = 1;
+      if (out.text || out.img) out.secs = Number(j.secs) || 30;
       return out;
     } catch (e) {}
   }
@@ -233,6 +235,17 @@ export default {
         ...cors,
         "Cache-Control": "no-store",
       });
+    }
+
+    // The picture for the photo gag. Lives in KV, not the public repo.
+    if (route === "/laughimg" && request.method === "GET") {
+      const uri = await env.SIGNAL.get("laughimg");
+      const m = uri && /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(uri);
+      if (!m) return new Response("no picture", { status: 404, headers: cors });
+      const bin = atob(m[2]);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new Response(bytes, { status: 200, headers: { ...cors, "Content-Type": m[1], "Cache-Control": "no-store" } });
     }
 
     // ---- keg levels -------------------------------------------------------
@@ -284,6 +297,18 @@ export default {
       return storeLevels(env, cors, readings, body.token);
     }
 
+    // Stage a picture for the photo gag: {"image": "data:image/jpeg;base64,..."}.
+    // {"image": null} deletes it.
+    if (route === "/laughimg") {
+      if (body.image === null) { await env.SIGNAL.delete("laughimg"); return json({ ok: true }, 200, cors); }
+      if (typeof body.image !== "string" || !/^data:image\/(jpeg|png|webp);base64,/.test(body.image)) {
+        return json({ ok: false, error: "image must be a jpeg/png/webp data URI" }, 400, cors);
+      }
+      if (body.image.length > 3000000) return json({ ok: false, error: "Picture too big" }, 400, cors);
+      await env.SIGNAL.put("laughimg", body.image);
+      return json({ ok: true }, 200, cors);
+    }
+
     // Fired from the laptop; the TV picks it up on its next poll.
     if (route === "/laugh") {
       // Bump a counter alongside the timestamp so every screen runs the same gag.
@@ -296,8 +321,9 @@ export default {
       }
       // Optional: a word for the TV to handwrite across the screen.
       const sig = { t: Date.now(), n };
-      if (typeof body.text === "string" && body.text.trim()) {
-        sig.text = body.text.trim().slice(0, 40);
+      if (typeof body.text === "string" && body.text.trim()) sig.text = body.text.trim().slice(0, 40);
+      if (body.img === true) sig.img = 1;      // show the staged picture
+      if (sig.text || sig.img) {
         const secs = Number(body.secs);
         sig.secs = Number.isFinite(secs) ? Math.max(5, Math.min(120, Math.round(secs))) : 30;
       }

@@ -511,6 +511,19 @@
     fill:none;stroke:#1d2f6f;stroke-linecap:round;stroke-width:1.4;
     stroke-dasharray:100;stroke-dashoffset:100;opacity:0;
   }
+  /* A photo, held up to the room. Picture comes from the worker, not the repo. */
+  #photogag{
+    position:fixed;left:0;top:0;right:0;bottom:0;z-index:9770;display:none;
+    background:radial-gradient(ellipse at center,#5a0000 0%,#1a0000 70%,#000 100%);
+    flex-direction:column;align-items:center;justify-content:center;
+  }
+  #photogag.on{display:flex}
+  #photogag .pframe{height:88vh;background:#fff;padding:1.2vh;
+    -webkit-transform:rotate(-2deg);transform:rotate(-2deg);box-shadow:0 2vh 6vh rgba(0,0,0,.7)}
+  #photogag.cap .pframe{height:76vh}
+  #photogag .pframe img{display:block;height:100%;width:auto}
+  #photogag .pcap{font-family:"Dancing Script",cursive;font-weight:700;color:#fff;
+    font-size:9vh;line-height:1.1;margin-top:2vh;white-space:nowrap}
   #writegag path.go{transition:stroke-dashoffset .9s ease-out;stroke-dashoffset:0;opacity:1}
 
   /* Unmistakably not the live board. Sits inside .screen so it rotates with it. */
@@ -587,6 +600,7 @@
 </div>
 <div id="scribgag" aria-hidden="true"></div>
 <div id="writegag" aria-hidden="true"></div>
+<div id="photogag" aria-hidden="true"></div>
 <div id="dimveil"></div>
 
 <video id="awake" muted loop playsinline webkit-playsinline preload="auto"
@@ -1213,7 +1227,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20261003-232436";
+  var BUILD = "20261003-233052";
 
   (function(){
     function check(){
@@ -1585,6 +1599,28 @@
       done(secs * 1000 + 600);
     }
 
+    /* 6 - a photo, staged with POST /laughimg and fired with {"img":true}.
+       Shown only once it has loaded, so nobody sees half a picture. */
+    function gagPhoto(t, secs, caption){
+      var box = el("photogag");
+      if(!box){ done(400); return; }
+      secs = Math.max(5, Math.min(120, Number(secs) || 30));
+      var img = new Image(), settled = false;
+      img.onload = function(){
+        if(settled) return;
+        settled = true;
+        box.innerHTML = '<div class="pframe"></div>' + (caption ? '<div class="pcap"></div>' : '');
+        box.querySelector(".pframe").appendChild(img);
+        if(caption) box.querySelector(".pcap").textContent = caption;
+        box.className = caption ? "on cap" : "on";
+        setTimeout(function(){ box.className = ""; box.innerHTML = ""; }, secs * 1000);
+        done(secs * 1000 + 600);
+      };
+      img.onerror = function(){ if(!settled){ settled = true; done(200); } };
+      setTimeout(function(){ if(!settled){ settled = true; done(0); } }, 15000);
+      img.src = SIGNAL_URL + "img?t=" + encodeURIComponent(t);
+    }
+
     var GAGS = [gagDoodles, gagHistory, gagStill, gagScribble];
 
     function runGag(n, j){
@@ -1592,7 +1628,9 @@
       running = true;
       var idx = ((Number(n) || 0) % GAGS.length + GAGS.length) % GAGS.length;
       try {
-        if(j && typeof j.text === "string" && j.text.trim()){
+        if(j && j.img){
+          gagPhoto(j.t, j.secs, typeof j.text === "string" ? j.text.trim().slice(0, 40) : "");
+        } else if(j && typeof j.text === "string" && j.text.trim()){
           gagWrite(j.text.trim().slice(0, 40), j.secs);
         } else {
           GAGS[idx]();
