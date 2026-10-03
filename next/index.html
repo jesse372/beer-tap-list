@@ -1227,7 +1227,7 @@
      server says what the current build is. If they differ, this page is stale
      and reloads. Unlike comparing ETags, this cannot be fooled by a cached
      page, because BUILD travels with the page itself. */
-  var BUILD = "20261003-233455";
+  var BUILD = "20261003-234258";
 
   (function(){
     function check(){
@@ -1636,20 +1636,23 @@
       }, false);
       while((n = w.nextNode())){ nodes.push(n); orig.push(n.nodeValue); }
 
-      function shuffleWord(word){
-        var a = word.split(""), i, j, k, tries = 0;
-        if(a.length < 2) return word;
-        do {
-          for(i = a.length - 1; i > 0; i--){ j = Math.floor(Math.random() * (i + 1)); k = a[i]; a[i] = a[j]; a[j] = k; }
-        } while(a.join("") === word && ++tries < 4);
-        return a.join("");
+      /* Random letters, not an anagram: a shuffled word keeps its shape and
+         reads as unchanged from across a room. Case and digits are kept, so
+         line lengths barely move. */
+      var UP = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", LO = "abcdefghijklmnopqrstuvwxyz";
+      function pick(set){ return set.charAt(Math.floor(Math.random() * set.length)); }
+      function swapChar(c){
+        if(c >= "A" && c <= "Z") return pick(UP);
+        if(c >= "a" && c <= "z") return pick(LO);
+        return pick("0123456789");
       }
       function scramble(){
         for(var i = 0; i < nodes.length; i++){
-          var v = orig[i].replace(/[A-Za-z0-9]+/g, shuffleWord);
+          var v = orig[i].replace(/[A-Za-z0-9]/g, swapChar);
           nodes[i].nodeValue = v; last[i] = v;
         }
       }
+      report = "jumble:" + nodes.length;
       scramble();
       tick = setInterval(scramble, 140);
       setTimeout(function(){
@@ -1659,14 +1662,19 @@
         for(var i = 0; i < nodes.length; i++){
           if(nodes[i].nodeValue === last[i]) nodes[i].nodeValue = orig[i];
         }
+        report = "jumble-done:" + nodes.length;
       }, secs * 1000);
       done(secs * 1000 + 300);
     }
 
     var GAGS = [gagDoodles, gagHistory, gagStill, gagScribble];
 
+    /* What the last signal actually did on this screen. Rides along on the next
+       poll (&r=...) so `wrangler tail` shows it — the only way to see inside a TV. */
+    var report = "";
+
     function runGag(n, j){
-      if(running || !data) return;
+      if(running || !data){ report = running ? "busy" : "nodata"; return; }
       running = true;
       var idx = ((Number(n) || 0) % GAGS.length + GAGS.length) % GAGS.length;
       try {
@@ -1679,13 +1687,14 @@
         } else {
           GAGS[idx]();
         }
-      } catch(e){ running = false; }
+      } catch(e){ running = false; report = "err:" + String(e && e.message || e).slice(0, 120); }
     }
 
     function poll(){
       var x = new XMLHttpRequest();
       x.open("GET", SIGNAL_URL + "?t=" + Date.now() +
-             "&build=" + encodeURIComponent(BUILD) + "&gags=" + GAGS.length, true);
+             "&build=" + encodeURIComponent(BUILD) + "&gags=" + GAGS.length +
+             (report ? "&r=" + encodeURIComponent(report) : ""), true);
       x.timeout = 8000;
       x.onload = function(){
         if(x.status < 200 || x.status >= 300) return;
