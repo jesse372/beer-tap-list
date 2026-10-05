@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-09-29T10:40:50.825Z",
+  "updated": "2026-10-05T08:35:45.770Z",
   "taps": [
     {
       "num": 1,
@@ -56,6 +56,20 @@
     },
     {
       "num": 4,
+      "name": "Helles of a Ride V1",
+      "style": "Munich Helles",
+      "abv": "5.1",
+      "ibu": "18",
+      "notes": "",
+      "color": "#FFBF42",
+      "srm": 4,
+      "guest": false,
+      "icon": "",
+      "level": 100,
+      "status": "pouring"
+    },
+    {
+      "num": 6,
       "name": "Prysma in the Galaxy",
       "style": "New England IPA",
       "abv": "6.2",
@@ -70,22 +84,7 @@
       "status": "pouring"
     },
     {
-      "num": 5,
-      "name": "Munich Helles HC",
-      "style": "International Lager",
-      "abv": "5",
-      "ibu": "18",
-      "notes": "",
-      "color": "#FFD878",
-      "srm": 2,
-      "ready": "",
-      "guest": false,
-      "icon": "",
-      "level": 100,
-      "status": "pouring"
-    },
-    {
-      "num": 6,
+      "num": 7,
       "name": "Krush Pacific Ale",
       "style": "Pacific Ale",
       "abv": "4.6",
@@ -100,7 +99,7 @@
       "status": "pouring"
     },
     {
-      "num": 7,
+      "num": 8,
       "name": "Blueberry Mango Sour",
       "style": "Catalina Sour",
       "abv": "5",
@@ -115,7 +114,7 @@
       "status": "pouring"
     },
     {
-      "num": 8,
+      "num": 9,
       "name": "Das Bier ist schön kalt",
       "style": "German Pilsner",
       "abv": "5.3",
@@ -128,21 +127,6 @@
       "icon": "",
       "level": 100,
       "status": "pouring"
-    },
-    {
-      "num": 9,
-      "name": "Helles of a Ride V1",
-      "style": "Munich Helles",
-      "abv": "5.1",
-      "ibu": "18",
-      "notes": "",
-      "color": "#FFBF42",
-      "srm": 4,
-      "ready": "2026-09-12",
-      "guest": false,
-      "icon": "",
-      "level": 100,
-      "status": "coming"
     },
     {
       "num": 10,
@@ -183,6 +167,8 @@
       "notes": "",
       "color": "#DE7C00",
       "srm": 10,
+      "ready": "",
+      "guest": false,
       "icon": "",
       "level": 100,
       "status": "coming"
@@ -231,7 +217,7 @@
       "notes": "",
       "color": "#FFD878",
       "srm": 2,
-      "icon": "mug"
+      "icon": ""
     }
   ],
   "dimAtNight": true,
