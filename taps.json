@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-10-06T07:36:48.670Z",
+  "updated": "2026-10-06T07:39:15.345Z",
   "taps": [
     {
       "num": 1,
@@ -85,7 +85,7 @@
       "status": "pouring"
     },
     {
-      "num": 7,
+      "num": 6,
       "name": "Krush Pacific Ale",
       "style": "Pacific Ale",
       "abv": "4.6",
@@ -100,7 +100,7 @@
       "status": "pouring"
     },
     {
-      "num": 8,
+      "num": 7,
       "name": "Blueberry Mango Sour",
       "style": "Catalina Sour",
       "abv": "5",
@@ -115,7 +115,7 @@
       "status": "pouring"
     },
     {
-      "num": 9,
+      "num": 8,
       "name": "Das Bier ist schön kalt",
       "style": "German Pilsner",
       "abv": "5.3",
@@ -130,7 +130,7 @@
       "status": "pouring"
     },
     {
-      "num": 10,
+      "num": 9,
       "name": "RØKKAR Stomper",
       "style": "American IPA",
       "abv": "6.6",
@@ -145,22 +145,7 @@
       "status": "coming"
     },
     {
-      "num": 11,
-      "name": "Juggins NZ Draught",
-      "style": "Kentucky Common",
-      "abv": "3.5",
-      "ibu": "17",
-      "notes": "",
-      "color": "#DE7C00",
-      "srm": 10,
-      "ready": "",
-      "guest": false,
-      "icon": "",
-      "level": 100,
-      "status": "coming"
-    },
-    {
-      "num": 12,
+      "num": 10,
       "name": "9 Hop Hazy",
       "style": "Hazy IPA",
       "abv": "6.7",
@@ -171,6 +156,21 @@
       "ready": "",
       "guest": false,
       "icon": "pint",
+      "level": 100,
+      "status": "coming"
+    },
+    {
+      "num": 12,
+      "name": "Juggins NZ Draught",
+      "style": "Kentucky Common",
+      "abv": "3.5",
+      "ibu": "17",
+      "notes": "",
+      "color": "#DE7C00",
+      "srm": 10,
+      "ready": "",
+      "guest": false,
+      "icon": "",
       "level": 100,
       "status": "coming"
     }
