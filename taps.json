@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-10-05T08:35:45.770Z",
+  "updated": "2026-10-06T07:23:16.529Z",
   "taps": [
     {
       "num": 1,
@@ -56,20 +56,6 @@
     },
     {
       "num": 4,
-      "name": "Helles of a Ride V1",
-      "style": "Munich Helles",
-      "abv": "5.1",
-      "ibu": "18",
-      "notes": "",
-      "color": "#FFBF42",
-      "srm": 4,
-      "guest": false,
-      "icon": "",
-      "level": 100,
-      "status": "pouring"
-    },
-    {
-      "num": 6,
       "name": "Prysma in the Galaxy",
       "style": "New England IPA",
       "abv": "6.2",
@@ -84,7 +70,7 @@
       "status": "pouring"
     },
     {
-      "num": 7,
+      "num": 6,
       "name": "Krush Pacific Ale",
       "style": "Pacific Ale",
       "abv": "4.6",
@@ -99,7 +85,7 @@
       "status": "pouring"
     },
     {
-      "num": 8,
+      "num": 7,
       "name": "Blueberry Mango Sour",
       "style": "Catalina Sour",
       "abv": "5",
@@ -114,7 +100,7 @@
       "status": "pouring"
     },
     {
-      "num": 9,
+      "num": 8,
       "name": "Das Bier ist schön kalt",
       "style": "German Pilsner",
       "abv": "5.3",
@@ -122,6 +108,21 @@
       "notes": "German Bake malt and noble German hops",
       "color": "#FFCA5A",
       "srm": 3,
+      "ready": "",
+      "guest": false,
+      "icon": "",
+      "level": 100,
+      "status": "pouring"
+    },
+    {
+      "num": 9,
+      "name": "Helles of a Ride V1",
+      "style": "Munich Helles",
+      "abv": "5.1",
+      "ibu": "18",
+      "notes": "",
+      "color": "#FFBF42",
+      "srm": 4,
       "ready": "",
       "guest": false,
       "icon": "",
