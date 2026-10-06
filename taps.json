@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-10-06T07:23:16.529Z",
+  "updated": "2026-10-06T07:36:48.670Z",
   "taps": [
     {
       "num": 1,
@@ -70,7 +70,22 @@
       "status": "pouring"
     },
     {
-      "num": 6,
+      "num": 5,
+      "name": "Helles of a Ride V1",
+      "style": "Munich Helles",
+      "abv": "5.1",
+      "ibu": "18",
+      "notes": "",
+      "color": "#FFBF42",
+      "srm": 4,
+      "ready": "",
+      "guest": false,
+      "icon": "",
+      "level": 100,
+      "status": "pouring"
+    },
+    {
+      "num": 7,
       "name": "Krush Pacific Ale",
       "style": "Pacific Ale",
       "abv": "4.6",
@@ -85,7 +100,7 @@
       "status": "pouring"
     },
     {
-      "num": 7,
+      "num": 8,
       "name": "Blueberry Mango Sour",
       "style": "Catalina Sour",
       "abv": "5",
@@ -100,7 +115,7 @@
       "status": "pouring"
     },
     {
-      "num": 8,
+      "num": 9,
       "name": "Das Bier ist schön kalt",
       "style": "German Pilsner",
       "abv": "5.3",
@@ -108,21 +123,6 @@
       "notes": "German Bake malt and noble German hops",
       "color": "#FFCA5A",
       "srm": 3,
-      "ready": "",
-      "guest": false,
-      "icon": "",
-      "level": 100,
-      "status": "pouring"
-    },
-    {
-      "num": 9,
-      "name": "Helles of a Ride V1",
-      "style": "Munich Helles",
-      "abv": "5.1",
-      "ibu": "18",
-      "notes": "",
-      "color": "#FFBF42",
-      "srm": 4,
       "ready": "",
       "guest": false,
       "icon": "",
@@ -146,21 +146,6 @@
     },
     {
       "num": 11,
-      "name": "9 Hop Hazy",
-      "style": "Hazy IPA",
-      "abv": "6.7",
-      "ibu": "43",
-      "notes": "Fruity with a bit of galaxy prism in the keg",
-      "color": "#FBB123",
-      "srm": 5,
-      "ready": "",
-      "guest": false,
-      "icon": "pint",
-      "level": 100,
-      "status": "coming"
-    },
-    {
-      "num": 12,
       "name": "Juggins NZ Draught",
       "style": "Kentucky Common",
       "abv": "3.5",
@@ -171,6 +156,21 @@
       "ready": "",
       "guest": false,
       "icon": "",
+      "level": 100,
+      "status": "coming"
+    },
+    {
+      "num": 12,
+      "name": "9 Hop Hazy",
+      "style": "Hazy IPA",
+      "abv": "6.7",
+      "ibu": "43",
+      "notes": "Fruity with a bit of galaxy prism in the keg",
+      "color": "#FBB123",
+      "srm": 5,
+      "ready": "",
+      "guest": false,
+      "icon": "pint",
       "level": 100,
       "status": "coming"
     }
