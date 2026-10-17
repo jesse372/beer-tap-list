@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-10-17T01:24:23.617Z",
+  "updated": "2026-10-17T01:25:55.166Z",
   "taps": [
     {
       "num": 1,
@@ -18,11 +18,10 @@
       "notes": "",
       "color": "#FFBF42",
       "srm": 4,
-      "ready": "2026-08-22",
       "guest": false,
       "icon": "",
       "level": 100,
-      "status": "coming"
+      "status": "pouring"
     },
     {
       "num": 2,
@@ -63,11 +62,10 @@
       "notes": "Fruity with a bit of galaxy prism in the keg",
       "color": "#FBB123",
       "srm": 5,
-      "ready": "",
       "guest": false,
       "icon": "",
       "level": 100,
-      "status": "coming"
+      "status": "pouring"
     },
     {
       "num": 5,
