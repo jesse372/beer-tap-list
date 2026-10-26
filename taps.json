@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-10-26T07:45:59.151Z",
+  "updated": "2026-10-26T07:47:10.286Z",
   "taps": [
     {
       "num": 1,
@@ -108,6 +108,7 @@
       "notes": "",
       "color": "#DE7C00",
       "srm": 10,
+      "ready": "",
       "guest": false,
       "icon": "",
       "level": 100,
