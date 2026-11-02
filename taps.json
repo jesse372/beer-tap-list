@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-11-01T04:52:11.343Z",
+  "updated": "2026-11-02T10:17:50.262Z",
   "taps": [
     {
       "num": 1,
@@ -138,10 +138,11 @@
       "notes": "",
       "color": "#D77200",
       "srm": 11,
+      "ready": "2026-11-15",
+      "guest": false,
       "icon": "",
       "level": 100,
-      "status": "coming",
-      "ready": "2026-11-15"
+      "status": "coming"
     },
     {
       "num": 10,
@@ -152,10 +153,24 @@
       "notes": "",
       "color": "#FFCA5A",
       "srm": 3,
+      "ready": "2026-12-13",
+      "guest": false,
       "icon": "pint",
       "level": 100,
-      "status": "coming",
-      "ready": "2026-12-13"
+      "status": "coming"
+    },
+    {
+      "num": 11,
+      "name": "Beach Passion",
+      "style": "Cider",
+      "abv": "5",
+      "ibu": "0",
+      "notes": "Peach and Passionfruit cider",
+      "color": "#c4467a",
+      "srm": null,
+      "icon": "",
+      "level": 100,
+      "status": "coming"
     }
   ],
   "rotate": 0,
