@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-11-19T09:18:35.886Z",
+  "updated": "2026-11-19T09:19:15.608Z",
   "taps": [
     {
       "num": 1,
@@ -185,7 +185,13 @@
       "srm": 10,
       "icon": "",
       "level": 100,
-      "status": "pouring"
+      "status": "coming",
+      "custom": [
+        {
+          "k": "",
+          "v": ""
+        }
+      ]
     }
   ],
   "rotate": 0,
