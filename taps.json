@@ -7,7 +7,7 @@
   "perPage": "auto",
   "rotateSeconds": 10,
   "hideKicked": false,
-  "updated": "2026-11-19T09:19:15.608Z",
+  "updated": "2026-11-19T09:20:41.851Z",
   "taps": [
     {
       "num": 1,
@@ -192,6 +192,19 @@
           "v": ""
         }
       ]
+    },
+    {
+      "num": 13,
+      "name": "Palm Grease",
+      "style": "American IPA",
+      "abv": "6.3",
+      "ibu": "30",
+      "notes": "",
+      "color": "#E58500",
+      "srm": 9,
+      "icon": "",
+      "level": 100,
+      "status": "coming"
     }
   ],
   "rotate": 0,
